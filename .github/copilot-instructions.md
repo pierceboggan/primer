@@ -19,6 +19,7 @@
 - **Analyzer:** Scans repo files to infer languages, frameworks, and package manager.
 - **Instructions:** Generates `.github/copilot-instructions.md` from convention files.
 - **Config Generation:** Writes `.vscode/settings.json` and `.vscode/mcp.json` (safe overwrite).
+- **Skills Generation:** Copies bundled meta-skills from `assets/skills/` to target repos.
 - **Git/GitHub:** Automates clone/branch/PR via `simple-git` and Octokit.
 - **Evaluation:** Compares agent responses with/without instructions using Copilot sessions.
 - **TUI:** `src/ui/tui.tsx` (Ink/React) for interactive terminal usage.
@@ -28,7 +29,7 @@
 - **Run locally (no build step):**
   - `npx tsx src/index.ts --help`
   - `npx tsx src/index.ts analyze [path] --json`
-  - `npx tsx src/index.ts generate mcp|vscode [path] [--force]`
+  - `npx tsx src/index.ts generate mcp|vscode|skills [path] [--force]`
   - `npx tsx src/index.ts instructions [--repo <path>] [--output <path>] [--model gpt-5]`
   - `npx tsx src/index.ts tui [--repo <path>]`
   - `npx tsx src/index.ts pr <owner/name> [--branch primer/add-configs]`
@@ -52,4 +53,6 @@
 - `.github/copilot-instructions.md` — This file
 - `src/index.ts` — CLI entrypoint
 - `src/services/` — Core logic
+- `src/services/skills.ts` — Skills generation service
+- `assets/skills/` — Bundled meta-skills (skill-creator, skill-planner, etc.)
 - `.vscode/settings.json` — Copilot/VS Code integration

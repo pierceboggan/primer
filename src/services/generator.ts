@@ -1,6 +1,7 @@
 import path from "path";
 import { RepoAnalysis } from "./analyzer";
 import { ensureDir, safeWriteFile } from "../utils/fs";
+import { copySkillsToRepo } from "./skills";
 
 export type GenerateOptions = {
   repoPath: string;
@@ -30,6 +31,10 @@ export async function generateConfigs(options: GenerateOptions): Promise<{ summa
     actions.push(result);
   }
 
+  if (selections.includes("skills")) {
+    const result = await copySkillsToRepo({ repoPath, force });
+    actions.push(result.summary);
+  }
 
   const summary = actions.length ? `\n${actions.join("\n")}` : "No changes made.";
   return { summary };
