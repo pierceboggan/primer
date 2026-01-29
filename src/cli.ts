@@ -35,7 +35,7 @@ export function runCli(argv: string[]): void {
 
   program
     .command("generate")
-    .argument("<type>", "prompts|agents|mcp|vscode|aiignore")
+    .argument("<type>", "mcp|vscode|skills")
     .argument("[path]", "Path to a local repository")
     .option("--force", "Overwrite existing files")
     .action(generateCommand);

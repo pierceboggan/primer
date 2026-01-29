@@ -60,7 +60,8 @@ export async function initCommand(repoPathArg: string | undefined, options: Init
         choices: [
           { name: "Custom instructions (.github/copilot-instructions.md)", value: "instructions" },
           { name: "MCP configuration", value: "mcp" },
-          { name: "VS Code settings", value: "vscode" }
+          { name: "VS Code settings", value: "vscode" },
+          { name: "Meta-skills for skill authoring (.github/skills/)", value: "skills" }
         ],
         required: true
       });

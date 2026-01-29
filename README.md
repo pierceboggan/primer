@@ -15,6 +15,7 @@ Primer is a CLI tool that analyzes your codebase and generates `.github/copilot-
 - **GitHub Integration** - Clone repos, create branches, and open PRs automatically
 - **Interactive TUI** - Beautiful terminal interface built with Ink
 - **Config Generation** - Generate MCP and VS Code configurations
+- **Skills Generation** - Add meta-skills for skill authoring (plan, create, evaluate, reskill)
 
 ## Prerequisites
 
@@ -122,14 +123,8 @@ npx tsx src/index.ts generate mcp
 # Generate VS Code settings
 npx tsx src/index.ts generate vscode --force
 
-# Generate custom prompts
-npx tsx src/index.ts generate prompts
-
-# Generate agent configs
-npx tsx src/index.ts generate agents
-
-# Generate .aiignore file
-npx tsx src/index.ts generate aiignore
+# Generate meta-skills for skill authoring
+npx tsx src/index.ts generate skills
 ```
 
 ### Manage Templates

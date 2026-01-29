@@ -7,9 +7,9 @@ type GenerateOptions = {
 };
 
 export async function generateCommand(type: string, repoPathArg: string | undefined, options: GenerateOptions): Promise<void> {
-  const allowed = new Set(["mcp", "vscode"]);
+  const allowed = new Set(["mcp", "vscode", "skills"]);
   if (!allowed.has(type)) {
-    console.error("Invalid type. Use: mcp, vscode.");
+    console.error("Invalid type. Use: mcp, vscode, skills.");
     process.exitCode = 1;
     return;
   }
