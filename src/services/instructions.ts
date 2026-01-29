@@ -90,6 +90,10 @@ Output ONLY the markdown content for the instructions file.`;
 const execFileAsync = promisify(execFile);
 
 async function findCopilotCliPath(): Promise<string> {
+  if (process.platform === "win32") {
+    return "copilot";
+  }
+
   // Try standard PATH first
   try {
     const { stdout } = await execFileAsync("which", ["copilot"], { timeout: 5000 });
@@ -121,6 +125,10 @@ async function findCopilotCliPath(): Promise<string> {
 
 async function assertCopilotCliReady(): Promise<string> {
   const cliPath = await findCopilotCliPath();
+  
+  if (process.platform === "win32" && cliPath === "copilot") {
+    return cliPath;
+  }
   
   try {
     await execFileAsync(cliPath, ["--version"], { timeout: 5000 });

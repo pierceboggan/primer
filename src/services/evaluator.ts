@@ -224,6 +224,10 @@ async function loadConfig(configPath: string): Promise<EvalConfig> {
 }
 
 async function findCopilotCliPath(): Promise<string> {
+  if (process.platform === "win32") {
+    return "copilot";
+  }
+
   // Try standard PATH first
   try {
     const { stdout } = await execFileAsync("which", ["copilot"], { timeout: 5000 });
