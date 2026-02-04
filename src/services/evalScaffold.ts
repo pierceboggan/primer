@@ -75,8 +75,9 @@ export async function generateEvalScaffold(options: EvalScaffoldOptions): Promis
       "The cases should mirror realistic developer questions about this repo.",
       "Use tools to inspect README, package.json, CLI commands, and key files.",
       "Ensure cases cover a range of topics: purpose, entrypoints, build/test, configuration, workflows.",
+      "Include a systemMessage that keeps answers scoped to this repository (avoid generic Copilot CLI details unless asked).",
       "Return JSON ONLY (no markdown, no commentary) in this schema:",
-      "{\n  \"instructionFile\": \".github/copilot-instructions.md\",\n  \"cases\": [\n    {\"id\": \"case-1\", \"prompt\": \"...\", \"expectation\": \"...\"}\n  ]\n}"
+      "{\n  \"instructionFile\": \".github/copilot-instructions.md\",\n  \"systemMessage\": \"...\",\n  \"cases\": [\n    {\"id\": \"case-1\", \"prompt\": \"...\", \"expectation\": \"...\"}\n  ]\n}"
     ].join("\n");
 
     progress("Analyzing codebase...");
@@ -118,8 +119,12 @@ function normalizeEvalConfig(parsed: EvalConfig, count: number): EvalConfig {
     throw new Error("Eval scaffold JSON did not include any usable cases.");
   }
 
+  const defaultSystemMessage =
+    "You are answering questions about this repository. Use tools to inspect the repo and cite its files. Avoid generic Copilot CLI details unless the prompt explicitly asks for them.";
+
   return {
     instructionFile: parsed.instructionFile ?? ".github/copilot-instructions.md",
+    systemMessage: parsed.systemMessage ?? defaultSystemMessage,
     cases
   };
 }

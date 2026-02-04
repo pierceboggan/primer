@@ -18,6 +18,9 @@ type EvalConfig = {
   outputPath?: string;
 };
 
+const DEFAULT_SYSTEM_MESSAGE =
+  "You are answering questions about this repository. Use tools to inspect the repo and cite its files. Avoid generic Copilot CLI details unless the prompt explicitly asks for them.";
+
 type EvalRunOptions = {
   configPath: string;
   repoPath: string;
@@ -79,6 +82,7 @@ export async function runEval(options: EvalRunOptions): Promise<{ summary: strin
   const instructionFile = config.instructionFile ?? ".github/copilot-instructions.md";
   const instructionPath = path.resolve(options.repoPath, instructionFile);
   const instructionText = await readOptionalFile(instructionPath);
+  const baseSystemMessage = config.systemMessage ?? DEFAULT_SYSTEM_MESSAGE;
   const progress = options.onProgress ?? (() => {});
   const outputPath = resolveOutputPath(options.repoPath, options.outputPath, config.outputPath);
   const runStartedAt = Date.now();
@@ -101,7 +105,7 @@ export async function runEval(options: EvalRunOptions): Promise<{ summary: strin
       const withoutResult = await askOnce(client, {
         prompt,
         model: options.model,
-        systemMessage: config.systemMessage,
+        systemMessage: baseSystemMessage,
         phase: "withoutInstructions"
       });
 
@@ -109,7 +113,7 @@ export async function runEval(options: EvalRunOptions): Promise<{ summary: strin
       const withResult = await askOnce(client, {
         prompt,
         model: options.model,
-        systemMessage: [config.systemMessage, instructionText].filter(Boolean).join("\n\n"),
+        systemMessage: [baseSystemMessage, instructionText].filter(Boolean).join("\n\n"),
         phase: "withInstructions"
       });
 

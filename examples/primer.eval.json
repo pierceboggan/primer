@@ -1,5 +1,6 @@
 {
   "instructionFile": ".github/copilot-instructions.md",
+  "systemMessage": "You are answering questions about this repository. Use tools to inspect the repo and cite its files. Avoid generic Copilot CLI details unless the prompt explicitly asks for them.",
   "cases": [
     {
       "id": "project-overview",
