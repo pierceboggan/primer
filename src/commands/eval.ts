@@ -1,6 +1,7 @@
 import path from "path";
 import fs from "fs/promises";
 import { runEval } from "../services/evaluator";
+import { listCopilotModels } from "../services/copilot";
 import { generateEvalScaffold } from "../services/evalScaffold";
 
 type EvalOptions = {
@@ -10,10 +11,21 @@ type EvalOptions = {
   output?: string;
   init?: boolean;
   count?: string;
+  listModels?: boolean;
 };
 
 export async function evalCommand(configPathArg: string | undefined, options: EvalOptions): Promise<void> {
   const repoPath = path.resolve(options.repo ?? process.cwd());
+
+  if (options.listModels) {
+    const models = await listCopilotModels();
+    if (!models.length) {
+      console.log("No models detected from Copilot CLI.");
+      return;
+    }
+    console.log(models.join("\n"));
+    return;
+  }
   
   // Handle --init flag
   if (options.init) {

@@ -8,8 +8,11 @@ import { runEval, type EvalResult } from "../services/evaluator";
 import { generateEvalScaffold } from "../services/evalScaffold";
 import { AnimatedBanner, StaticBanner } from "./AnimatedBanner";
 import { BatchTui } from "./BatchTui";
+import { BatchTuiAzure } from "./BatchTuiAzure";
 import { getGitHubToken } from "../services/github";
+import { getAzureDevOpsToken } from "../services/azureDevops";
 import { safeWriteFile } from "../utils/fs";
+import { ReadinessReport, ReadinessCriterionResult, runReadinessReport } from "../services/readiness";
 
 type Props = {
   repoPath: string;
@@ -21,12 +24,14 @@ type Status =
   | "idle"
   | "analyzing"
   | "generating"
+  | "readiness"
   | "bootstrapping"
   | "evaluating"
   | "preview"
   | "done"
   | "error"
-  | "batch"
+  | "batch-github"
+  | "batch-azure"
   | "bootstrapEvalCount"
   | "bootstrapEvalConfirm";
 
@@ -46,8 +51,10 @@ export function PrimerTui({ repoPath, skipAnimation = false }: Props): React.JSX
   const [evalResults, setEvalResults] = useState<EvalResult[] | null>(null);
   const [evalViewerPath, setEvalViewerPath] = useState<string | null>(null);
   const [batchToken, setBatchToken] = useState<string | null>(null);
+  const [batchAzureToken, setBatchAzureToken] = useState<string | null>(null);
   const [evalCaseCountInput, setEvalCaseCountInput] = useState<string>("");
   const [evalBootstrapCount, setEvalBootstrapCount] = useState<number | null>(null);
+  const [readinessReport, setReadinessReport] = useState<ReadinessReport | null>(null);
   const repoLabel = useMemo(() => repoPath, [repoPath]);
 
   const handleAnimationComplete = () => {
@@ -223,7 +230,21 @@ export function PrimerTui({ repoPath, skipAnimation = false }: Props): React.JSX
         return;
       }
       setBatchToken(token);
-      setStatus("batch");
+      setStatus("batch-github");
+      return;
+    }
+
+    if (input.toLowerCase() === "z") {
+      setStatus("analyzing");
+      setMessage("Checking Azure DevOps authentication...");
+      const token = getAzureDevOpsToken();
+      if (!token) {
+        setStatus("error");
+        setMessage("Azure DevOps PAT required. Set AZURE_DEVOPS_PAT or AZDO_PAT.");
+        return;
+      }
+      setBatchAzureToken(token);
+      setStatus("batch-azure");
       return;
     }
 
@@ -269,6 +290,21 @@ export function PrimerTui({ repoPath, skipAnimation = false }: Props): React.JSX
       setEvalCaseCountInput("");
       setEvalBootstrapCount(null);
     }
+
+    if (input.toLowerCase() === "r") {
+      setStatus("readiness");
+      setMessage("Running readiness report...");
+      setReadinessReport(null);
+      try {
+        const report = await runReadinessReport({ repoPath });
+        setReadinessReport(report);
+        setStatus("done");
+        setMessage("Readiness report complete.");
+      } catch (error) {
+        setStatus("error");
+        setMessage(error instanceof Error ? error.message : "Readiness report failed.");
+      }
+    }
   });
 
   const statusLabel = status === "intro" ? "starting" : status === "idle" ? "ready" : status;
@@ -287,8 +323,12 @@ export function PrimerTui({ repoPath, skipAnimation = false }: Props): React.JSX
   const truncatedPreview = previewLines.join("\n") + (generatedContent.split("\n").length > 20 ? "\n..." : "");
 
   // Render BatchTui when in batch mode
-  if (status === "batch" && batchToken) {
+  if (status === "batch-github" && batchToken) {
     return <BatchTui token={batchToken} />;
+  }
+
+  if (status === "batch-azure" && batchAzureToken) {
+    return <BatchTuiAzure token={batchAzureToken} />;
   }
 
   return (
@@ -352,6 +392,29 @@ export function PrimerTui({ repoPath, skipAnimation = false }: Props): React.JSX
           )}
         </Box>
       )}
+      {readinessReport && (
+        <Box flexDirection="column" marginTop={1} borderStyle="single" borderColor="gray" paddingX={1}>
+          <Text color="cyan" bold>Readiness Report:</Text>
+          <Text>Level: {readinessReport.achievedLevel || 1} ({levelName(readinessReport.achievedLevel || 1)})</Text>
+          <Text>Monorepo: {readinessReport.isMonorepo ? "yes" : "no"}{readinessReport.apps.length ? ` (${readinessReport.apps.length} apps)` : ""}</Text>
+          <Text color="gray">Pillars:</Text>
+          {readinessReport.pillars.map((pillar) => (
+            <Text key={pillar.id} color={pillar.passRate >= 0.8 ? "green" : "yellow"}>
+              {pillar.name}: {pillar.passed}/{pillar.total} ({formatPercent(pillar.passRate)})
+            </Text>
+          ))}
+          {topFixes(readinessReport.criteria).length > 0 && (
+            <>
+              <Text color="gray">Fix first:</Text>
+              {topFixes(readinessReport.criteria).map((fix) => (
+                <Text key={fix.id}>
+                  - {fix.title} ({fix.impact}/{fix.effort})
+                </Text>
+              ))}
+            </>
+          )}
+        </Box>
+      )}
       <Box marginTop={1}>
         {status === "intro" ? (
           <Text color="gray">Press any key to skip animation...</Text>
@@ -360,9 +423,44 @@ export function PrimerTui({ repoPath, skipAnimation = false }: Props): React.JSX
         ) : status === "bootstrapEvalConfirm" ? (
           <Text color="cyan">Keys: [Y] Overwrite  [N] Cancel  [Q] Quit</Text>
         ) : (
-          <Text color="cyan">Keys: [A] Analyze  [G] Generate  [E] Eval  [I] Init Eval  [B] Batch  [Q] Quit</Text>
+          <Text color="cyan">Keys: [A] Analyze  [G] Generate  [R] Readiness  [E] Eval  [I] Init Eval  [B] Batch  [Z] Batch Azure  [Q] Quit</Text>
         )}
       </Box>
     </Box>
   );
+}
+
+function topFixes(criteria: ReadinessCriterionResult[]): ReadinessCriterionResult[] {
+  return criteria
+    .filter((criterion) => criterion.status === "fail")
+    .sort((a, b) => {
+      const impactDelta = impactWeight(b.impact) - impactWeight(a.impact);
+      if (impactDelta !== 0) return impactDelta;
+      return effortWeight(a.effort) - effortWeight(b.effort);
+    })
+    .slice(0, 5);
+}
+
+function impactWeight(value: "high" | "medium" | "low"): number {
+  if (value === "high") return 3;
+  if (value === "medium") return 2;
+  return 1;
+}
+
+function effortWeight(value: "low" | "medium" | "high"): number {
+  if (value === "low") return 1;
+  if (value === "medium") return 2;
+  return 3;
+}
+
+function formatPercent(value: number): string {
+  return `${Math.round(value * 100)}%`;
+}
+
+function levelName(level: number): string {
+  if (level === 2) return "Documented";
+  if (level === 3) return "Standardized";
+  if (level === 4) return "Optimized";
+  if (level === 5) return "Autonomous";
+  return "Functional";
 }

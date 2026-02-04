@@ -55,6 +55,7 @@ export function runCli(argv: string[]): void {
     .option("--repo <path>", "Repository path", process.cwd())
     .option("--model <name>", "Model for responses", "gpt-5")
     .option("--judge-model <name>", "Model for judging", "gpt-5")
+    .option("--list-models", "List Copilot CLI models and exit")
     .option("--output <path>", "Write results JSON to file")
     .option("--init", "Create a starter primer.eval.json file")
     .option("--count <number>", "Number of eval cases to generate (with --init)")

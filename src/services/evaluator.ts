@@ -636,6 +636,7 @@ function buildTrajectoryViewerHtml(data: Record<string, unknown>): string {
       .section h3 { margin: 8px 0; font-size: 14px; color: #c7ccd6; }
       .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
       .chip { background: #1e2232; border: 1px solid #2c3250; border-radius: 999px; padding: 2px 8px; font-size: 12px; color: #c9d1e3; }
+      .chip.phase { background: #23283b; border-color: #3a4163; color: #aeb7c6; }
       .muted { color: #8a93a5; font-size: 12px; }
       .filters { display: flex; gap: 12px; align-items: center; margin-top: 8px; }
       .filters label { font-size: 12px; color: #b7bdc8; }
@@ -674,6 +675,7 @@ function buildTrajectoryViewerHtml(data: Record<string, unknown>): string {
       const results = data.results || [];
       let activeCaseId = null;
       let toolsOnly = false;
+      let phaseFilter = 'all';
       summaryEl.textContent =
         'Repo: ' +
         (data.repoPath || 'unknown') +
@@ -682,10 +684,11 @@ function buildTrajectoryViewerHtml(data: Record<string, unknown>): string {
         ' • Judge: ' +
         (data.judgeModel || 'unknown');
 
-      function collectToolCounts(events) {
+      function collectToolCounts(events, phase) {
         const counts = { total: 0, byName: {} };
         if (!events) return counts;
         events.forEach((event) => {
+          if (phase && event.phase !== phase) return;
           if (event.type !== 'tool.execution_start') return;
           const name = (event.data && event.data.toolName) || 'unknown';
           counts.total += 1;
@@ -746,7 +749,7 @@ function buildTrajectoryViewerHtml(data: Record<string, unknown>): string {
           return (
             'Duration: ' +
             m.durationMs +
-            'ms • Tokens: ' +
+            'ms • Tokens (prompt/completion/total): ' +
             prompt +
             ' / ' +
             completion +
@@ -776,9 +779,11 @@ function buildTrajectoryViewerHtml(data: Record<string, unknown>): string {
 
       function renderTrajectory(events) {
         if (!events || !events.length) return '<p>No trajectory events captured.</p>';
-        const filtered = toolsOnly
-          ? events.filter((event) => event.type.startsWith('tool.'))
-          : events;
+        const filtered = events.filter((event) => {
+          if (phaseFilter !== 'all' && event.phase !== phaseFilter) return false;
+          if (toolsOnly && !event.type.startsWith('tool.')) return false;
+          return true;
+        });
         return (
           '<div class="trajectory">' +
           filtered
@@ -811,17 +816,41 @@ function buildTrajectoryViewerHtml(data: Record<string, unknown>): string {
         activeCaseId = result.id;
         renderCaseList(result.id);
         const toolCounts = collectToolCounts(result.trajectory || []);
+        const toolCountsWithout = collectToolCounts(result.trajectory || [], 'withoutInstructions');
+        const toolCountsWith = collectToolCounts(result.trajectory || [], 'withInstructions');
+        const toolCountsJudge = collectToolCounts(result.trajectory || [], 'judge');
         caseDetailsEl.innerHTML =
           '<h2>' +
           escapeHtml(result.id) +
           '</h2>' +
           '<div class="filters">' +
           '<label><input type="checkbox" id="toolsOnly" ' + (toolsOnly ? 'checked' : '') + ' /> Tools only</label>' +
+          '<label>Phase ' +
+          '<select id="phaseFilter">' +
+          '<option value="all" ' + (phaseFilter === 'all' ? 'selected' : '') + '>All</option>' +
+          '<option value="withoutInstructions" ' + (phaseFilter === 'withoutInstructions' ? 'selected' : '') + '>Without instructions</option>' +
+          '<option value="withInstructions" ' + (phaseFilter === 'withInstructions' ? 'selected' : '') + '>With instructions</option>' +
+          '<option value="judge" ' + (phaseFilter === 'judge' ? 'selected' : '') + '>Judge</option>' +
+          '</select>' +
+          '</label>' +
           '</div>' +
           '<div class="section">' +
           '<h3>Tool calls</h3>' +
           '<div class="muted">Total tool calls: ' + toolCounts.total + '</div>' +
           renderToolChips(toolCounts, 8) +
+          '</div>' +
+          '<div class="section">' +
+          '<h3>Tool calls by phase</h3>' +
+          '<div class="muted">Without: ' + toolCountsWithout.total + ' • With: ' + toolCountsWith.total + ' • Judge: ' + toolCountsJudge.total + '</div>' +
+          '<div class="chips">' +
+          '<span class="chip phase">withoutInstructions</span>' + renderToolChips(toolCountsWithout, 6) +
+          '</div>' +
+          '<div class="chips">' +
+          '<span class="chip phase">withInstructions</span>' + renderToolChips(toolCountsWith, 6) +
+          '</div>' +
+          '<div class="chips">' +
+          '<span class="chip phase">judge</span>' + renderToolChips(toolCountsJudge, 6) +
+          '</div>' +
           '</div>' +
           '<div class="section">' +
           '<h3>Summary</h3>' +
@@ -850,6 +879,14 @@ function buildTrajectoryViewerHtml(data: Record<string, unknown>): string {
         if (toolsCheckbox) {
           toolsCheckbox.addEventListener('change', (event) => {
             toolsOnly = event.target.checked;
+            renderCaseDetails(activeCaseId);
+          });
+        }
+
+        const phaseSelect = document.getElementById('phaseFilter');
+        if (phaseSelect) {
+          phaseSelect.addEventListener('change', (event) => {
+            phaseFilter = event.target.value || 'all';
             renderCaseDetails(activeCaseId);
           });
         }
