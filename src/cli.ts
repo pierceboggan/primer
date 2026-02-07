@@ -10,6 +10,7 @@ import { tuiCommand } from "./commands/tui";
 import { instructionsCommand } from "./commands/instructions";
 import { batchCommand } from "./commands/batch";
 import { readinessCommand } from "./commands/readiness";
+import { batchReadinessCommand } from "./commands/batchReadiness";
 
 export function runCli(argv: string[]): void {
   const program = new Command();
@@ -72,7 +73,8 @@ export function runCli(argv: string[]): void {
     .command("readiness")
     .argument("[path]", "Path to a local repository")
     .option("--json", "Output JSON")
-    .option("--output <path>", "Write JSON report to file")
+    .option("--output <path>", "Write report to file (.json or .html)")
+    .option("--visual", "Generate visual HTML report")
     .action(readinessCommand);
 
   program
@@ -81,6 +83,12 @@ export function runCli(argv: string[]): void {
     .option("--output <path>", "Write results JSON to file")
     .option("--provider <provider>", "Repo provider (github|azure)", "github")
     .action(batchCommand);
+
+  program
+    .command("batch-readiness")
+    .description("Generate batch AI readiness report for multiple repos")
+    .option("--output <path>", "Write HTML report to file")
+    .action(batchReadinessCommand);
 
   program.command("templates").action(templatesCommand);
   program.command("update").action(updateCommand);

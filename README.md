@@ -16,6 +16,8 @@ Primer is a CLI tool that analyzes your codebase and generates `.github/copilot-
 - **Batch Processing** - Process multiple repos across organizations with a single command
 - **Evaluation Framework** - Test and measure how well your instructions improve AI responses
 - **Readiness Report** - Score AI readiness across key pillars with a fix-first checklist
+- **Visual Reports** - Generate beautiful HTML reports for single or multiple repositories
+- **Batch Readiness** - Consolidated visual reports for tracking AI readiness across entire organizations
 - **GitHub Integration** - Clone repos, create branches, and open PRs automatically
 - **Interactive TUI** - Beautiful terminal interface built with Ink
 - **Config Generation** - Generate MCP and VS Code configurations
@@ -144,7 +146,34 @@ primer readiness --json
 
 # Write JSON report to a file
 primer readiness --output readiness.json
+
+# Generate a beautiful visual HTML report
+primer readiness --visual
+
+# Save visual report to a specific file
+primer readiness --output report.html
 ```
+
+#### Batch Readiness Report
+
+Generate a consolidated visual report for multiple repositories across organizations:
+
+```bash
+# Launch interactive batch readiness report
+primer batch-readiness
+
+# Save report to a custom file
+primer batch-readiness --output team-readiness.html
+```
+
+The visual report includes:
+- **Summary Cards** - Total repositories, average readiness level, success rate
+- **Pillar Performance** - AI readiness metrics across all repositories
+- **Level Distribution** - Visual breakdown of repositories by maturity level
+- **Repository Details** - Individual scores and top fixes for each repository
+- **Beautiful UI** - Gradient backgrounds, responsive design, and interactive elements
+
+Perfect for AI enablement teams tracking improvement targets!
 
 ### Examples
 

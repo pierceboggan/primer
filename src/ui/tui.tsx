@@ -95,8 +95,20 @@ export function PrimerTui({ repoPath, skipAnimation = false }: Props): React.JSX
       setMessage("Generating eval cases with Copilot SDK...");
       const config = await generateEvalScaffold({
         repoPath,
+        count,
+        model: evalModel,
+        onProgress: (msg) => setMessage(msg)
+      });
+      await safeWriteFile(configPath, JSON.stringify(config, null, 2), force);
+      setStatus("idle");
+      setMessage(`Generated primer.eval.json with ${config.cases.length} cases.`);
+    } catch (error) {
+      setStatus("error");
+      setMessage(error instanceof Error ? error.message : "Failed to generate eval config.");
+    }
+  };
 
-    useInput(async (input: string, key: Key) => {
+  useInput(async (input: string, key: Key) => {
       if (status === "intro") {
         setStatus("idle");
         return;
@@ -317,25 +329,6 @@ export function PrimerTui({ repoPath, skipAnimation = false }: Props): React.JSX
           setMessage(error instanceof Error ? error.message : "Readiness report failed.");
         }
       }
-    });
-      setEvalCaseCountInput("");
-      setEvalBootstrapCount(null);
-    }
-
-    if (input.toLowerCase() === "r") {
-      setStatus("readiness");
-      setMessage("Running readiness report...");
-      setReadinessReport(null);
-      try {
-        const report = await runReadinessReport({ repoPath });
-        setReadinessReport(report);
-        setStatus("done");
-        setMessage("Readiness report complete.");
-      } catch (error) {
-        setStatus("error");
-        setMessage(error instanceof Error ? error.message : "Readiness report failed.");
-      }
-    }
   });
 
   const statusLabel = status === "intro" ? "starting" : status === "idle" ? "ready" : status;
