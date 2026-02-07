@@ -643,36 +643,401 @@ function buildTrajectoryViewerHtml(data: Record<string, unknown>): string {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Primer Eval Trajectory</title>
     <style>
-      body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 24px; background: #0f1115; color: #e6e9ef; }
-      h1 { font-size: 20px; margin-bottom: 8px; }
-      .summary { margin-bottom: 24px; color: #b7bdc8; }
-      .layout { display: grid; grid-template-columns: 280px 1fr; gap: 16px; }
-      .panel { background: #151924; border: 1px solid #23283b; border-radius: 10px; padding: 12px; }
-      .section { margin-top: 16px; }
-      .section h3 { margin: 8px 0; font-size: 14px; color: #c7ccd6; }
-      .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-      .chip { background: #1e2232; border: 1px solid #2c3250; border-radius: 999px; padding: 2px 8px; font-size: 12px; color: #c9d1e3; }
-      .chip.phase { background: #23283b; border-color: #3a4163; color: #aeb7c6; }
-      .muted { color: #8a93a5; font-size: 12px; }
-      .filters { display: flex; gap: 12px; align-items: center; margin-top: 8px; }
-      .filters label { font-size: 12px; color: #b7bdc8; }
-      .case { padding: 8px; border-radius: 8px; cursor: pointer; margin-bottom: 6px; }
-      .case.active { background: #23283b; }
-      .case span { display: block; font-size: 12px; color: #9aa3b2; }
-      pre { white-space: pre-wrap; word-break: break-word; background: #0b0d12; padding: 12px; border-radius: 8px; border: 1px solid #1e2232; }
-      .pill { display: inline-block; padding: 2px 6px; border-radius: 999px; background: #23283b; margin-right: 6px; font-size: 12px; }
-      .trajectory { max-height: 520px; overflow-y: auto; }
-      .event { border-bottom: 1px solid #1e2232; padding: 8px 0; }
-      .event:last-child { border-bottom: none; }
+      * { box-sizing: border-box; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #0a0e1a 0%, #1a1f2e 100%);
+        color: #e8eaf0;
+        line-height: 1.6;
+        min-height: 100vh;
+      }
+      .header {
+        background: linear-gradient(90deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+        border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+        padding: 24px 32px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        backdrop-filter: blur(10px);
+      }
+      h1 {
+        font-size: 28px;
+        margin: 0 0 12px 0;
+        font-weight: 700;
+        background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .summary {
+        color: #a0aec0;
+        font-size: 14px;
+        display: flex;
+        gap: 24px;
+        flex-wrap: wrap;
+      }
+      .summary-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .summary-label {
+        color: #6b7280;
+        font-weight: 500;
+      }
+      .container {
+        padding: 32px;
+        max-width: 1800px;
+        margin: 0 auto;
+      }
+      .tool-summary-panel {
+        background: rgba(30, 41, 59, 0.5);
+        border: 1px solid rgba(71, 85, 105, 0.3);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        backdrop-filter: blur(10px);
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 24px;
+        align-items: start;
+      }
+      @media (max-width: 1200px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+      .panel {
+        background: rgba(30, 41, 59, 0.5);
+        border: 1px solid rgba(71, 85, 105, 0.3);
+        border-radius: 16px;
+        padding: 24px;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+      }
+      .panel:hover {
+        border-color: rgba(99, 102, 241, 0.4);
+        box-shadow: 0 8px 32px rgba(99, 102, 241, 0.1);
+      }
+      .section {
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid rgba(71, 85, 105, 0.3);
+      }
+      .section:first-child {
+        margin-top: 0;
+        padding-top: 0;
+        border-top: none;
+      }
+      .section h3 {
+        margin: 0 0 16px 0;
+        font-size: 16px;
+        color: #e8eaf0;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .section-toggle {
+        cursor: pointer;
+        user-select: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .section-toggle::after {
+        content: '▼';
+        font-size: 10px;
+        color: #6b7280;
+        transition: transform 0.2s ease;
+      }
+      .section-toggle.collapsed::after {
+        transform: rotate(-90deg);
+      }
+      .section-content {
+        max-height: 2000px;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+      }
+      .section-content.collapsed {
+        max-height: 0;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .chip {
+        background: rgba(99, 102, 241, 0.1);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 13px;
+        color: #c7d2fe;
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+      .chip:hover {
+        background: rgba(99, 102, 241, 0.2);
+        border-color: rgba(99, 102, 241, 0.5);
+      }
+      .chip.phase {
+        background: rgba(168, 85, 247, 0.1);
+        border-color: rgba(168, 85, 247, 0.3);
+        color: #e9d5ff;
+      }
+      .muted {
+        color: #9ca3af;
+        font-size: 13px;
+      }
+      .filters {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 16px;
+        padding: 16px;
+        background: rgba(15, 23, 42, 0.5);
+        border-radius: 12px;
+        border: 1px solid rgba(71, 85, 105, 0.3);
+      }
+      .filters label {
+        font-size: 13px;
+        color: #cbd5e1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-weight: 500;
+      }
+      .filters input[type="checkbox"] {
+        cursor: pointer;
+        width: 16px;
+        height: 16px;
+      }
+      .filters select {
+        background: rgba(30, 41, 59, 0.8);
+        color: #e8eaf0;
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 13px;
+        cursor: pointer;
+        outline: none;
+        transition: all 0.2s ease;
+      }
+      .filters select:hover {
+        border-color: rgba(99, 102, 241, 0.5);
+      }
+      .filters select:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+      }
+      .case-list {
+        position: sticky;
+        top: 120px;
+        max-height: calc(100vh - 180px);
+        overflow-y: auto;
+      }
+      .case {
+        padding: 12px 16px;
+        border-radius: 12px;
+        cursor: pointer;
+        margin-bottom: 8px;
+        border: 2px solid transparent;
+        transition: all 0.2s ease;
+        background: rgba(15, 23, 42, 0.3);
+      }
+      .case:hover {
+        background: rgba(30, 41, 59, 0.6);
+        border-color: rgba(99, 102, 241, 0.3);
+      }
+      .case.active {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%);
+        border-color: rgba(99, 102, 241, 0.6);
+        box-shadow: 0 4px 16px rgba(99, 102, 241, 0.2);
+      }
+      .case-title {
+        font-weight: 600;
+        color: #e8eaf0;
+        margin-bottom: 4px;
+        font-size: 14px;
+      }
+      .case span {
+        display: block;
+        font-size: 12px;
+        color: #9ca3af;
+      }
+      .verdict-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .verdict-pass {
+        background: rgba(34, 197, 94, 0.2);
+        color: #86efac;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+      }
+      .verdict-fail {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      }
+      .verdict-unknown {
+        background: rgba(251, 191, 36, 0.2);
+        color: #fde68a;
+        border: 1px solid rgba(251, 191, 36, 0.3);
+      }
+      pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+        background: rgba(15, 23, 42, 0.8);
+        padding: 16px;
+        border-radius: 12px;
+        border: 1px solid rgba(71, 85, 105, 0.3);
+        font-size: 13px;
+        line-height: 1.5;
+        color: #cbd5e1;
+        max-height: 400px;
+        overflow: auto;
+        font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+      }
+      pre::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      pre::-webkit-scrollbar-track {
+        background: rgba(15, 23, 42, 0.5);
+        border-radius: 4px;
+      }
+      pre::-webkit-scrollbar-thumb {
+        background: rgba(99, 102, 241, 0.3);
+        border-radius: 4px;
+      }
+      pre::-webkit-scrollbar-thumb:hover {
+        background: rgba(99, 102, 241, 0.5);
+      }
+      .pill {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 8px;
+        background: rgba(99, 102, 241, 0.15);
+        margin-right: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #c7d2fe;
+        border: 1px solid rgba(99, 102, 241, 0.3);
+      }
+      .trajectory {
+        max-height: 600px;
+        overflow-y: auto;
+        padding-right: 8px;
+      }
+      .trajectory::-webkit-scrollbar {
+        width: 10px;
+      }
+      .trajectory::-webkit-scrollbar-track {
+        background: rgba(15, 23, 42, 0.5);
+        border-radius: 5px;
+      }
+      .trajectory::-webkit-scrollbar-thumb {
+        background: rgba(99, 102, 241, 0.3);
+        border-radius: 5px;
+      }
+      .trajectory::-webkit-scrollbar-thumb:hover {
+        background: rgba(99, 102, 241, 0.5);
+      }
+      .event {
+        border-bottom: 1px solid rgba(71, 85, 105, 0.2);
+        padding: 16px 0;
+        transition: background 0.2s ease;
+      }
+      .event:hover {
+        background: rgba(99, 102, 241, 0.05);
+        margin: 0 -8px;
+        padding: 16px 8px;
+        border-radius: 8px;
+      }
+      .event:last-child {
+        border-bottom: none;
+      }
+      .event-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+      }
+      .event-type {
+        font-weight: 600;
+        color: #e8eaf0;
+        font-size: 14px;
+      }
+      .event-time {
+        color: #6b7280;
+        font-size: 12px;
+        font-family: 'SF Mono', Monaco, monospace;
+      }
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+        margin-top: 12px;
+      }
+      .metric-card {
+        background: rgba(15, 23, 42, 0.5);
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid rgba(71, 85, 105, 0.3);
+      }
+      .metric-value {
+        font-size: 20px;
+        font-weight: 700;
+        color: #e8eaf0;
+        margin-bottom: 4px;
+      }
+      .metric-label {
+        font-size: 12px;
+        color: #9ca3af;
+        font-weight: 500;
+      }
+      .info-box {
+        background: rgba(99, 102, 241, 0.1);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        border-radius: 12px;
+        padding: 16px;
+        margin: 12px 0;
+      }
+      .info-box p {
+        margin: 8px 0;
+        color: #cbd5e1;
+        font-size: 14px;
+      }
+      .info-box strong {
+        color: #e8eaf0;
+        font-weight: 600;
+      }
     </style>
   </head>
   <body>
-    <h1>Primer Eval Trajectory</h1>
-    <div class="summary" id="summary"></div>
-    <div class="panel" id="toolSummary"></div>
-    <div class="layout">
-      <div class="panel" id="caseList"></div>
-      <div class="panel" id="caseDetails"></div>
+    <div class="header">
+      <h1>Primer Eval Trajectory</h1>
+      <div class="summary" id="summary"></div>
+    </div>
+    <div class="container">
+      <div class="tool-summary-panel" id="toolSummary"></div>
+      <div class="layout">
+        <div class="panel case-list" id="caseList"></div>
+        <div class="panel" id="caseDetails"></div>
+      </div>
     </div>
     <script>
       const data = ${serialized};
@@ -692,13 +1057,26 @@ function buildTrajectoryViewerHtml(data: Record<string, unknown>): string {
       let activeCaseId = null;
       let toolsOnly = false;
       let phaseFilter = 'all';
-      summaryEl.textContent =
-        'Repo: ' +
-        (data.repoPath || 'unknown') +
-        ' • Model: ' +
+
+      const formatRepoName = (path) => {
+        if (!path) return 'unknown';
+        const parts = path.split('/');
+        return parts[parts.length - 1] || path;
+      };
+
+      summaryEl.innerHTML =
+        '<div class="summary-item"><span class="summary-label">Repo:</span> ' +
+        formatRepoName(data.repoPath) +
+        '</div>' +
+        '<div class="summary-item"><span class="summary-label">Model:</span> ' +
         (data.model || 'unknown') +
-        ' • Judge: ' +
-        (data.judgeModel || 'unknown');
+        '</div>' +
+        '<div class="summary-item"><span class="summary-label">Judge:</span> ' +
+        (data.judgeModel || 'unknown') +
+        '</div>' +
+        '<div class="summary-item"><span class="summary-label">Cases:</span> ' +
+        results.length +
+        '</div>';
 
       function collectToolCounts(events, phase) {
         const counts = { total: 0, byName: {} };
@@ -733,86 +1111,119 @@ function buildTrajectoryViewerHtml(data: Record<string, unknown>): string {
       function renderOverallToolSummary() {
         const overall = { total: 0, byName: {} };
         results.forEach((result) => mergeToolCounts(overall, collectToolCounts(result.trajectory || [])));
+
+        const passed = results.filter(r => r.verdict === 'pass').length;
+        const failed = results.filter(r => r.verdict === 'fail').length;
+        const unknown = results.filter(r => r.verdict === 'unknown').length;
+
         toolSummaryEl.innerHTML =
-          '<div>' +
-          '<strong>Tool call summary (all cases)</strong>' +
-          '<div class="muted">Total tool calls: ' + overall.total + '</div>' +
+          '<div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 24px;">' +
+          '<div style="flex: 1;">' +
+          '<h3 style="margin: 0 0 12px 0; font-size: 18px; color: #e8eaf0;">Overall Summary</h3>' +
+          '<div class="metrics-grid" style="margin-top: 16px;">' +
+          '<div class="metric-card">' +
+          '<div class="metric-value verdict-pass">' + passed + '</div>' +
+          '<div class="metric-label">Passed</div>' +
+          '</div>' +
+          '<div class="metric-card">' +
+          '<div class="metric-value verdict-fail">' + failed + '</div>' +
+          '<div class="metric-label">Failed</div>' +
+          '</div>' +
+          '<div class="metric-card">' +
+          '<div class="metric-value verdict-unknown">' + unknown + '</div>' +
+          '<div class="metric-label">Unknown</div>' +
+          '</div>' +
+          '<div class="metric-card">' +
+          '<div class="metric-value">' + overall.total + '</div>' +
+          '<div class="metric-label">Total Tool Calls</div>' +
+          '</div>' +
+          '</div>' +
+          '</div>' +
+          '<div style="flex: 1;">' +
+          '<h3 style="margin: 0 0 12px 0; font-size: 18px; color: #e8eaf0;">Top Tools Used</h3>' +
           renderToolChips(overall, 10) +
+          '</div>' +
           '</div>';
       }
 
       function renderCaseList(activeId) {
-        caseListEl.innerHTML = '';
+        caseListEl.innerHTML = '<h3 style="margin: 0 0 16px 0; font-size: 16px;">Test Cases</h3>';
         results.forEach((result) => {
           const row = document.createElement('div');
           row.className = 'case ' + (result.id === activeId ? 'active' : '');
-          row.textContent = result.id + ' (' + (result.verdict ?? 'unknown') + ')';
-          const sub = document.createElement('span');
-          sub.textContent = 'Score: ' + (result.score ?? 0);
-          row.appendChild(sub);
+
+          const verdictClass = result.verdict === 'pass' ? 'verdict-pass' :
+                              result.verdict === 'fail' ? 'verdict-fail' : 'verdict-unknown';
+
+          row.innerHTML =
+            '<div class="case-title">' + escapeHtml(result.id) + '</div>' +
+            '<span class="verdict-badge ' + verdictClass + '">' + (result.verdict ?? 'unknown') + '</span> ' +
+            '<span>Score: ' + (result.score ?? 0) + '</span>';
+
           row.addEventListener('click', () => renderCaseDetails(result.id));
           caseListEl.appendChild(row);
         });
       }
 
       function renderMetrics(metrics) {
-        if (!metrics) return '<p>No metrics available.</p>';
-        const fmt = (m) => {
+        if (!metrics) return '<p class="muted">No metrics available.</p>';
+        const fmt = (m, label) => {
           const usage = m.tokenUsage;
-          const prompt = usage?.promptTokens ?? 'n/a';
-          const completion = usage?.completionTokens ?? 'n/a';
-          const total = usage?.totalTokens ?? (usage ? (Number(usage.promptTokens ?? 0) + Number(usage.completionTokens ?? 0)) : 'n/a');
+          const prompt = usage?.promptTokens ?? 0;
+          const completion = usage?.completionTokens ?? 0;
+          const total = usage?.totalTokens ?? (usage ? (prompt + completion) : 0);
           return (
-            'Duration: ' +
-            m.durationMs +
-            'ms • Tokens (prompt/completion/total): ' +
-            prompt +
-            ' / ' +
-            completion +
-            ' / ' +
-            total +
-            ' • Tool calls: ' +
-            (m.toolCalls?.count ?? 0)
+            '<div class="metric-card">' +
+            '<div class="pill">' + label + '</div>' +
+            '<div style="margin-top: 8px;">' +
+            '<div class="muted">Duration: ' + m.durationMs + 'ms</div>' +
+            '<div class="muted">Tokens: ' + prompt + ' / ' + completion + ' / ' + total + '</div>' +
+            '<div class="muted">Tool calls: ' + (m.toolCalls?.count ?? 0) + '</div>' +
+            '</div>' +
+            '</div>'
           );
         };
         return (
-          '<div>' +
-          '<div class="pill">Without Instructions</div><span>' +
-          fmt(metrics.withoutInstructions) +
-          '</span><br />' +
-          '<div class="pill">With Instructions</div><span>' +
-          fmt(metrics.withInstructions) +
-          '</span><br />' +
-          '<div class="pill">Judge</div><span>' +
-          fmt(metrics.judge) +
-          '</span><br />' +
-          '<div class="pill">Total</div><span>' +
-          metrics.totalDurationMs +
-          'ms</span>' +
+          '<div class="metrics-grid">' +
+          fmt(metrics.withoutInstructions, 'Without Instructions') +
+          fmt(metrics.withInstructions, 'With Instructions') +
+          fmt(metrics.judge, 'Judge') +
+          '<div class="metric-card">' +
+          '<div class="pill">Total</div>' +
+          '<div style="margin-top: 8px;">' +
+          '<div class="metric-value">' + metrics.totalDurationMs + '<span style="font-size: 14px; font-weight: 400; color: #9ca3af;">ms</span></div>' +
+          '<div class="metric-label">Total Duration</div>' +
+          '</div>' +
+          '</div>' +
           '</div>'
         );
       }
 
       function renderTrajectory(events) {
-        if (!events || !events.length) return '<p>No trajectory events captured.</p>';
+        if (!events || !events.length) return '<p class="muted">No trajectory events captured.</p>';
         const filtered = events.filter((event) => {
           if (phaseFilter !== 'all' && event.phase !== phaseFilter) return false;
           if (toolsOnly && !event.type.startsWith('tool.')) return false;
           return true;
         });
+        if (!filtered.length) return '<p class="muted">No events match the current filters.</p>';
         return (
           '<div class="trajectory">' +
           filtered
             .map(
               (event) =>
                 '<div class="event">' +
-                '<div><strong>' +
+                '<div class="event-header">' +
+                '<div class="event-type">' +
                 event.type +
-                '</strong> <span class="pill">' +
+                '</div>' +
+                '<span class="pill phase">' +
                 event.phase +
-                '</span> <span>' +
+                '</span>' +
+                '<span class="event-time">' +
                 new Date(event.timestampMs).toISOString() +
-                '</span></div>' +
+                '</span>' +
+                '</div>' +
                 '<pre>' +
                 JSON.stringify(event.data ?? {}, null, 2) +
                 '</pre>' +
@@ -826,7 +1237,7 @@ function buildTrajectoryViewerHtml(data: Record<string, unknown>): string {
       function renderCaseDetails(caseId) {
         const result = results.find((r) => r.id === caseId) ?? results[0];
         if (!result) {
-          caseDetailsEl.innerHTML = '<p>No results available.</p>';
+          caseDetailsEl.innerHTML = '<p class="muted">No results available.</p>';
           return;
         }
         activeCaseId = result.id;
@@ -835,13 +1246,22 @@ function buildTrajectoryViewerHtml(data: Record<string, unknown>): string {
         const toolCountsWithout = collectToolCounts(result.trajectory || [], 'withoutInstructions');
         const toolCountsWith = collectToolCounts(result.trajectory || [], 'withInstructions');
         const toolCountsJudge = collectToolCounts(result.trajectory || [], 'judge');
+
+        const verdictClass = result.verdict === 'pass' ? 'verdict-pass' :
+                            result.verdict === 'fail' ? 'verdict-fail' : 'verdict-unknown';
+
         caseDetailsEl.innerHTML =
-          '<h2>' +
+          '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">' +
+          '<h2 style="margin: 0; font-size: 24px; color: #e8eaf0;">' +
           escapeHtml(result.id) +
           '</h2>' +
+          '<span class="verdict-badge ' + verdictClass + '" style="padding: 6px 16px; font-size: 13px;">' +
+          (result.verdict ?? 'unknown') + ' • Score: ' + (result.score ?? 0) +
+          '</span>' +
+          '</div>' +
           '<div class="filters">' +
           '<label><input type="checkbox" id="toolsOnly" ' + (toolsOnly ? 'checked' : '') + ' /> Tools only</label>' +
-          '<label>Phase ' +
+          '<label>Phase: ' +
           '<select id="phaseFilter">' +
           '<option value="all" ' + (phaseFilter === 'all' ? 'selected' : '') + '>All</option>' +
           '<option value="withoutInstructions" ' + (phaseFilter === 'withoutInstructions' ? 'selected' : '') + '>Without instructions</option>' +
@@ -851,43 +1271,44 @@ function buildTrajectoryViewerHtml(data: Record<string, unknown>): string {
           '</label>' +
           '</div>' +
           '<div class="section">' +
-          '<h3>Tool calls</h3>' +
-          '<div class="muted">Total tool calls: ' + toolCounts.total + '</div>' +
-          renderToolChips(toolCounts, 8) +
-          '</div>' +
-          '<div class="section">' +
-          '<h3>Tool calls by phase</h3>' +
-          '<div class="muted">Without: ' + toolCountsWithout.total + ' • With: ' + toolCountsWith.total + ' • Judge: ' + toolCountsJudge.total + '</div>' +
-          '<div class="chips">' +
-          '<span class="chip phase">withoutInstructions</span>' + renderToolChips(toolCountsWithout, 6) +
-          '</div>' +
-          '<div class="chips">' +
-          '<span class="chip phase">withInstructions</span>' + renderToolChips(toolCountsWith, 6) +
-          '</div>' +
-          '<div class="chips">' +
-          '<span class="chip phase">judge</span>' + renderToolChips(toolCountsJudge, 6) +
+          '<h3>Overview</h3>' +
+          '<div class="info-box">' +
+          '<p><strong>Prompt:</strong> ' + escapeHtml(result.prompt ?? '') + '</p>' +
+          '<p><strong>Expectation:</strong> ' + escapeHtml(result.expectation ?? '') + '</p>' +
+          (result.rationale ? '<p><strong>Rationale:</strong> ' + escapeHtml(result.rationale) + '</p>' : '') +
           '</div>' +
           '</div>' +
           '<div class="section">' +
-          '<h3>Summary</h3>' +
-          '<p><strong>Verdict:</strong> ' +
-          escapeHtml(result.verdict ?? 'unknown') +
-          ' (score: ' +
-          escapeHtml(result.score ?? 0) +
-          ')</p>' +
-          '<p><strong>Prompt:</strong> ' +
-          escapeHtml(result.prompt ?? '') +
-          '</p>' +
-          '<p><strong>Expectation:</strong> ' +
-          escapeHtml(result.expectation ?? '') +
-          '</p>' +
-          '</div>' +
-          '<div class="section">' +
-          '<h3>Metrics</h3>' +
+          '<h3>Performance Metrics</h3>' +
           renderMetrics(result.metrics) +
           '</div>' +
           '<div class="section">' +
-          '<h3>Trajectory</h3>' +
+          '<h3>Tool Usage Summary</h3>' +
+          '<div class="muted" style="margin-bottom: 12px;">Total tool calls: ' + toolCounts.total + '</div>' +
+          renderToolChips(toolCounts, 12) +
+          '<div style="margin-top: 20px;">' +
+          '<h4 style="font-size: 14px; color: #cbd5e1; margin-bottom: 12px;">By Phase</h4>' +
+          '<div style="display: grid; gap: 12px;">' +
+          '<div class="metric-card">' +
+          '<span class="chip phase">withoutInstructions</span>' +
+          '<div class="muted" style="margin-top: 8px;">' + toolCountsWithout.total + ' calls</div>' +
+          renderToolChips(toolCountsWithout, 6) +
+          '</div>' +
+          '<div class="metric-card">' +
+          '<span class="chip phase">withInstructions</span>' +
+          '<div class="muted" style="margin-top: 8px;">' + toolCountsWith.total + ' calls</div>' +
+          renderToolChips(toolCountsWith, 6) +
+          '</div>' +
+          '<div class="metric-card">' +
+          '<span class="chip phase">judge</span>' +
+          '<div class="muted" style="margin-top: 8px;">' + toolCountsJudge.total + ' calls</div>' +
+          renderToolChips(toolCountsJudge, 6) +
+          '</div>' +
+          '</div>' +
+          '</div>' +
+          '</div>' +
+          '<div class="section">' +
+          '<h3>Event Trajectory <span class="muted">(' + (result.trajectory?.length ?? 0) + ' events)</span></h3>' +
           renderTrajectory(result.trajectory) +
           '</div>';
 
