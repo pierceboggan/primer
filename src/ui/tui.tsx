@@ -817,8 +817,8 @@ export function PrimerTui({ repoPath, skipAnimation = false }: Props): React.JSX
               <KeyHint k="B" label="Batch" />
             </Box>
             <Box>
-              <KeyHint k="M" label="Cycle model" />
-              <KeyHint k="J" label="Cycle judge" />
+              <KeyHint k="M" label="Model" />
+              <KeyHint k="J" label="Judge" />
               <KeyHint k="Q" label="Quit" />
             </Box>
           </Box>
