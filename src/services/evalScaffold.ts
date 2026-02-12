@@ -47,7 +47,7 @@ export async function generateEvalScaffold(options: EvalScaffoldOptions): Promis
         streaming: true,
         systemMessage: {
           content:
-            "You are an expert codebase analyst. Generate developer-oriented eval cases for this repository. Use tools (glob, view, grep) to inspect the codebase. Output ONLY JSON with keys: instructionFile, cases (array of {id,prompt,expectation})."
+            "You are an expert codebase analyst specializing in deep architectural analysis. Generate challenging, cross-cutting eval cases for this repository that require synthesizing information from multiple files and tracing logic across layers. Avoid trivial questions answerable from a single file read or grep. Use tools (glob, view, grep) extensively to inspect the codebase. Output ONLY JSON with keys: instructionFile, cases (array of {id,prompt,expectation})."
         },
         infiniteSessions: { enabled: false }
       });
@@ -73,9 +73,27 @@ export async function generateEvalScaffold(options: EvalScaffoldOptions): Promis
 
       const prompt = [
         `Analyze the repository at ${repoPath} and generate ${count} eval cases.`,
-        "The cases should mirror realistic developer questions about this repo.",
-        "Use tools to inspect README, package.json, CLI commands, and key files.",
-        "Ensure cases cover a range of topics: purpose, entrypoints, build/test, configuration, workflows.",
+        "",
+        "IMPORTANT: Generate HARD eval cases that require deep, cross-cutting understanding of the codebase.",
+        "Each case should require synthesizing information from MULTIPLE files or tracing logic across several layers.",
+        "Do NOT generate simple questions that can be answered by reading a single file or running a single grep.",
+        "",
+        "Good eval case examples (adapt to this repo):",
+        "- Questions about how data flows end-to-end through multiple modules (e.g., 'Trace what happens when X is called — which services, transforms, and side effects are involved?')",
+        "- Questions about implicit conventions or patterns that span many files (e.g., 'What error-handling pattern is used across the service layer, and where does it deviate?')",
+        "- Questions requiring understanding of runtime behavior not obvious from static code (e.g., 'What is the order of initialization and what would break if module X loaded before Y?')",
+        "- Questions about non-obvious interactions between components (e.g., 'How does changing config option X affect the behavior of feature Y?')",
+        "- Questions about edge cases or failure modes that require reading implementation details across files",
+        "- Questions that require understanding the type system, generics, or shared interfaces across module boundaries",
+        "",
+        "Bad eval case examples (avoid these):",
+        "- 'What does this project do?' (answered by README alone)",
+        "- 'How do I build/test?' (answered by package.json alone)",
+        "- 'What is the entrypoint?' (answered by a single file)",
+        "- Any question answerable by reading one file or searching for one keyword",
+        "",
+        "Use tools extensively to inspect the codebase — read multiple files, trace imports, follow call chains.",
+        "Ensure cases cover cross-cutting concerns: data flow, error propagation, configuration impact, implicit coupling, architectural invariants.",
         "Include a systemMessage that keeps answers scoped to this repository (avoid generic Copilot CLI details unless asked).",
         "Return JSON ONLY (no markdown, no commentary) in this schema:",
         "{\n  \"instructionFile\": \".github/copilot-instructions.md\",\n  \"systemMessage\": \"...\",\n  \"cases\": [\n    {\"id\": \"case-1\", \"prompt\": \"...\", \"expectation\": \"...\"}\n  ]\n}"
