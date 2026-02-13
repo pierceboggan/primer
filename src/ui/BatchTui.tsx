@@ -11,9 +11,12 @@ import {
   listAccessibleRepos,
   checkReposForInstructions
 } from "../services/github";
-import { cloneRepo, checkoutBranch, commitAll, pushBranch, isGitRepo, CloneOptions } from "../services/git";
+import simpleGit from "simple-git";
+import { buildAuthedUrl, cloneRepo, checkoutBranch, commitAll, pushBranch, isGitRepo, CloneOptions } from "../services/git";
 import { generateCopilotInstructions } from "../services/instructions";
-import { ensureDir } from "../utils/fs";
+import { ensureDir, validateCachePath } from "../utils/fs";
+import { buildInstructionsPrBody } from "../utils/pr";
+import { DEFAULT_MODEL } from "../config";
 import { StaticBanner } from "./AnimatedBanner";
 
 type Props = {
@@ -146,6 +149,8 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
     setCurrentRepoIndex(0);
     setResults([]);
 
+    const localResults: ProcessResult[] = [];
+
     for (let i = 0; i < selectedRepos.length; i++) {
       const repo = selectedRepos[i];
       setCurrentRepoIndex(i);
@@ -154,13 +159,11 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
       try {
         // Clone
         const cacheRoot = path.join(process.cwd(), ".primer-cache");
-        const repoPath = path.join(cacheRoot, repo.owner, repo.name);
+        const repoPath = validateCachePath(cacheRoot, repo.owner, repo.name);
         await ensureDir(repoPath);
 
         if (!(await isGitRepo(repoPath))) {
-          // Add auth to clone URL (strip trailing slashes first)
-          const cleanUrl = repo.cloneUrl.replace(/\/+$/, "");
-          const authedUrl = cleanUrl.replace("https://", `https://x-access-token:${token}@`);
+          const authedUrl = buildAuthedUrl(repo.cloneUrl, token, "github");
           await cloneRepo(authedUrl, repoPath, {
             shallow: true,
             timeoutMs: 120000, // 2 minute timeout for clone
@@ -168,6 +171,9 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
               setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ${repo.fullName}: Cloning (${stage} ${progress}%)...`);
             }
           });
+          // Strip credentials from persisted remote URL
+          const git = simpleGit(repoPath);
+          await git.remote(["set-url", "origin", repo.cloneUrl]);
         }
 
         // Branch
@@ -181,17 +187,21 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
         const timeoutMs = 120000; // 2 minute timeout per repo
         const instructionsPromise = generateCopilotInstructions({
           repoPath,
-          model: "gpt-4.1",
+          model: DEFAULT_MODEL,
           onProgress: (msg) => {
             setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ${repo.fullName}: ${msg}`);
           }
         });
         
+        let timer: ReturnType<typeof setTimeout>;
         const timeoutPromise = new Promise<string>((_, reject) => {
-          setTimeout(() => reject(new Error("Generation timed out after 2 minutes")), timeoutMs);
+          timer = setTimeout(() => reject(new Error("Generation timed out after 2 minutes")), timeoutMs);
         });
         
-        const instructions = await Promise.race([instructionsPromise, timeoutPromise]);
+        const instructions = await Promise.race([instructionsPromise, timeoutPromise])
+          .finally(() => clearTimeout(timer));
+        // Prevent unhandled rejection if the losing promise rejects later
+        instructionsPromise.catch(() => {});
 
         if (!instructions.trim()) {
           throw new Error("Generated instructions were empty");
@@ -217,22 +227,23 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
           owner: repo.owner,
           repo: repo.name,
           title: "🤖 Add Copilot instructions via Primer",
-          body: buildPrBody(),
+          body: buildInstructionsPrBody(),
           head: branch,
           base: repo.defaultBranch
         });
 
-        setResults(prev => [...prev, { repo: repo.fullName, success: true, prUrl }]);
+        localResults.push({ repo: repo.fullName, success: true, prUrl });
+        setResults([...localResults]);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : "Unknown error";
-        setResults(prev => [...prev, { repo: repo.fullName, success: false, error: errorMsg }]);
+        localResults.push({ repo: repo.fullName, success: false, error: errorMsg });
+        setResults([...localResults]);
       }
     }
 
     // Write results if output path specified
     if (outputPath) {
-      const finalResults = [...results];
-      await fs.writeFile(outputPath, JSON.stringify(finalResults, null, 2), "utf8");
+      await fs.writeFile(outputPath, JSON.stringify(localResults, null, 2), "utf8");
     }
 
     setStatus("complete");
@@ -262,7 +273,10 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
           return next;
         });
       } else if (key.return && selectedOrgIndices.size > 0) {
-        loadRepos();
+        loadRepos().catch(err => {
+          setStatus("error");
+          setErrorMessage(err instanceof Error ? err.message : "Failed to load repos");
+        });
       }
     }
 
@@ -297,7 +311,10 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
 
     if (status === "confirm") {
       if (input.toLowerCase() === "y") {
-        processRepos();
+        processRepos().catch(err => {
+          setStatus("error");
+          setErrorMessage(err instanceof Error ? err.message : "Processing failed");
+        });
       } else if (input.toLowerCase() === "n") {
         setStatus("select-repos");
         setMessage("Select repos (space to toggle, enter to confirm)");
@@ -437,30 +454,4 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
       </Box>
     </Box>
   );
-}
-
-function buildPrBody(): string {
-  return [
-    "## 🤖 Copilot Instructions Added",
-    "",
-    "This PR adds a `.github/copilot-instructions.md` file to help GitHub Copilot understand this codebase better.",
-    "",
-    "### What's Included",
-    "",
-    "The instructions file contains:",
-    "- Project overview and architecture",
-    "- Tech stack and conventions",
-    "- Build/test commands",
-    "- Key directories and files",
-    "",
-    "### Benefits",
-    "",
-    "With these instructions, Copilot will:",
-    "- Generate more contextually-aware code suggestions",
-    "- Follow project-specific patterns and conventions",
-    "- Understand the codebase structure",
-    "",
-    "---",
-    "*Generated by [Primer](https://github.com/pierceboggan/primer) - Prime your repos for AI*"
-  ].join("\n");
 }
