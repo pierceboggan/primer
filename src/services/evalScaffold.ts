@@ -69,7 +69,9 @@ export async function generateEvalScaffold(options: EvalScaffoldOptions): Promis
         } else if (event.type === "session.error") {
           const errorMsg = (event.data?.message as string) ?? "Unknown error";
           if (errorMsg.toLowerCase().includes("auth") || errorMsg.toLowerCase().includes("login")) {
-            throw new Error("Copilot CLI not logged in. Run `copilot` then `/login` to authenticate.");
+            throw new Error(
+              "Copilot CLI not logged in. Run `copilot` then `/login` to authenticate."
+            );
           }
         }
       });
@@ -100,7 +102,7 @@ export async function generateEvalScaffold(options: EvalScaffoldOptions): Promis
         "Ensure cases cover cross-cutting concerns: data flow, error propagation, configuration impact, implicit coupling, architectural invariants.",
         "Include a systemMessage that keeps answers scoped to this repository (avoid generic Copilot CLI details unless asked).",
         "Return JSON ONLY (no markdown, no commentary) in this schema:",
-        "{\n  \"instructionFile\": \".github/copilot-instructions.md\",\n  \"systemMessage\": \"...\",\n  \"cases\": [\n    {\"id\": \"case-1\", \"prompt\": \"...\", \"expectation\": \"...\"}\n  ]\n}"
+        '{\n  "instructionFile": ".github/copilot-instructions.md",\n  "systemMessage": "...",\n  "cases": [\n    {"id": "case-1", "prompt": "...", "expectation": "..."}\n  ]\n}'
       ].join("\n");
 
       progress("Analyzing codebase...");

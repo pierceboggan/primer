@@ -104,13 +104,9 @@ describe("analyzeRepo", () => {
     await fs.writeFile(path.join(repoPath, "pnpm-lock.yaml"), "lockfileVersion: 9");
     await fs.writeFile(
       path.join(repoPath, "pnpm-workspace.yaml"),
-      [
-        "# workspace config",
-        "packages:",
-        "  - 'apps/*' # main apps",
-        "  - 'libs/*'",
-        "# end"
-      ].join("\n")
+      ["# workspace config", "packages:", "  - 'apps/*' # main apps", "  - 'libs/*'", "# end"].join(
+        "\n"
+      )
     );
     await fs.mkdir(path.join(repoPath, "apps", "web"), { recursive: true });
     await fs.writeFile(
@@ -123,7 +119,7 @@ describe("analyzeRepo", () => {
     expect(result.workspacePatterns).toContain("apps/*");
     expect(result.workspacePatterns).toContain("libs/*");
     // Should not include comment text in patterns
-    expect(result.workspacePatterns?.some(p => p.includes("#"))).toBe(false);
+    expect(result.workspacePatterns?.some((p) => p.includes("#"))).toBe(false);
   });
 
   it("detects pnpm inline array workspace", async () => {
@@ -132,7 +128,7 @@ describe("analyzeRepo", () => {
     await fs.writeFile(path.join(repoPath, "pnpm-lock.yaml"), "lockfileVersion: 9");
     await fs.writeFile(
       path.join(repoPath, "pnpm-workspace.yaml"),
-      "packages: [\"apps/*\", \"libs/*\"]\n"
+      'packages: ["apps/*", "libs/*"]\n'
     );
 
     const result = await analyzeRepo(repoPath);
@@ -169,7 +165,7 @@ describe("analyzeRepo", () => {
     expect(result.isMonorepo).toBe(true);
     expect(result.workspaceType).toBe("cargo");
     expect(result.apps?.length).toBe(2);
-    expect(result.apps?.map(a => a.name).sort()).toEqual(["my-cli", "my-core"]);
+    expect(result.apps?.map((a) => a.name).sort()).toEqual(["my-cli", "my-core"]);
     expect(result.apps?.[0].ecosystem).toBe("rust");
   });
 
@@ -177,14 +173,7 @@ describe("analyzeRepo", () => {
     const repoPath = await makeTmpDir();
     await fs.writeFile(
       path.join(repoPath, "go.work"),
-      [
-        "go 1.21",
-        "",
-        "use (",
-        "    ./cmd/server",
-        "    ./pkg/lib",
-        ")"
-      ].join("\n")
+      ["go 1.21", "", "use (", "    ./cmd/server", "    ./pkg/lib", ")"].join("\n")
     );
     await fs.mkdir(path.join(repoPath, "cmd", "server"), { recursive: true });
     await fs.writeFile(
@@ -201,7 +190,7 @@ describe("analyzeRepo", () => {
     expect(result.isMonorepo).toBe(true);
     expect(result.workspaceType).toBe("go");
     expect(result.apps?.length).toBe(2);
-    expect(result.apps?.map(a => a.name).sort()).toEqual(["lib", "server"]);
+    expect(result.apps?.map((a) => a.name).sort()).toEqual(["lib", "server"]);
     expect(result.apps?.[0].ecosystem).toBe("go");
   });
 
@@ -209,7 +198,7 @@ describe("analyzeRepo", () => {
     const repoPath = await makeTmpDir();
     const slnContent = [
       "Microsoft Visual Studio Solution File, Format Version 12.00",
-      '# Visual Studio Version 17',
+      "# Visual Studio Version 17",
       'Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApp", "src\\WebApp\\WebApp.csproj", "{GUID1}"',
       "EndProject",
       'Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreLib", "src\\CoreLib\\CoreLib.csproj", "{GUID2}"',
@@ -226,7 +215,7 @@ describe("analyzeRepo", () => {
     expect(result.isMonorepo).toBe(true);
     expect(result.workspaceType).toBe("dotnet");
     expect(result.apps?.length).toBe(2);
-    expect(result.apps?.map(a => a.name).sort()).toEqual(["CoreLib", "WebApp"]);
+    expect(result.apps?.map((a) => a.name).sort()).toEqual(["CoreLib", "WebApp"]);
     expect(result.apps?.[0].ecosystem).toBe("dotnet");
   });
 
@@ -247,7 +236,7 @@ describe("analyzeRepo", () => {
     expect(result.isMonorepo).toBe(true);
     expect(result.workspaceType).toBe("gradle");
     expect(result.apps?.length).toBe(2);
-    expect(result.apps?.map(a => a.name).sort()).toEqual(["app", "lib"]);
+    expect(result.apps?.map((a) => a.name).sort()).toEqual(["app", "lib"]);
     expect(result.apps?.[0].ecosystem).toBe("java");
   });
 
@@ -267,7 +256,7 @@ describe("analyzeRepo", () => {
     expect(result.isMonorepo).toBe(true);
     expect(result.workspaceType).toBe("gradle");
     expect(result.apps?.length).toBe(2);
-    expect(result.apps?.map(a => a.name).sort()).toEqual(["app", "server"]);
+    expect(result.apps?.map((a) => a.name).sort()).toEqual(["app", "server"]);
   });
 
   it("detects Maven multi-module", async () => {
@@ -293,7 +282,7 @@ describe("analyzeRepo", () => {
     expect(result.isMonorepo).toBe(true);
     expect(result.workspaceType).toBe("maven");
     expect(result.apps?.length).toBe(2);
-    expect(result.apps?.map(a => a.name).sort()).toEqual(["api", "web"]);
+    expect(result.apps?.map((a) => a.name).sort()).toEqual(["api", "web"]);
   });
 
   it("sets ecosystem to node for JS workspace apps", async () => {

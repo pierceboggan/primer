@@ -22,9 +22,7 @@ export async function batchReadinessCommand(options: BatchReadinessOptions): Pro
     return;
   }
 
-  const { waitUntilExit } = render(
-    <BatchReadinessTui token={token} outputPath={options.output} />
-  );
+  const { waitUntilExit } = render(<BatchReadinessTui token={token} outputPath={options.output} />);
 
   await waitUntilExit();
 }

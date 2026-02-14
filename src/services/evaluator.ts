@@ -76,7 +76,9 @@ export type EvalResult = {
   trajectory?: TrajectoryEvent[];
 };
 
-export async function runEval(options: EvalRunOptions): Promise<{ summary: string; results: EvalResult[]; viewerPath?: string }> {
+export async function runEval(
+  options: EvalRunOptions
+): Promise<{ summary: string; results: EvalResult[]; viewerPath?: string }> {
   const config = await loadConfig(options.configPath);
   const instructionFile = config.instructionFile ?? ".github/copilot-instructions.md";
   const instructionPath = path.resolve(options.repoPath, instructionFile);
@@ -89,7 +91,8 @@ export async function runEval(options: EvalRunOptions): Promise<{ summary: strin
     "evals",
     buildTimestampedName("eval-results")
   );
-  const outputPath = resolveOutputPath(options.repoPath, options.outputPath, config.outputPath) ?? defaultOutputPath;
+  const outputPath =
+    resolveOutputPath(options.repoPath, options.outputPath, config.outputPath) ?? defaultOutputPath;
   const runStartedAt = Date.now();
 
   progress("Starting Copilot SDK...");
@@ -157,7 +160,9 @@ export async function runEval(options: EvalRunOptions): Promise<{ summary: strin
         trajectory
       });
 
-      progress(`Eval ${index + 1}/${total}: ${id} → ${judgment.result.verdict} (score: ${judgment.result.score})`);
+      progress(
+        `Eval ${index + 1}/${total}: ${id} → ${judgment.result.verdict} (score: ${judgment.result.score})`
+      );
     }
 
     const runFinishedAt = Date.now();
@@ -200,17 +205,12 @@ type AskResult = {
   trajectory: TrajectoryEvent[];
 };
 
-async function askOnce(
-  client: CopilotClient,
-  options: AskOptions
-): Promise<AskResult> {
+async function askOnce(client: CopilotClient, options: AskOptions): Promise<AskResult> {
   const session = await client.createSession({
     model: options.model,
     streaming: true,
     infiniteSessions: { enabled: false },
-    systemMessage: options.systemMessage
-      ? { content: options.systemMessage }
-      : undefined
+    systemMessage: options.systemMessage ? { content: options.systemMessage } : undefined
   });
 
   let content = "";
@@ -261,7 +261,8 @@ async function judge(
     streaming: true,
     infiniteSessions: { enabled: false },
     systemMessage: {
-      content: "You are a strict evaluator. Return JSON with keys: verdict (pass|fail|unknown), score (0-100), rationale. Do not include any other text."
+      content:
+        "You are a strict evaluator. Return JSON with keys: verdict (pass|fail|unknown), score (0-100), rationale. Do not include any other text."
     }
   });
 
@@ -358,7 +359,9 @@ function formatSummary(results: EvalResult[], runDurationMs: number): string {
   const failed = results.filter((r) => r.verdict === "fail").length;
   const unknown = results.filter((r) => r.verdict === "unknown").length;
   const totalUsage = aggregateTokenUsage(results);
-  const hasUsage = Boolean(totalUsage.promptTokens || totalUsage.completionTokens || totalUsage.totalTokens);
+  const hasUsage = Boolean(
+    totalUsage.promptTokens || totalUsage.completionTokens || totalUsage.totalTokens
+  );
 
   const lines = [
     `Eval results: ${passed}/${total} pass, ${failed} fail, ${unknown} unknown.`,
@@ -367,9 +370,7 @@ function formatSummary(results: EvalResult[], runDurationMs: number): string {
   ];
 
   for (const result of results) {
-    lines.push(
-      `- ${result.id}: ${result.verdict ?? "unknown"} (score: ${result.score ?? 0})`
-    );
+    lines.push(`- ${result.id}: ${result.verdict ?? "unknown"} (score: ${result.score ?? 0})`);
   }
 
   return `\n${lines.join("\n")}`;
@@ -414,7 +415,8 @@ function captureTelemetryEvent(
   } else if (event.type === "tool.execution_finish" || event.type === "tool.execution_error") {
     const toolName = (event.data?.toolName as string | undefined) ?? "unknown";
     const toolId = resolveToolId(event.data, toolName, telemetry.toolCallMap.size);
-    const entry = telemetry.toolCallMap.get(toolId) ?? findLatestToolByName(telemetry.toolCallMap, toolName);
+    const entry =
+      telemetry.toolCallMap.get(toolId) ?? findLatestToolByName(telemetry.toolCallMap, toolName);
     if (entry) {
       const durationMs = timestampMs - entry.startMs;
       telemetry.toolCalls.totalDurationMs += durationMs;
@@ -455,7 +457,10 @@ function extractTokenUsage(data: Record<string, unknown> | undefined): TokenUsag
     usage?.prompt_tokens ?? usage?.promptTokens ?? data.promptTokens ?? data.inputTokens
   );
   const completionTokens = getNumber(
-    usage?.completion_tokens ?? usage?.completionTokens ?? data.completionTokens ?? data.outputTokens
+    usage?.completion_tokens ??
+      usage?.completionTokens ??
+      data.completionTokens ??
+      data.outputTokens
   );
   const totalTokens = getNumber(usage?.total_tokens ?? usage?.totalTokens ?? data.totalTokens);
 
@@ -471,20 +476,18 @@ function extractTokenUsage(data: Record<string, unknown> | undefined): TokenUsag
 }
 
 function findUsageObject(data: Record<string, unknown>): Record<string, unknown> | undefined {
-  const direct = (data.usage ?? data.tokenUsage ?? data.tokens) as Record<string, unknown> | undefined;
+  const direct = (data.usage ?? data.tokenUsage ?? data.tokens) as
+    | Record<string, unknown>
+    | undefined;
   if (direct) return direct;
 
-  const candidates = [
-    data.response,
-    data.result,
-    data.message,
-    data.metrics,
-    data.output
-  ];
+  const candidates = [data.response, data.result, data.message, data.metrics, data.output];
 
   for (const candidate of candidates) {
     if (candidate && typeof candidate === "object") {
-      const nested = (candidate as Record<string, unknown>).usage ?? (candidate as Record<string, unknown>).tokenUsage;
+      const nested =
+        (candidate as Record<string, unknown>).usage ??
+        (candidate as Record<string, unknown>).tokenUsage;
       if (nested && typeof nested === "object") return nested as Record<string, unknown>;
     }
   }
@@ -541,7 +544,8 @@ function getNumber(value: unknown): number | null {
 function mergeTokenUsage(existing: TokenUsage, next: TokenUsage): TokenUsage {
   return {
     promptTokens: Math.max(existing.promptTokens ?? 0, next.promptTokens ?? 0) || undefined,
-    completionTokens: Math.max(existing.completionTokens ?? 0, next.completionTokens ?? 0) || undefined,
+    completionTokens:
+      Math.max(existing.completionTokens ?? 0, next.completionTokens ?? 0) || undefined,
     totalTokens: Math.max(existing.totalTokens ?? 0, next.totalTokens ?? 0) || undefined
   };
 }
@@ -565,7 +569,11 @@ function aggregateTokenUsage(results: EvalResult[]): TokenUsage {
   for (const result of results) {
     const metrics = result.metrics;
     if (!metrics) continue;
-    const usages = [metrics.withoutInstructions.tokenUsage, metrics.withInstructions.tokenUsage, metrics.judge.tokenUsage];
+    const usages = [
+      metrics.withoutInstructions.tokenUsage,
+      metrics.withInstructions.tokenUsage,
+      metrics.judge.tokenUsage
+    ];
     for (const usage of usages) {
       if (!usage) continue;
       total.promptTokens = (total.promptTokens ?? 0) + (usage.promptTokens ?? 0);
@@ -591,7 +599,11 @@ function formatTokenUsage(usage: TokenUsage): string {
   return `prompt ${prompt}, completion ${completion}, total ${total}`;
 }
 
-function resolveOutputPath(repoPath: string, override?: string, configValue?: string): string | undefined {
+function resolveOutputPath(
+  repoPath: string,
+  override?: string,
+  configValue?: string
+): string | undefined {
   const chosen = override ?? configValue;
   if (!chosen) return undefined;
   return path.isAbsolute(chosen) ? chosen : path.resolve(repoPath, chosen);
@@ -918,7 +930,9 @@ renderCaseDetails();
 </html>`;
 }
 
-function sanitizeEventData(data: Record<string, unknown> | undefined): Record<string, unknown> | undefined {
+function sanitizeEventData(
+  data: Record<string, unknown> | undefined
+): Record<string, unknown> | undefined {
   if (!data) return undefined;
   const sanitized: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {

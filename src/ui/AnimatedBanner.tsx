@@ -14,31 +14,31 @@ const FULL_BANNER = [
   "██████╔╝██████╔╝██║██╔████╔██║█████╗  ██████╔╝",
   "██╔═══╝ ██╔══██╗██║██║╚██╔╝██║██╔══╝  ██╔══██╗",
   "██║     ██║  ██║██║██║ ╚═╝ ██║███████╗██║  ██║",
-  "╚═╝     ╚═╝  ╚═╝╚═╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝",
+  "╚═╝     ╚═╝  ╚═╝╚═╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝"
 ];
 
 // Animation frames - slide in from right with progressive reveal
 const generateFrames = (): string[][] => {
   const frames: string[][] = [];
   const width = FULL_BANNER[0].length;
-  
+
   // Frame 0-4: Empty -> sparkles appearing
   frames.push(["", "", "", "", "", ""]);
   frames.push(["", "", "    ✦", "", "", ""]);
   frames.push(["  ✦", "", "    ✦  ✧", "", "      ✦", ""]);
-  
+
   // Frame 5-15: Slide in from right
   for (let offset = width; offset >= 0; offset -= 4) {
-    const frame = FULL_BANNER.map(line => {
+    const frame = FULL_BANNER.map((line) => {
       if (offset >= line.length) return "";
       return " ".repeat(Math.max(0, offset)) + line.slice(0, Math.max(0, line.length - offset));
     });
     frames.push(frame);
   }
-  
+
   // Final frame: Full banner
   frames.push([...FULL_BANNER]);
-  
+
   return frames;
 };
 
@@ -51,13 +51,13 @@ type ColorRole = "primary" | "accent" | "sparkle";
 const THEME_DARK: Record<ColorRole, string> = {
   primary: "magentaBright",
   accent: "cyanBright",
-  sparkle: "yellowBright",
+  sparkle: "yellowBright"
 };
 
 const THEME_LIGHT: Record<ColorRole, string> = {
   primary: "magenta",
-  accent: "cyan", 
-  sparkle: "yellow",
+  accent: "cyan",
+  sparkle: "yellow"
 };
 
 type AnimatedBannerProps = {
@@ -66,14 +66,14 @@ type AnimatedBannerProps = {
   darkMode?: boolean;
 };
 
-export function AnimatedBanner({ 
-  onComplete, 
+export function AnimatedBanner({
+  onComplete,
   skipAnimation = false,
-  darkMode = true,
+  darkMode = true
 }: AnimatedBannerProps): React.JSX.Element {
   const [frameIndex, setFrameIndex] = useState(skipAnimation ? FRAMES.length - 1 : 0);
   const [isComplete, setIsComplete] = useState(skipAnimation);
-  
+
   const theme = darkMode ? THEME_DARK : THEME_LIGHT;
 
   useEffect(() => {
@@ -107,9 +107,9 @@ export function AnimatedBanner({
   return (
     <Box flexDirection="column">
       {currentFrame.map((line, i) => (
-        <Text 
-          key={i} 
-          color={showSparkles && line.includes("✦") ? theme.sparkle : theme.primary} 
+        <Text
+          key={i}
+          color={showSparkles && line.includes("✦") ? theme.sparkle : theme.primary}
           bold={!showSparkles}
         >
           {line || " "}
@@ -124,7 +124,7 @@ export function AnimatedBanner({
  */
 export function StaticBanner({ darkMode = true }: { darkMode?: boolean }): React.JSX.Element {
   const color = darkMode ? "magentaBright" : "magenta";
-  
+
   return (
     <Box flexDirection="column">
       {FULL_BANNER.map((line, i) => (

@@ -1,7 +1,7 @@
 ---
 description: Code review following VS Code contribution standards — correctness, lifecycle, naming, layering, accessibility, and security
 name: Code Review (Codex)
-tools: ['search', 'read/problems', 'read/terminalLastCommand', 'web/githubRepo']
+tools: ["search", "read/problems", "read/terminalLastCommand", "web/githubRepo"]
 model: GPT-5.3-Codex (copilot)
 handoffs:
   - label: Fix Issues
@@ -132,7 +132,7 @@ You are a code reviewer for the VS Code codebase. Review changes against VS Code
 # Review Rules
 
 - Never approve code with Critical or Major findings
-- Explain *why* something is a problem, not just *what*
+- Explain _why_ something is a problem, not just _what_
 - Suggest a concrete fix for Critical and Major findings
 - Do not flag style preferences as Major issues
 - Do not rewrite working code just because you would write it differently
@@ -150,14 +150,18 @@ You are a code reviewer for the VS Code codebase. Review changes against VS Code
 
 ```markdown
 ## Summary
+
 One-sentence summary of the overall change quality.
 
 ## Findings
+
 ### [Severity] Title
+
 **File:** `path/to/file.ts:L42`
 **Issue:** Description of the problem and why it matters.
 **Suggestion:** Concrete fix or approach.
 
 ## Verdict
+
 APPROVE | REQUEST_CHANGES | NEEDS_DISCUSSION
 ```

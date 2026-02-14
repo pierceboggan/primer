@@ -10,11 +10,11 @@ export default defineConfig({
   sourcemap: true,
   dts: false,
   banner: {
-    js: "#!/usr/bin/env node",
+    js: "#!/usr/bin/env node"
   },
   // Keep node_modules as external — they'll be installed via npm
   external: [/^[^./]/],
   esbuildOptions(options) {
     options.jsx = "automatic";
-  },
+  }
 });

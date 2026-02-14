@@ -8,7 +8,6 @@
 - Place new CLI commands in src/commands/, core logic in src/services/, and TUI in src/ui/.
 - Do not add new build/lint/test tools unless necessary; use existing npm scripts.
 
-
 ## Overview
 
 **Primer** is a TypeScript CLI tool for priming repositories for AI-assisted development and evaluation.

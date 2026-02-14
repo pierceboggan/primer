@@ -3,10 +3,7 @@ import path from "path";
 import { checkbox, select } from "@inquirer/prompts";
 
 import { analyzeRepo } from "../services/analyzer";
-import type {
-  AzureDevOpsOrg,
-  AzureDevOpsProject,
-  AzureDevOpsRepo } from "../services/azureDevops";
+import type { AzureDevOpsOrg, AzureDevOpsProject, AzureDevOpsRepo } from "../services/azureDevops";
 import {
   getAzureDevOpsToken,
   listOrganizations,
@@ -15,7 +12,7 @@ import {
 } from "../services/azureDevops";
 import { generateConfigs } from "../services/generator";
 import { buildAuthedUrl, cloneRepo, isGitRepo, setRemoteUrl } from "../services/git";
-import type { GitHubRepo} from "../services/github";
+import type { GitHubRepo } from "../services/github";
 import { listAccessibleRepos } from "../services/github";
 import { generateCopilotInstructions } from "../services/instructions";
 import { ensureDir, safeWriteFile, validateCachePath } from "../utils/fs";
@@ -28,7 +25,10 @@ type InitOptions = {
   force?: boolean;
 };
 
-export async function initCommand(repoPathArg: string | undefined, options: InitOptions): Promise<void> {
+export async function initCommand(
+  repoPathArg: string | undefined,
+  options: InitOptions
+): Promise<void> {
   let repoPath = path.resolve(repoPathArg ?? process.cwd());
   const provider = options.provider ?? (options.github ? "github" : undefined);
 
@@ -125,7 +125,12 @@ export async function initCommand(repoPathArg: string | undefined, options: Init
     });
 
     const cacheRoot = path.join(process.cwd(), ".primer-cache");
-    repoPath = validateCachePath(cacheRoot, orgSelection.name, projectSelection.name, repoSelection.name);
+    repoPath = validateCachePath(
+      cacheRoot,
+      orgSelection.name,
+      projectSelection.name,
+      repoSelection.name
+    );
     await ensureDir(repoPath);
 
     const hasGit = await isGitRepo(repoPath);

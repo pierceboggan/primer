@@ -28,7 +28,6 @@ export function runCli(argv: string[]): void {
     .option("--force", "Overwrite existing files")
     .action(initCommand);
 
-
   program
     .command("generate")
     .argument("<type>", "instructions|agents|mcp|vscode")

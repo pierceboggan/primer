@@ -51,7 +51,7 @@ export async function analyzeRepo(repoPath: string): Promise<RepoAnalysis> {
   const hasRequirements = files.includes("requirements.txt");
   const hasGoMod = files.includes("go.mod");
   const hasCargo = files.includes("Cargo.toml");
-  const hasCsproj = files.some(f => f.endsWith(".csproj") || f.endsWith(".sln"));
+  const hasCsproj = files.some((f) => f.endsWith(".csproj") || f.endsWith(".sln"));
   const hasPomXml = files.includes("pom.xml");
   const hasBuildGradle = files.includes("build.gradle") || files.includes("build.gradle.kts");
   const hasGemfile = files.includes("Gemfile");
@@ -107,7 +107,10 @@ export async function analyzeRepo(repoPath: string): Promise<RepoAnalysis> {
   return analysis;
 }
 
-async function detectPackageManager(_repoPath: string, files: string[]): Promise<string | undefined> {
+async function detectPackageManager(
+  _repoPath: string,
+  files: string[]
+): Promise<string | undefined> {
   for (const manager of PACKAGE_MANAGERS) {
     if (files.includes(manager.file)) return manager.name;
   }
@@ -125,7 +128,8 @@ function detectFrameworks(deps: string[], files: string[]): string[] {
   const frameworks: string[] = [];
   const hasFile = (file: string): boolean => files.includes(file);
 
-  if (deps.includes("next") || hasFile("next.config.js") || hasFile("next.config.mjs")) frameworks.push("Next.js");
+  if (deps.includes("next") || hasFile("next.config.js") || hasFile("next.config.mjs"))
+    frameworks.push("Next.js");
   if (deps.includes("react") || deps.includes("react-dom")) frameworks.push("React");
   if (deps.includes("vue") || hasFile("vue.config.js")) frameworks.push("Vue");
   if (deps.includes("@angular/core") || hasFile("angular.json")) frameworks.push("Angular");
@@ -188,9 +192,7 @@ async function readPnpmWorkspace(filePath: string): Promise<string[]> {
         // Handle inline array: packages: ["apps/*", "libs/*"]
         const inline = line.match(/packages\s*:\s*\[([^\]]+)\]/u);
         if (inline) {
-          const items = inline[1].split(",").map(s =>
-            s.trim().replace(/^['"]|['"]$/gu, "")
-          );
+          const items = inline[1].split(",").map((s) => s.trim().replace(/^['"]|['"]$/gu, ""));
           return items.filter(Boolean);
         }
         inPackages = true;
@@ -200,7 +202,10 @@ async function readPnpmWorkspace(filePath: string): Promise<string[]> {
         const match = line.match(/^\s*-\s*(.+)$/u);
         if (match?.[1]) {
           // Strip trailing comments and quotes
-          const value = match[1].split("#")[0].trim().replace(/^['"]|['"]$/gu, "");
+          const value = match[1]
+            .split("#")[0]
+            .trim()
+            .replace(/^['"]|['"]$/gu, "");
           if (value) patterns.push(value);
           continue;
         }
@@ -221,10 +226,14 @@ async function resolveWorkspaceApps(
 ): Promise<RepoApp[]> {
   const workspacePatterns = patterns
     .map((pattern) => pattern.replace(/\\/gu, "/"))
-    .map((pattern) => (pattern.endsWith("package.json") ? pattern : path.posix.join(pattern, "package.json")));
+    .map((pattern) =>
+      pattern.endsWith("package.json") ? pattern : path.posix.join(pattern, "package.json")
+    );
 
   const packageJsonPaths = workspacePatterns.length
-    ? (await fg(workspacePatterns, { cwd: repoPath, absolute: true, onlyFiles: true, dot: false })).map(p => path.normalize(p))
+    ? (
+        await fg(workspacePatterns, { cwd: repoPath, absolute: true, onlyFiles: true, dot: false })
+      ).map((p) => path.normalize(p))
     : [];
 
   if (!packageJsonPaths.length && rootPackageJson) {
@@ -287,7 +296,10 @@ type NonJsMonorepoResult = {
   apps: RepoApp[];
 };
 
-async function detectNonJsMonorepo(repoPath: string, files: string[]): Promise<NonJsMonorepoResult> {
+async function detectNonJsMonorepo(
+  repoPath: string,
+  files: string[]
+): Promise<NonJsMonorepoResult> {
   const cargoApps = await detectCargoWorkspace(repoPath);
   if (cargoApps.length > 1) return { type: "cargo", apps: cargoApps };
 
@@ -317,25 +329,24 @@ async function detectCargoWorkspace(repoPath: string): Promise<RepoApp[]> {
   const membersMatch = workspaceSection[1].match(/members\s*=\s*\[([\s\S]*?)\]/u);
   if (!membersMatch) return [];
 
-  const patterns = [...membersMatch[1].matchAll(/"([^"]+)"/gu)].map(m => m[1]);
+  const patterns = [...membersMatch[1].matchAll(/"([^"]+)"/gu)].map((m) => m[1]);
   if (!patterns.length) return [];
 
-  const tomlPaths = (await fg(
-    patterns.map(p => path.posix.join(p, "Cargo.toml")),
-    { cwd: repoPath, absolute: true, onlyFiles: true }
-  )).map(p => path.normalize(p));
+  const tomlPaths = (
+    await fg(
+      patterns.map((p) => path.posix.join(p, "Cargo.toml")),
+      { cwd: repoPath, absolute: true, onlyFiles: true }
+    )
+  ).map((p) => path.normalize(p));
 
-  return Promise.all(tomlPaths.map(async (tomlPath) => {
-    const dir = path.dirname(tomlPath);
-    const toml = await safeReadFile(tomlPath);
-    const nameMatch = toml?.match(/^\s*name\s*=\s*"([^"]+)"/mu);
-    return buildNonJsApp(
-      nameMatch?.[1] ?? path.basename(dir),
-      dir,
-      "rust",
-      tomlPath
-    );
-  }));
+  return Promise.all(
+    tomlPaths.map(async (tomlPath) => {
+      const dir = path.dirname(tomlPath);
+      const toml = await safeReadFile(tomlPath);
+      const nameMatch = toml?.match(/^\s*name\s*=\s*"([^"]+)"/mu);
+      return buildNonJsApp(nameMatch?.[1] ?? path.basename(dir), dir, "rust", tomlPath);
+    })
+  );
 }
 
 async function detectGoWorkspace(repoPath: string): Promise<RepoApp[]> {
@@ -362,7 +373,7 @@ async function detectGoWorkspace(repoPath: string): Promise<RepoApp[]> {
   for (const mod of modules) {
     const modPath = path.resolve(repoPath, mod);
     const goModPath = path.join(modPath, "go.mod");
-    if (!await fileExists(goModPath)) continue;
+    if (!(await fileExists(goModPath))) continue;
 
     const goMod = await safeReadFile(goModPath);
     const nameMatch = goMod?.match(/^module\s+(\S+)/mu);
@@ -374,7 +385,7 @@ async function detectGoWorkspace(repoPath: string): Promise<RepoApp[]> {
 }
 
 async function detectDotnetSolution(repoPath: string, files: string[]): Promise<RepoApp[]> {
-  const slnFile = files.find(f => f.endsWith(".sln"));
+  const slnFile = files.find((f) => f.endsWith(".sln"));
   if (!slnFile) return [];
 
   const content = await safeReadFile(path.join(repoPath, slnFile));
@@ -399,9 +410,11 @@ async function detectDotnetSolution(repoPath: string, files: string[]): Promise<
 }
 
 async function detectGradleMultiProject(repoPath: string, files: string[]): Promise<RepoApp[]> {
-  const settingsFile = files.includes("settings.gradle.kts") ? "settings.gradle.kts"
-    : files.includes("settings.gradle") ? "settings.gradle"
-    : null;
+  const settingsFile = files.includes("settings.gradle.kts")
+    ? "settings.gradle.kts"
+    : files.includes("settings.gradle")
+      ? "settings.gradle"
+      : null;
   if (!settingsFile) return [];
 
   const content = await safeReadFile(path.join(repoPath, settingsFile));
@@ -421,9 +434,11 @@ async function detectGradleMultiProject(repoPath: string, files: string[]): Prom
     const ktsPath = path.join(projectDir, "build.gradle.kts");
     const groovyPath = path.join(projectDir, "build.gradle");
 
-    const buildFile = await fileExists(ktsPath) ? ktsPath
-      : await fileExists(groovyPath) ? groovyPath
-      : null;
+    const buildFile = (await fileExists(ktsPath))
+      ? ktsPath
+      : (await fileExists(groovyPath))
+        ? groovyPath
+        : null;
 
     if (buildFile) {
       apps.push(buildNonJsApp(path.basename(project), projectDir, "java", buildFile));

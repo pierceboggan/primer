@@ -30,9 +30,7 @@ export async function batchCommand(options: BatchOptions): Promise<void> {
       return;
     }
 
-    const { waitUntilExit } = render(
-      <BatchTuiAzure token={token} outputPath={options.output} />
-    );
+    const { waitUntilExit } = render(<BatchTuiAzure token={token} outputPath={options.output} />);
     await waitUntilExit();
     return;
   }
@@ -50,10 +48,7 @@ export async function batchCommand(options: BatchOptions): Promise<void> {
     return;
   }
 
-  const { waitUntilExit } = render(
-    <BatchTui token={token} outputPath={options.output} />
-  );
-
+  const { waitUntilExit } = render(<BatchTui token={token} outputPath={options.output} />);
 
   await waitUntilExit();
 }

@@ -2,6 +2,7 @@
 name: deslop
 description: Remove AI-generated slop from a branch by diffing against main
 ---
+
 Get the diff (`git diff main...HEAD`) and remove AI-generated slop from changed files:
 
 - Comments inconsistent with the rest of the file

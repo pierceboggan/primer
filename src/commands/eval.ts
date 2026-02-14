@@ -16,7 +16,10 @@ type EvalOptions = {
   listModels?: boolean;
 };
 
-export async function evalCommand(configPathArg: string | undefined, options: EvalOptions): Promise<void> {
+export async function evalCommand(
+  configPathArg: string | undefined,
+  options: EvalOptions
+): Promise<void> {
   const repoPath = path.resolve(options.repo ?? process.cwd());
 
   if (options.listModels) {
@@ -28,7 +31,7 @@ export async function evalCommand(configPathArg: string | undefined, options: Ev
     console.log(models.join("\n"));
     return;
   }
-  
+
   // Handle --init flag
   if (options.init) {
     const outputPath = path.join(repoPath, "primer.eval.json");

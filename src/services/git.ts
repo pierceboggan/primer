@@ -26,16 +26,18 @@ export type CloneOptions = {
 };
 
 export async function cloneRepo(
-  repoUrl: string, 
+  repoUrl: string,
   destination: string,
   options: CloneOptions = {}
 ): Promise<void> {
   const { shallow = true, timeoutMs = 60000, onProgress } = options;
-  
+
   const git = simpleGit({
-    progress: onProgress ? ({ stage, progress }: SimpleGitProgressEvent) => {
-      onProgress(stage, progress);
-    } : undefined,
+    progress: onProgress
+      ? ({ stage, progress }: SimpleGitProgressEvent) => {
+          onProgress(stage, progress);
+        }
+      : undefined,
     timeout: {
       block: timeoutMs
     }
@@ -108,7 +110,7 @@ export async function pushBranch(
   provider: AuthProvider = "github"
 ): Promise<void> {
   const git = simpleGit(repoPath);
-  
+
   if (token) {
     // Set up credentials for this push
     const remoteUrl = (await git.remote(["get-url", "origin"])) ?? "";
@@ -120,9 +122,10 @@ export async function pushBranch(
         await git.push(["-u", "origin", branch]);
       } catch (err) {
         // Strip embedded credentials from error messages to avoid leaking tokens
-        const sanitized = err instanceof Error
-          ? new Error(err.message.replace(/https:\/\/[^@]+@/g, "https://***@"))
-          : err;
+        const sanitized =
+          err instanceof Error
+            ? new Error(err.message.replace(/https:\/\/[^@]+@/g, "https://***@"))
+            : err;
         throw sanitized;
       } finally {
         // Restore original URL to avoid leaking token
@@ -131,6 +134,6 @@ export async function pushBranch(
       return;
     }
   }
-  
+
   await git.push(["-u", "origin", branch]);
 }

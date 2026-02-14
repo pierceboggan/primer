@@ -13,19 +13,21 @@ Make any repository "AI-ready" with a single command — generating optimal conf
 ## ✨ Core Features
 
 ### 1. **Readiness Report**
+
 - Score AI readiness across key pillars
 - Provide fix-first checklists and maturity levels
 - Support monorepos with app-scoped checks
 
 ### 2. **Configuration Generation**
 
-| Config Type | Description |
-|-------------|-------------|
-| **Custom Instructions** | `.github/copilot-instructions.md` generated via Copilot SDK |
-| **MCP Server Config** | `.vscode/mcp.json` for Model Context Protocol servers |
-| **VS Code Settings** | `.vscode/settings.json` with AI-optimized workspace settings |
+| Config Type             | Description                                                  |
+| ----------------------- | ------------------------------------------------------------ |
+| **Custom Instructions** | `.github/copilot-instructions.md` generated via Copilot SDK  |
+| **MCP Server Config**   | `.vscode/mcp.json` for Model Context Protocol servers        |
+| **VS Code Settings**    | `.vscode/settings.json` with AI-optimized workspace settings |
 
 ### 3. **GitHub Integration**
+
 - Authenticate via GitHub CLI (`gh auth`) or OAuth device flow
 - List and select from accessible repositories
 - Clone repos temporarily for analysis
@@ -33,11 +35,13 @@ Make any repository "AI-ready" with a single command — generating optimal conf
 - Support for GitHub Enterprise
 
 ### 4. **Local Repository Support**
+
 - Detect local Git repositories
 - Work offline with local-only mode
 - Push changes to remote when ready
 
 ### 5. **Interactive & Non-Interactive Modes**
+
 - Beautiful TUI with prompts and previews
 - CI/CD-friendly `--yes` flag for automation
 - JSON output for scripting
@@ -61,17 +65,17 @@ Make any repository "AI-ready" with a single command — generating optimal conf
 
 ### Tech Stack Recommendation
 
-| Component | Choice | Rationale |
-|-----------|--------|-----------|
-| **Language** | TypeScript | Type safety, excellent tooling, npm ecosystem |
-| **CLI Framework** | [Commander.js](https://github.com/tj/commander.js) | Mature, cross-platform, great DX |
-| **TUI** | [Ink](https://github.com/vadimdemedes/ink) | React for CLIs, beautiful components |
-| **Prompts** | [@inquirer/prompts](https://github.com/SBoudrias/Inquirer.js) | Modern, accessible prompts |
-| **GitHub API** | [Octokit](https://github.com/octokit/octokit.js) | Official GitHub SDK |
-| **Git Operations** | [simple-git](https://github.com/steveukx/git-js) | Cross-platform Git commands |
-| **Styling** | [chalk](https://github.com/chalk/chalk) + [boxen](https://github.com/sindresorhus/boxen) | Beautiful terminal output |
-| **Bundling** | [tsup](https://github.com/egoist/tsup) | Fast, zero-config bundler |
-| **Distribution** | npm + standalone binaries via [pkg](https://github.com/vercel/pkg) | Maximum reach |
+| Component          | Choice                                                                                   | Rationale                                     |
+| ------------------ | ---------------------------------------------------------------------------------------- | --------------------------------------------- |
+| **Language**       | TypeScript                                                                               | Type safety, excellent tooling, npm ecosystem |
+| **CLI Framework**  | [Commander.js](https://github.com/tj/commander.js)                                       | Mature, cross-platform, great DX              |
+| **TUI**            | [Ink](https://github.com/vadimdemedes/ink)                                               | React for CLIs, beautiful components          |
+| **Prompts**        | [@inquirer/prompts](https://github.com/SBoudrias/Inquirer.js)                            | Modern, accessible prompts                    |
+| **GitHub API**     | [Octokit](https://github.com/octokit/octokit.js)                                         | Official GitHub SDK                           |
+| **Git Operations** | [simple-git](https://github.com/steveukx/git-js)                                         | Cross-platform Git commands                   |
+| **Styling**        | [chalk](https://github.com/chalk/chalk) + [boxen](https://github.com/sindresorhus/boxen) | Beautiful terminal output                     |
+| **Bundling**       | [tsup](https://github.com/egoist/tsup)                                                   | Fast, zero-config bundler                     |
+| **Distribution**   | npm + standalone binaries via [pkg](https://github.com/vercel/pkg)                       | Maximum reach                                 |
 
 ---
 
@@ -125,6 +129,7 @@ primer batch
 ## 🔍 Repository Detection Logic
 
 ### Language Detection Priority
+
 1. Check for lock files (`package-lock.json`, `yarn.lock`, `Cargo.lock`, `go.sum`, etc.)
 2. Analyze file extensions distribution
 3. Check for framework-specific files
@@ -132,17 +137,18 @@ primer batch
 
 ### Framework Detection
 
-| Language | Frameworks to Detect |
-|----------|---------------------|
+| Language                  | Frameworks to Detect                                                  |
+| ------------------------- | --------------------------------------------------------------------- |
 | **JavaScript/TypeScript** | React, Vue, Angular, Next.js, Nuxt, Svelte, Express, Nest.js, Fastify |
-| **Python** | Django, Flask, FastAPI, Pandas/NumPy (data science) |
-| **Go** | Gin, Echo, Fiber |
-| **Rust** | Actix, Axum, Rocket |
-| **Java** | Spring Boot, Quarkus |
-| **C#** | ASP.NET Core, Blazor |
-| **Ruby** | Rails, Sinatra |
+| **Python**                | Django, Flask, FastAPI, Pandas/NumPy (data science)                   |
+| **Go**                    | Gin, Echo, Fiber                                                      |
+| **Rust**                  | Actix, Axum, Rocket                                                   |
+| **Java**                  | Spring Boot, Quarkus                                                  |
+| **C#**                    | ASP.NET Core, Blazor                                                  |
+| **Ruby**                  | Rails, Sinatra                                                        |
 
 ### Project Type Classification
+
 - **Frontend**: UI components, styling, client-side routing
 - **Backend**: API routes, database schemas, authentication
 - **Full-stack**: Both frontend and backend
@@ -161,28 +167,33 @@ primer batch
 # Project: {name}
 
 ## Tech Stack
+
 - Language: TypeScript
 - Framework: Next.js 14 (App Router)
 - Styling: Tailwind CSS
 - Database: Prisma + PostgreSQL
 
 ## Coding Conventions
+
 - Use functional components with hooks
 - Prefer server components where possible
 - Use `cn()` utility for conditional classes
 - Follow existing patterns in `src/components/`
 
 ## File Structure
+
 - `src/app/` - App router pages and layouts
 - `src/components/` - Reusable UI components
 - `src/lib/` - Utility functions and shared logic
 - `src/server/` - Server-side code and API logic
 
 ## Testing
+
 - Run tests: `npm test`
 - Test files: `*.test.ts` colocated with source
 
 ## Important Notes
+
 - This project uses {specific conventions}
 - Avoid {anti-patterns specific to this codebase}
 ```
@@ -310,6 +321,7 @@ primer batch
 ### GitHub Auth Flow
 
 1. **Check for existing `gh` CLI auth**
+
    ```bash
    gh auth status
    ```
@@ -324,6 +336,7 @@ primer batch
    - Fallback to encrypted file in `~/.config/primer/`
 
 ### Required Scopes
+
 - `repo` - Full repository access
 - `read:user` - Read user profile
 
@@ -355,11 +368,11 @@ This PR adds configurations to prime this repository for AI coding assistants.
 
 ### Added Files
 
-| File | Purpose |
-|------|---------|
-| `.github/copilot-instructions.md` | Project context for GitHub Copilot |
-| `.vscode/settings.json` | VS Code settings for optimal AI assistance |
-| `.vscode/mcp.json` | Model Context Protocol server configuration |
+| File                              | Purpose                                     |
+| --------------------------------- | ------------------------------------------- |
+| `.github/copilot-instructions.md` | Project context for GitHub Copilot          |
+| `.vscode/settings.json`           | VS Code settings for optimal AI assistance  |
+| `.vscode/mcp.json`                | Model Context Protocol server configuration |
 
 ### How to Use
 
@@ -368,7 +381,8 @@ This PR adds configurations to prime this repository for AI coding assistants.
 3. Start chatting with Copilot — it now understands your project!
 
 ---
-*Generated by [Primer](https://github.com/your-org/primer)*
+
+_Generated by [Primer](https://github.com/your-org/primer)_
 ```
 
 ---
@@ -418,21 +432,26 @@ primer/
 ## 🧪 Testing Strategy
 
 ### Unit Tests
+
 - Template rendering with different inputs
 - Language/framework detection
 - Config merging logic
 
 ### Integration Tests
+
 - Full init flow (mocked filesystem)
 - GitHub API interactions (mocked)
 - PR creation flow
 
 ### E2E Tests
+
 - Real repo analysis (test fixtures)
 - Actual file generation
 
 ### Test Fixtures
+
 Create example repos for each major stack:
+
 - `fixtures/nextjs-app/`
 - `fixtures/python-fastapi/`
 - `fixtures/rust-cli/`
@@ -443,12 +462,14 @@ Create example repos for each major stack:
 ## 🌟 Additional Feature Ideas
 
 ### Phase 2
+
 - [ ] **Team Sync** — Share configs across org/team repos
 - [ ] **Config Validation** — Lint generated configs
 - [ ] **Diff View** — Show what will change in existing files
 - [ ] **Rollback** — Undo generated changes
 
 ### Phase 3
+
 - [ ] **AI Enhancement** — Use AI to generate better project-specific instructions
 - [ ] **Telemetry** — Anonymous usage stats (opt-in)
 - [ ] **VS Code Extension** — GUI version of the CLI
@@ -456,6 +477,7 @@ Create example repos for each major stack:
 - [ ] **Monorepo Support** — Generate configs per package
 
 ### Community Features
+
 - [ ] **Repo Showcase** — Examples of well-configured repos
 
 ---
@@ -463,6 +485,7 @@ Create example repos for each major stack:
 ## 📅 Implementation Phases
 
 ### Phase 1: MVP (2-3 weeks)
+
 - [x] Project setup (TypeScript, Commander, tsup)
 - [ ] Basic CLI with `init` and `generate` commands
 - [ ] Local repo analysis
@@ -471,18 +494,21 @@ Create example repos for each major stack:
 - [ ] Basic interactive prompts
 
 ### Phase 2: GitHub Integration (1-2 weeks)
+
 - [ ] GitHub authentication
 - [ ] Remote repo access
 - [ ] PR creation
 - [ ] Fork workflow
 
 ### Phase 3: Polish (1 week)
+
 - [ ] Beautiful TUI with previews
 - [ ] More language/framework support
 - [ ] MCP configurations
 - [ ] Documentation and examples
 
 ### Phase 4: Distribution (1 week)
+
 - [ ] npm publish
 - [ ] Standalone binaries
 - [ ] Homebrew formula
@@ -536,4 +562,4 @@ npm link
 
 ---
 
-*This plan is a living document. Update as the project evolves.*
+_This plan is a living document. Update as the project evolves._

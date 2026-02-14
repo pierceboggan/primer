@@ -6,10 +6,15 @@ import React, { useEffect, useState } from "react";
 import simpleGit from "simple-git";
 
 import { DEFAULT_MODEL } from "../config";
-import { buildAuthedUrl, cloneRepo, checkoutBranch, commitAll, pushBranch, isGitRepo } from "../services/git";
-import type {
-  GitHubOrg,
-  GitHubRepo } from "../services/github";
+import {
+  buildAuthedUrl,
+  cloneRepo,
+  checkoutBranch,
+  commitAll,
+  pushBranch,
+  isGitRepo
+} from "../services/git";
+import type { GitHubOrg, GitHubRepo } from "../services/github";
 import {
   listUserOrgs,
   listOrgRepos,
@@ -89,19 +94,21 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
     setStatus("loading-repos");
     setMessage("Fetching repositories...");
     try {
-      const selectedOrgs = Array.from(selectedOrgIndices).map(i => orgs[i]);
+      const selectedOrgs = Array.from(selectedOrgIndices).map((i) => orgs[i]);
       let allRepos: GitHubRepo[] = [];
 
       for (let idx = 0; idx < selectedOrgs.length; idx++) {
         const org = selectedOrgs[idx];
-        setMessage(`Fetching repos from ${org.name ?? org.login} (${idx + 1}/${selectedOrgs.length})...`);
-        
+        setMessage(
+          `Fetching repos from ${org.name ?? org.login} (${idx + 1}/${selectedOrgs.length})...`
+        );
+
         if (org.login === "__personal__") {
           // Fetch personal repos (limited to 100 most recently pushed)
           const personalRepos = await listAccessibleRepos(token);
           // Filter to only repos owned by the user (not org repos)
           const userRepos = personalRepos
-            .filter(r => !orgs.some(o => o.login !== "__personal__" && o.login === r.owner))
+            .filter((r) => !orgs.some((o) => o.login !== "__personal__" && o.login === r.owner))
             .slice(0, 100);
           allRepos = [...allRepos, ...userRepos];
         } else {
@@ -113,7 +120,7 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
 
       // Deduplicate by fullName
       const seen = new Set<string>();
-      const uniqueRepos = allRepos.filter(r => {
+      const uniqueRepos = allRepos.filter((r) => {
         if (seen.has(r.fullName)) return false;
         seen.add(r.fullName);
         return true;
@@ -122,9 +129,10 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
       // Check which repos already have instructions
       setMessage(`Checking ${uniqueRepos.length} repos for existing instructions...`);
       const reposWithStatus = await checkReposForInstructions(
-        token, 
+        token,
         uniqueRepos,
-        (checked, total) => setMessage(`Checking for existing instructions (${checked}/${total})...`)
+        (checked, total) =>
+          setMessage(`Checking for existing instructions (${checked}/${total})...`)
       );
 
       // Sort: repos without instructions first
@@ -133,14 +141,16 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
         return a.hasInstructions ? 1 : -1;
       });
 
-      const withInstructions = reposWithStatus.filter(r => r.hasInstructions).length;
+      const withInstructions = reposWithStatus.filter((r) => r.hasInstructions).length;
       const withoutInstructions = reposWithStatus.length - withInstructions;
 
       setRepos(reposWithStatus);
       setCursorIndex(0);
       setSelectedRepoIndices(new Set());
       setStatus("select-repos");
-      setMessage(`Found ${reposWithStatus.length} repos (${withoutInstructions} need instructions, ${withInstructions} already have them)`);
+      setMessage(
+        `Found ${reposWithStatus.length} repos (${withoutInstructions} need instructions, ${withInstructions} already have them)`
+      );
     } catch (error) {
       setStatus("error");
       setErrorMessage(error instanceof Error ? error.message : "Failed to fetch repositories");
@@ -148,7 +158,7 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
   }
 
   async function processRepos() {
-    const selectedRepos = Array.from(selectedRepoIndices).map(i => repos[i]);
+    const selectedRepos = Array.from(selectedRepoIndices).map((i) => repos[i]);
     setStatus("processing");
     setCurrentRepoIndex(0);
     setResults([]);
@@ -172,7 +182,9 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
             shallow: true,
             timeoutMs: 120000, // 2 minute timeout for clone
             onProgress: (stage, progress) => {
-              setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ${repo.fullName}: Cloning (${stage} ${progress}%)...`);
+              setProcessingMessage(
+                `[${i + 1}/${selectedRepos.length}] ${repo.fullName}: Cloning (${stage} ${progress}%)...`
+              );
             }
           });
           // Strip credentials from persisted remote URL
@@ -181,13 +193,17 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
         }
 
         // Branch
-        setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ${repo.fullName}: Creating branch...`);
+        setProcessingMessage(
+          `[${i + 1}/${selectedRepos.length}] ${repo.fullName}: Creating branch...`
+        );
         const branch = "primer/add-instructions";
         await checkoutBranch(repoPath, branch);
 
         // Generate instructions with timeout
-        setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ${repo.fullName}: Generating instructions...`);
-        
+        setProcessingMessage(
+          `[${i + 1}/${selectedRepos.length}] ${repo.fullName}: Generating instructions...`
+        );
+
         const timeoutMs = 120000; // 2 minute timeout per repo
         const instructionsPromise = generateCopilotInstructions({
           repoPath,
@@ -196,14 +212,18 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
             setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ${repo.fullName}: ${msg}`);
           }
         });
-        
+
         let timer: ReturnType<typeof setTimeout>;
         const timeoutPromise = new Promise<string>((_, reject) => {
-          timer = setTimeout(() => reject(new Error("Generation timed out after 2 minutes")), timeoutMs);
+          timer = setTimeout(
+            () => reject(new Error("Generation timed out after 2 minutes")),
+            timeoutMs
+          );
         });
-        
-        const instructions = await Promise.race([instructionsPromise, timeoutPromise])
-          .finally(() => clearTimeout(timer));
+
+        const instructions = await Promise.race([instructionsPromise, timeoutPromise]).finally(() =>
+          clearTimeout(timer)
+        );
         // Prevent unhandled rejection if the losing promise rejects later
         instructionsPromise.catch(() => {});
 
@@ -263,11 +283,11 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
     if (status === "select-orgs") {
       const items = orgs;
       if (key.upArrow) {
-        setCursorIndex(prev => Math.max(0, prev - 1));
+        setCursorIndex((prev) => Math.max(0, prev - 1));
       } else if (key.downArrow) {
-        setCursorIndex(prev => Math.min(items.length - 1, prev + 1));
+        setCursorIndex((prev) => Math.min(items.length - 1, prev + 1));
       } else if (input === " ") {
-        setSelectedOrgIndices(prev => {
+        setSelectedOrgIndices((prev) => {
           const next = new Set(prev);
           if (next.has(cursorIndex)) {
             next.delete(cursorIndex);
@@ -277,7 +297,7 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
           return next;
         });
       } else if (key.return && selectedOrgIndices.size > 0) {
-        loadRepos().catch(err => {
+        loadRepos().catch((err) => {
           setStatus("error");
           setErrorMessage(err instanceof Error ? err.message : "Failed to load repos");
         });
@@ -287,11 +307,11 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
     if (status === "select-repos") {
       const items = repos;
       if (key.upArrow) {
-        setCursorIndex(prev => Math.max(0, prev - 1));
+        setCursorIndex((prev) => Math.max(0, prev - 1));
       } else if (key.downArrow) {
-        setCursorIndex(prev => Math.min(items.length - 1, prev + 1));
+        setCursorIndex((prev) => Math.min(items.length - 1, prev + 1));
       } else if (input === " ") {
-        setSelectedRepoIndices(prev => {
+        setSelectedRepoIndices((prev) => {
           const next = new Set(prev);
           if (next.has(cursorIndex)) {
             next.delete(cursorIndex);
@@ -309,13 +329,15 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
         setSelectedRepoIndices(new Set(indicesWithoutInstructions));
       } else if (key.return && selectedRepoIndices.size > 0) {
         setStatus("confirm");
-        setMessage(`Ready to process ${selectedRepoIndices.size} repositories. Press Y to confirm, N to go back.`);
+        setMessage(
+          `Ready to process ${selectedRepoIndices.size} repositories. Press Y to confirm, N to go back.`
+        );
       }
     }
 
     if (status === "confirm") {
       if (input.toLowerCase() === "y") {
-        processRepos().catch(err => {
+        processRepos().catch((err) => {
           setStatus("error");
           setErrorMessage(err instanceof Error ? err.message : "Processing failed");
         });
@@ -387,7 +409,9 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
                 <Text key={repo.fullName}>
                   <Text color={isCursor ? "cyan" : undefined}>{isCursor ? "❯ " : "  "}</Text>
                   <Text color={isSelected ? "green" : "gray"}>{isSelected ? "◉" : "○"} </Text>
-                  <Text color={repo.hasInstructions ? "green" : "red"}>{repo.hasInstructions ? "✓" : "✗"} </Text>
+                  <Text color={repo.hasInstructions ? "green" : "red"}>
+                    {repo.hasInstructions ? "✓" : "✗"}{" "}
+                  </Text>
                   <Text color={repo.hasInstructions ? "gray" : undefined}>{repo.fullName}</Text>
                   {repo.isPrivate && <Text color="yellow"> (private)</Text>}
                 </Text>
@@ -428,7 +452,8 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
       {status === "complete" && (
         <Box flexDirection="column" marginTop={1}>
           <Text color="green" bold>
-            ✓ Batch complete: {results.filter(r => r.success).length} succeeded, {results.filter(r => !r.success).length} failed
+            ✓ Batch complete: {results.filter((r) => r.success).length} succeeded,{" "}
+            {results.filter((r) => !r.success).length} failed
           </Text>
           <Box flexDirection="column" marginTop={1}>
             {results.map((r) => (
@@ -444,17 +469,15 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
 
       <Box marginTop={1}>
         {status === "select-orgs" && (
-          <Text color="cyan">Keys: [Space] Toggle  [Enter] Confirm  [Q] Quit</Text>
+          <Text color="cyan">Keys: [Space] Toggle [Enter] Confirm [Q] Quit</Text>
         )}
         {status === "select-repos" && (
-          <Text color="cyan">Keys: [Space] Toggle  [A] Select Missing  [Enter] Confirm  [Q] Quit</Text>
+          <Text color="cyan">Keys: [Space] Toggle [A] Select Missing [Enter] Confirm [Q] Quit</Text>
         )}
         {status === "confirm" && (
-          <Text color="cyan">Keys: [Y] Yes, proceed  [N] Go back  [Q] Quit</Text>
+          <Text color="cyan">Keys: [Y] Yes, proceed [N] Go back [Q] Quit</Text>
         )}
-        {(status === "complete" || status === "error") && (
-          <Text color="cyan">Keys: [Q] Quit</Text>
-        )}
+        {(status === "complete" || status === "error") && <Text color="cyan">Keys: [Q] Quit</Text>}
       </Box>
     </Box>
   );

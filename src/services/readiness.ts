@@ -187,7 +187,9 @@ export async function runReadinessReport(options: ReadinessOptions): Promise<Rea
 
   const pillars = summarizePillars(criteriaResults);
   const levels = summarizeLevels(criteriaResults);
-  const achievedLevel = levels.filter((level) => level.achieved).reduce((acc, level) => Math.max(acc, level.level), 0);
+  const achievedLevel = levels
+    .filter((level) => level.achieved)
+    .reduce((acc, level) => Math.max(acc, level.level), 0);
 
   const extras = options.includeExtras === false ? [] : await runExtras(context);
 
@@ -331,7 +333,12 @@ function buildCriteria(): ReadinessCriterion[] {
       impact: "high",
       effort: "low",
       check: async (context) => {
-        const found = hasAnyFile(context.rootFiles, ["pnpm-lock.yaml", "yarn.lock", "package-lock.json", "bun.lockb"]);
+        const found = hasAnyFile(context.rootFiles, [
+          "pnpm-lock.yaml",
+          "yarn.lock",
+          "package-lock.json",
+          "bun.lockb"
+        ]);
         return {
           status: found ? "pass" : "fail",
           reason: found ? undefined : "Missing package manager lockfile."
@@ -444,7 +451,9 @@ function buildCriteria(): ReadinessCriterion[] {
       effort: "medium",
       check: async (context) => {
         const deps = await readAllDependencies(context);
-        const has = deps.some((dep) => ["@opentelemetry/api", "@opentelemetry/sdk", "pino", "winston", "bunyan"].includes(dep));
+        const has = deps.some((dep) =>
+          ["@opentelemetry/api", "@opentelemetry/sdk", "pino", "winston", "bunyan"].includes(dep)
+        );
         return {
           status: has ? "pass" : "fail",
           reason: "No observability dependencies detected (OpenTelemetry/logging)."
@@ -464,8 +473,15 @@ function buildCriteria(): ReadinessCriterion[] {
         if (rootFound.length === 0) {
           return {
             status: "fail",
-            reason: "Missing custom AI instructions (e.g. copilot-instructions.md, CLAUDE.md, AGENTS.md, .cursorrules).",
-            evidence: ["copilot-instructions.md", "CLAUDE.md", "AGENTS.md", ".cursorrules", ".github/copilot-instructions.md"]
+            reason:
+              "Missing custom AI instructions (e.g. copilot-instructions.md, CLAUDE.md, AGENTS.md, .cursorrules).",
+            evidence: [
+              "copilot-instructions.md",
+              "CLAUDE.md",
+              "AGENTS.md",
+              ".cursorrules",
+              ".github/copilot-instructions.md"
+            ]
           };
         }
 
@@ -482,7 +498,10 @@ function buildCriteria(): ReadinessCriterion[] {
             return {
               status: "pass",
               reason: `Root instructions found, but ${appsMissing.length}/${context.apps.length} apps missing their own: ${appsMissing.join(", ")}`,
-              evidence: [...rootFound, ...appsMissing.map(name => `${name}: missing app-level instructions`)]
+              evidence: [
+                ...rootFound,
+                ...appsMissing.map((name) => `${name}: missing app-level instructions`)
+              ]
             };
           }
         }
@@ -506,7 +525,10 @@ function buildCriteria(): ReadinessCriterion[] {
         return {
           status: found.length > 0 ? "pass" : "fail",
           reason: "Missing MCP (Model Context Protocol) configuration (e.g. .vscode/mcp.json).",
-          evidence: found.length > 0 ? found : [".vscode/mcp.json", ".vscode/settings.json (mcp section)", "mcp.json"]
+          evidence:
+            found.length > 0
+              ? found
+              : [".vscode/mcp.json", ".vscode/settings.json (mcp section)", "mcp.json"]
         };
       }
     },
@@ -523,7 +545,10 @@ function buildCriteria(): ReadinessCriterion[] {
         return {
           status: found.length > 0 ? "pass" : "fail",
           reason: "No custom AI agents configured (e.g. .github/agents/, .copilot/agents/).",
-          evidence: found.length > 0 ? found : [".github/agents/", ".copilot/agents/", ".github/copilot/agents/"]
+          evidence:
+            found.length > 0
+              ? found
+              : [".github/agents/", ".copilot/agents/", ".github/copilot/agents/"]
         };
       }
     },
@@ -540,7 +565,8 @@ function buildCriteria(): ReadinessCriterion[] {
         return {
           status: found.length > 0 ? "pass" : "fail",
           reason: "No Copilot or Claude skills found (e.g. .copilot/skills/, .github/skills/).",
-          evidence: found.length > 0 ? found : [".copilot/skills/", ".github/skills/", ".claude/skills/"]
+          evidence:
+            found.length > 0 ? found : [".copilot/skills/", ".github/skills/", ".claude/skills/"]
         };
       }
     }
@@ -633,7 +659,9 @@ function summarizeLevels(criteria: ReadinessCriterionResult[]): ReadinessLevelSu
 
   for (const summary of summaries) {
     const allPrior = summaries.filter((candidate) => candidate.level <= summary.level);
-    const achieved = allPrior.every((candidate) => candidate.total > 0 && candidate.passRate >= 0.8);
+    const achieved = allPrior.every(
+      (candidate) => candidate.total > 0 && candidate.passRate >= 0.8
+    );
     summary.achieved = achieved;
   }
 
@@ -652,7 +680,9 @@ function hasAnyFile(files: string[], candidates: string[]): boolean {
 
 async function hasReadme(repoPath: string): Promise<boolean> {
   const files = await safeReadDir(repoPath);
-  return files.some((file) => file.toLowerCase() === "readme.md" || file.toLowerCase() === "readme");
+  return files.some(
+    (file) => file.toLowerCase() === "readme.md" || file.toLowerCase() === "readme"
+  );
 }
 
 async function hasLintConfig(repoPath: string): Promise<boolean> {
@@ -783,21 +813,14 @@ async function hasMcpConfig(repoPath: string): Promise<string[]> {
 
 async function hasCustomAgents(repoPath: string): Promise<string[]> {
   const found: string[] = [];
-  const agentDirs = [
-    ".github/agents",
-    ".copilot/agents",
-    ".github/copilot/agents"
-  ];
+  const agentDirs = [".github/agents", ".copilot/agents", ".github/copilot/agents"];
   for (const dir of agentDirs) {
     if (await fileExists(path.join(repoPath, dir))) {
       found.push(dir);
     }
   }
   // Check for agent config files
-  const agentFiles = [
-    ".github/copilot-agents.yml",
-    ".github/copilot-agents.yaml"
-  ];
+  const agentFiles = [".github/copilot-agents.yml", ".github/copilot-agents.yaml"];
   for (const agentFile of agentFiles) {
     if (await fileExists(path.join(repoPath, agentFile))) {
       found.push(agentFile);
@@ -830,19 +853,23 @@ async function readAllDependencies(context: ReadinessContext): Promise<string[]>
     const pkg = await readJson(app.packageJsonPath);
     const deps = (pkg?.dependencies ?? {}) as Record<string, unknown>;
     const devDeps = (pkg?.devDependencies ?? {}) as Record<string, unknown>;
-    dependencies.push(...Object.keys({
-      ...deps,
-      ...devDeps
-    }));
+    dependencies.push(
+      ...Object.keys({
+        ...deps,
+        ...devDeps
+      })
+    );
   }
 
   if (!apps.length && context.rootPackageJson) {
     const rootDeps = (context.rootPackageJson.dependencies ?? {}) as Record<string, unknown>;
     const rootDevDeps = (context.rootPackageJson.devDependencies ?? {}) as Record<string, unknown>;
-    dependencies.push(...Object.keys({
-      ...rootDeps,
-      ...rootDevDeps
-    }));
+    dependencies.push(
+      ...Object.keys({
+        ...rootDeps,
+        ...rootDevDeps
+      })
+    );
   }
 
   return Array.from(new Set(dependencies));

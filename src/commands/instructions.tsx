@@ -24,7 +24,9 @@ export async function instructionsCommand(options: InstructionsOptions): Promise
     });
   } catch (error) {
     console.error("Failed to generate instructions with Copilot SDK.");
-    console.error("Ensure the Copilot CLI is installed (copilot --version) and logged in (run 'copilot' then '/login')." );
+    console.error(
+      "Ensure the Copilot CLI is installed (copilot --version) and logged in (run 'copilot' then '/login')."
+    );
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;
     return;

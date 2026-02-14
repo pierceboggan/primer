@@ -9,7 +9,15 @@ import {
   getRepo as getAzureRepo
 } from "../services/azureDevops";
 import { generateConfigs } from "../services/generator";
-import { buildAuthedUrl, checkoutBranch, cloneRepo, commitAll, isGitRepo, pushBranch, setRemoteUrl } from "../services/git";
+import {
+  buildAuthedUrl,
+  checkoutBranch,
+  cloneRepo,
+  commitAll,
+  isGitRepo,
+  pushBranch,
+  setRemoteUrl
+} from "../services/git";
 import { createPullRequest, getRepo } from "../services/github";
 import { generateCopilotInstructions } from "../services/instructions";
 import { ensureDir, validateCachePath } from "../utils/fs";

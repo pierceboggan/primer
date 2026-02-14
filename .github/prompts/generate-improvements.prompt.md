@@ -29,17 +29,17 @@ You are a senior software engineer reviewing the **Primer** project — a TypeSc
 
 ### CLI Commands
 
-| Command | Description |
-|---------|-------------|
-| `primer init` | Interactive setup wizard (instructions + configs) |
+| Command                  | Description                                                   |
+| ------------------------ | ------------------------------------------------------------- |
+| `primer init`            | Interactive setup wizard (instructions + configs)             |
 | `primer generate <type>` | Generate `instructions`, `agents`, `mcp`, or `vscode` configs |
-| `primer instructions` | Generate copilot-instructions.md via Copilot SDK |
-| `primer eval` | Run evaluation cases comparing with/without instructions |
-| `primer readiness` | AI readiness assessment with optional visual HTML report |
-| `primer batch` | Batch process multiple repos across GitHub/Azure orgs |
-| `primer batch-readiness` | Batch readiness reports across multiple repos |
-| `primer pr` | Automate branch/PR creation for generated configs |
-| `primer tui` | Interactive Ink-based terminal UI |
+| `primer instructions`    | Generate copilot-instructions.md via Copilot SDK              |
+| `primer eval`            | Run evaluation cases comparing with/without instructions      |
+| `primer readiness`       | AI readiness assessment with optional visual HTML report      |
+| `primer batch`           | Batch process multiple repos across GitHub/Azure orgs         |
+| `primer batch-readiness` | Batch readiness reports across multiple repos                 |
+| `primer pr`              | Automate branch/PR creation for generated configs             |
+| `primer tui`             | Interactive Ink-based terminal UI                             |
 
 ### Key Patterns
 
@@ -64,6 +64,7 @@ Analyze the full codebase and generate a prioritized list of **concrete, actiona
 ## Areas to Evaluate
 
 ### Features & Functionality
+
 - Are there CLI commands or flags referenced in README/help text that aren't fully implemented?
 - Could `analyzeRepo` detect more languages, frameworks, or package managers (e.g., Gradle, Maven, .NET, Ruby)?
 - Does `primer init --yes` skip useful defaults (currently only selects instructions, not MCP/VS Code configs)?
@@ -72,6 +73,7 @@ Analyze the full codebase and generate a prioritized list of **concrete, actiona
 - Could `primer eval` scaffold richer default eval cases or support custom grading rubrics?
 
 ### Bug Fixes & Correctness
+
 - Does `analyzeRepo` correctly handle edge cases like empty repos, non-git directories, or deeply nested monorepos?
 - Does `readPnpmWorkspace` handle all valid YAML edge cases or is the line-by-line parser fragile?
 - Does the Copilot SDK session handling (`instructions.ts`) properly clean up on errors (session.destroy, client.stop)?
@@ -79,6 +81,7 @@ Analyze the full codebase and generate a prioritized list of **concrete, actiona
 - Does `process.chdir()` in `generateCopilotInstructions` create issues if called concurrently?
 
 ### Security
+
 - Is the GitHub token (`getGitHubToken`) handled securely — never logged, never leaked in error messages?
 - Are user-supplied repo paths validated against path traversal (e.g., `../../etc/passwd` as a repo path)?
 - Does `execFileAsync` usage properly sanitize arguments to prevent command injection?
@@ -86,6 +89,7 @@ Analyze the full codebase and generate a prioritized list of **concrete, actiona
 - Is the `safeWriteFile` function safe against symlink attacks (writing through a symlink to an unintended location)?
 
 ### Performance
+
 - Could `analyzeRepo` avoid redundant `readdir`/`readFile` calls when the same repo is analyzed multiple times?
 - Is `fast-glob` usage in workspace detection efficient for large monorepos with many packages?
 - Could the Copilot CLI path lookup (`findCopilotCliPath` in `copilot.ts`) be cached across invocations?
@@ -93,6 +97,7 @@ Analyze the full codebase and generate a prioritized list of **concrete, actiona
 - Does the eval trajectory viewer HTML (`evaluator.ts`) generate excessively large output for many eval cases?
 
 ### Engineering Quality
+
 - Are there TypeScript strict-mode violations, `any` types, or `as` casts that should be eliminated?
 - Is error handling consistent across services — do all commands give clear, actionable error messages?
 - Are there dead code paths or unused exports in the services or commands?
@@ -100,6 +105,7 @@ Analyze the full codebase and generate a prioritized list of **concrete, actiona
 - Are service interfaces well-separated for testability, or are there tight couplings (e.g., direct `process.env` reads)?
 
 ### Testing
+
 - What is the current test coverage? Only `analyzer.test.ts`, `fs.test.ts`, `readiness.test.ts`, and `visualReport.test.ts` exist — many services and commands are untested.
 - Are there tests for the Copilot SDK integration paths (even with mocked SDK)?
 - Are edge cases in `readPnpmWorkspace`, `detectWorkspace`, and `resolveWorkspaceApps` covered?
@@ -107,6 +113,7 @@ Analyze the full codebase and generate a prioritized list of **concrete, actiona
 - Is the GitHub/Azure DevOps API integration tested with mocked HTTP responses?
 
 ### Developer Experience
+
 - Is the `npx tsx` workflow sufficient, or should there be a `dev` script for faster iteration?
 - Are error messages clear when prerequisites are missing (Copilot CLI, GitHub token, `gh` CLI)?
 - Is the TUI (`src/ui/tui.tsx`) tested or difficult to test due to Ink rendering?

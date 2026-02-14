@@ -2,6 +2,7 @@
 name: review
 description: Run three parallel code reviews (Opus, Gemini, Codex) and synthesize findings into a prioritized fix list
 ---
+
 Run a multi-model code review:
 
 1. Invoke `code-review-opus`, `code-review-gemini`, and `code-review-codex` as three parallel subagents

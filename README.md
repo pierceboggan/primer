@@ -63,6 +63,7 @@ primer tui --repo /path/to/repo
 ```
 
 **Main menu:**
+
 - `[G]` Generate → choose Copilot instructions or AGENTS.md (with per-app support for monorepos)
 - `[E]` Eval → run evals or init eval config
 - `[B]` Batch → pick GitHub or Azure DevOps
@@ -120,6 +121,7 @@ primer readiness --output report.html
 | 5 | Autonomous | Full AI-native development with minimal oversight |
 
 **AI Tooling checks:**
+
 - Custom instructions (`copilot-instructions.md`, `CLAUDE.md`, `AGENTS.md`, `.cursorrules`)
 - MCP configuration (`.vscode/mcp.json`, settings)
 - Custom AI agents (`.github/agents/`, `.copilot/agents/`)
@@ -234,12 +236,15 @@ primer/
 ## Troubleshooting
 
 ### "Copilot CLI not found"
+
 Install the GitHub Copilot Chat extension in VS Code. The CLI is bundled with it.
 
 ### "Copilot CLI not logged in"
+
 Run `copilot` in your terminal, then type `/login` to authenticate.
 
 ### "GitHub authentication required"
+
 Install GitHub CLI and authenticate: `brew install gh && gh auth login`
 Or set a token: `export GITHUB_TOKEN=<your-token>`
 

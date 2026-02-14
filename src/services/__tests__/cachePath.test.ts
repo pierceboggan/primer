@@ -14,7 +14,9 @@ describe("validateCachePath", () => {
   });
 
   it("throws on path traversal via ..", () => {
-    expect(() => validateCachePath(cacheRoot, "..", "..", "etc")).toThrow("escapes cache directory");
+    expect(() => validateCachePath(cacheRoot, "..", "..", "etc")).toThrow(
+      "escapes cache directory"
+    );
   });
 
   it("throws on absolute path segment that escapes", () => {

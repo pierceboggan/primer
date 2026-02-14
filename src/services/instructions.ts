@@ -10,7 +10,9 @@ type GenerateInstructionsOptions = {
   onProgress?: (message: string) => void;
 };
 
-export async function generateCopilotInstructions(options: GenerateInstructionsOptions): Promise<string> {
+export async function generateCopilotInstructions(
+  options: GenerateInstructionsOptions
+): Promise<string> {
   const repoPath = options.repoPath;
   const progress = options.onProgress ?? (() => {});
 
@@ -21,7 +23,7 @@ export async function generateCopilotInstructions(options: GenerateInstructionsO
     progress("Starting Copilot SDK...");
     const sdk = await import("@github/copilot-sdk");
     const client = new sdk.CopilotClient({
-      cliPath,
+      cliPath
     });
 
     try {
@@ -31,13 +33,14 @@ export async function generateCopilotInstructions(options: GenerateInstructionsO
         model: preferredModel,
         streaming: true,
         systemMessage: {
-          content: "You are an expert codebase analyst. Your task is to generate a concise .github/copilot-instructions.md file. Use the available tools (glob, view, grep) to explore the codebase. Output ONLY the final markdown content, no explanations.",
+          content:
+            "You are an expert codebase analyst. Your task is to generate a concise .github/copilot-instructions.md file. Use the available tools (glob, view, grep) to explore the codebase. Output ONLY the final markdown content, no explanations."
         },
-        infiniteSessions: { enabled: false },
+        infiniteSessions: { enabled: false }
       });
 
       let content = "";
-    
+
       // Subscribe to events for progress and to capture content
       session.on((event) => {
         const e = event as { type: string; data?: Record<string, unknown> };
@@ -53,7 +56,9 @@ export async function generateCopilotInstructions(options: GenerateInstructionsO
         } else if (e.type === "session.error") {
           const errorMsg = (e.data?.message as string) ?? "Unknown error";
           if (errorMsg.toLowerCase().includes("auth") || errorMsg.toLowerCase().includes("login")) {
-            throw new Error("Copilot CLI not logged in. Run `copilot` then `/login` to authenticate.");
+            throw new Error(
+              "Copilot CLI not logged in. Run `copilot` then `/login` to authenticate."
+            );
           }
         }
       });

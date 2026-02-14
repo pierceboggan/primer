@@ -58,7 +58,8 @@ export type AzureDevOpsRepo = {
   hasInstructions?: boolean;
 };
 
-const PROFILE_URL = "https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=7.1-preview.1";
+const PROFILE_URL =
+  "https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=7.1-preview.1";
 
 const ADO_SLUG_RE = /^[\w][\w.-]*$/u;
 
@@ -99,7 +100,10 @@ export function getAzureDevOpsToken(): string | null {
 export async function listOrganizations(token: string): Promise<AzureDevOpsOrg[]> {
   const profile = await adoRequest<AzureDevOpsProfileResponse>(PROFILE_URL, token);
   const accountsUrl = `https://app.vssps.visualstudio.com/_apis/accounts?memberId=${encodeURIComponent(profile.id)}&api-version=7.1-preview.1`;
-  const accounts = await adoRequest<AzureDevOpsListResponse<AzureDevOpsAccountResponse>>(accountsUrl, token);
+  const accounts = await adoRequest<AzureDevOpsListResponse<AzureDevOpsAccountResponse>>(
+    accountsUrl,
+    token
+  );
 
   return accounts.value.map((account) => ({
     id: account.accountId,
@@ -108,10 +112,16 @@ export async function listOrganizations(token: string): Promise<AzureDevOpsOrg[]
   }));
 }
 
-export async function listProjects(token: string, organization: string): Promise<AzureDevOpsProject[]> {
+export async function listProjects(
+  token: string,
+  organization: string
+): Promise<AzureDevOpsProject[]> {
   const org = validateAdoSlug(organization, "organization");
   const url = `https://dev.azure.com/${org}/_apis/projects?stateFilter=wellFormed&api-version=7.1-preview.1`;
-  const response = await adoRequest<AzureDevOpsListResponse<AzureDevOpsProjectResponse>>(url, token);
+  const response = await adoRequest<AzureDevOpsListResponse<AzureDevOpsProjectResponse>>(
+    url,
+    token
+  );
 
   return response.value.map((project) => ({
     id: project.id,
@@ -121,7 +131,11 @@ export async function listProjects(token: string, organization: string): Promise
   }));
 }
 
-export async function listRepos(token: string, organization: string, project: string): Promise<AzureDevOpsRepo[]> {
+export async function listRepos(
+  token: string,
+  organization: string,
+  project: string
+): Promise<AzureDevOpsRepo[]> {
   const org = validateAdoSlug(organization, "organization");
   const proj = validateAdoSlug(project, "project");
   const url = `https://dev.azure.com/${org}/${proj}/_apis/git/repositories?api-version=7.1-preview.1`;

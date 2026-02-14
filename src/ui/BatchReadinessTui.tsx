@@ -7,14 +7,8 @@ import React, { useEffect, useState } from "react";
 import simpleGit from "simple-git";
 
 import { buildAuthedUrl, cloneRepo } from "../services/git";
-import type {
-  GitHubOrg,
-  GitHubRepo } from "../services/github";
-import {
-  listUserOrgs,
-  listOrgRepos,
-  listAccessibleRepos
-} from "../services/github";
+import type { GitHubOrg, GitHubRepo } from "../services/github";
+import { listUserOrgs, listOrgRepos, listAccessibleRepos } from "../services/github";
 import type { ReadinessReport } from "../services/readiness";
 import { runReadinessReport } from "../services/readiness";
 import { generateVisualReport } from "../services/visualReport";
@@ -86,17 +80,19 @@ export function BatchReadinessTui({ token, outputPath }: Props): React.JSX.Eleme
     setStatus("loading-repos");
     setMessage("Fetching repositories...");
     try {
-      const selectedOrgs = Array.from(selectedOrgIndices).map(i => orgs[i]);
+      const selectedOrgs = Array.from(selectedOrgIndices).map((i) => orgs[i]);
       let allRepos: GitHubRepo[] = [];
 
       for (let idx = 0; idx < selectedOrgs.length; idx++) {
         const org = selectedOrgs[idx];
-        setMessage(`Fetching repos from ${org.name ?? org.login} (${idx + 1}/${selectedOrgs.length})...`);
+        setMessage(
+          `Fetching repos from ${org.name ?? org.login} (${idx + 1}/${selectedOrgs.length})...`
+        );
 
         if (org.login === "__personal__") {
           const personalRepos = await listAccessibleRepos(token);
           const userRepos = personalRepos
-            .filter(r => !orgs.some(o => o.login !== "__personal__" && o.login === r.owner))
+            .filter((r) => !orgs.some((o) => o.login !== "__personal__" && o.login === r.owner))
             .slice(0, 100);
           allRepos = [...allRepos, ...userRepos];
         } else {
@@ -117,7 +113,7 @@ export function BatchReadinessTui({ token, outputPath }: Props): React.JSX.Eleme
 
   async function processRepos() {
     setStatus("processing");
-    const selectedRepos = Array.from(selectedRepoIndices).map(i => repos[i]);
+    const selectedRepos = Array.from(selectedRepoIndices).map((i) => repos[i]);
     const results: ProcessResult[] = [];
     const tmpDir = path.join(os.tmpdir(), `primer-batch-readiness-${Date.now()}`);
 
@@ -161,10 +157,20 @@ export function BatchReadinessTui({ token, outputPath }: Props): React.JSX.Eleme
       // Generate visual report
       const html = generateVisualReport({
         reports: results
-          .filter(r => r.report || r.error)
-          .map(r => ({
+          .filter((r) => r.report || r.error)
+          .map((r) => ({
             repo: r.repo,
-            report: r.report ?? { repoPath: r.repo, generatedAt: new Date().toISOString(), isMonorepo: false, apps: [], pillars: [], levels: [], achievedLevel: 0, criteria: [], extras: [] },
+            report: r.report ?? {
+              repoPath: r.repo,
+              generatedAt: new Date().toISOString(),
+              isMonorepo: false,
+              apps: [],
+              pillars: [],
+              levels: [],
+              achievedLevel: 0,
+              criteria: [],
+              extras: []
+            },
             error: r.error
           })),
         title: "Batch AI Readiness Report",
@@ -213,7 +219,7 @@ export function BatchReadinessTui({ token, outputPath }: Props): React.JSX.Eleme
           setMessage("Please select at least one organization");
           return;
         }
-        loadRepos().catch(err => {
+        loadRepos().catch((err) => {
           setStatus("error");
           setErrorMessage(err instanceof Error ? err.message : "Failed to load repos");
         });
@@ -249,7 +255,7 @@ export function BatchReadinessTui({ token, outputPath }: Props): React.JSX.Eleme
 
     if (status === "confirm") {
       if (input.toLowerCase() === "y") {
-        processRepos().catch(err => {
+        processRepos().catch((err) => {
           setStatus("error");
           setErrorMessage(err instanceof Error ? err.message : "Processing failed");
         });
@@ -286,7 +292,8 @@ export function BatchReadinessTui({ token, outputPath }: Props): React.JSX.Eleme
           <Text dimColor>Organizations:</Text>
           {orgs.slice(0, 20).map((org, i) => (
             <Text key={i}>
-              {i === cursorIndex ? ">" : " "} [{selectedOrgIndices.has(i) ? "●" : " "}] {org.name ?? org.login}
+              {i === cursorIndex ? ">" : " "} [{selectedOrgIndices.has(i) ? "●" : " "}]{" "}
+              {org.name ?? org.login}
             </Text>
           ))}
           <Box marginTop={1}>
@@ -298,14 +305,17 @@ export function BatchReadinessTui({ token, outputPath }: Props): React.JSX.Eleme
       {status === "select-repos" && (
         <Box marginTop={1} flexDirection="column">
           <Text dimColor>Repositories ({repos.length}):</Text>
-          {repos.slice(Math.max(0, cursorIndex - 10), Math.min(repos.length, cursorIndex + 10)).map((repo, i) => {
-            const actualIndex = Math.max(0, cursorIndex - 10) + i;
-            return (
-              <Text key={actualIndex}>
-                {actualIndex === cursorIndex ? ">" : " "} [{selectedRepoIndices.has(actualIndex) ? "●" : " "}] {repo.fullName}
-              </Text>
-            );
-          })}
+          {repos
+            .slice(Math.max(0, cursorIndex - 10), Math.min(repos.length, cursorIndex + 10))
+            .map((repo, i) => {
+              const actualIndex = Math.max(0, cursorIndex - 10) + i;
+              return (
+                <Text key={actualIndex}>
+                  {actualIndex === cursorIndex ? ">" : " "} [
+                  {selectedRepoIndices.has(actualIndex) ? "●" : " "}] {repo.fullName}
+                </Text>
+              );
+            })}
           <Box marginTop={1}>
             <Text dimColor>[Space] toggle • [A] select all • [Enter] confirm • [Q] quit</Text>
           </Box>
@@ -316,7 +326,9 @@ export function BatchReadinessTui({ token, outputPath }: Props): React.JSX.Eleme
         <Box marginTop={1} flexDirection="column">
           <Text>Processing repositories...</Text>
           <Text>{processingMessage}</Text>
-          <Text>Progress: {currentRepoIndex + 1}/{Array.from(selectedRepoIndices).length}</Text>
+          <Text>
+            Progress: {currentRepoIndex + 1}/{Array.from(selectedRepoIndices).length}
+          </Text>
         </Box>
       )}
 
@@ -324,8 +336,8 @@ export function BatchReadinessTui({ token, outputPath }: Props): React.JSX.Eleme
         <Box marginTop={1} flexDirection="column">
           <Text color="green">✓ Complete!</Text>
           <Text>Total repositories: {results.length}</Text>
-          <Text>Successful: {results.filter(r => !r.error).length}</Text>
-          <Text>Failed: {results.filter(r => r.error).length}</Text>
+          <Text>Successful: {results.filter((r) => !r.error).length}</Text>
+          <Text>Failed: {results.filter((r) => r.error).length}</Text>
         </Box>
       )}
     </Box>

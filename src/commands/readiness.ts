@@ -3,12 +3,8 @@ import path from "path";
 
 import chalk from "chalk";
 
-import type {
-  ReadinessReport,
-  ReadinessCriterionResult} from "../services/readiness";
-import {
-  runReadinessReport
-} from "../services/readiness";
+import type { ReadinessReport, ReadinessCriterionResult } from "../services/readiness";
+import { runReadinessReport } from "../services/readiness";
 import { generateVisualReport } from "../services/visualReport";
 
 type ReadinessOptions = {
@@ -17,13 +13,16 @@ type ReadinessOptions = {
   visual?: boolean;
 };
 
-export async function readinessCommand(repoPathArg: string | undefined, options: ReadinessOptions): Promise<void> {
+export async function readinessCommand(
+  repoPathArg: string | undefined,
+  options: ReadinessOptions
+): Promise<void> {
   const repoPath = path.resolve(repoPathArg ?? process.cwd());
   const report = await runReadinessReport({ repoPath });
   const repoName = path.basename(repoPath);
 
   // Generate visual HTML report
-  if (options.visual || (options.output && options.output.endsWith('.html'))) {
+  if (options.visual || (options.output && options.output.endsWith(".html"))) {
     const html = generateVisualReport({
       reports: [{ repo: repoName, report }],
       title: `AI Readiness Report: ${repoName}`,
@@ -32,7 +31,7 @@ export async function readinessCommand(repoPathArg: string | undefined, options:
 
     const outputPath = options.output
       ? path.resolve(options.output)
-      : path.join(repoPath, 'readiness-report.html');
+      : path.join(repoPath, "readiness-report.html");
 
     await fs.writeFile(outputPath, html, "utf8");
     console.log(chalk.green(`✓ Visual report generated: ${outputPath}`));
@@ -40,7 +39,7 @@ export async function readinessCommand(repoPathArg: string | undefined, options:
   }
 
   // Output JSON
-  if (options.output && options.output.endsWith('.json')) {
+  if (options.output && options.output.endsWith(".json")) {
     const outputPath = path.resolve(options.output);
     await fs.writeFile(outputPath, JSON.stringify(report, null, 2), "utf8");
     console.log(chalk.green(`✓ JSON report saved: ${outputPath}`));
@@ -58,7 +57,9 @@ export async function readinessCommand(repoPathArg: string | undefined, options:
 function printReadinessChecklist(report: ReadinessReport): void {
   console.log(chalk.bold("Readiness report"));
   console.log(`- Repo: ${report.repoPath}`);
-  console.log(`- Monorepo: ${report.isMonorepo ? "yes" : "no"}${report.apps.length ? ` (${report.apps.length} apps)` : ""}`);
+  console.log(
+    `- Monorepo: ${report.isMonorepo ? "yes" : "no"}${report.apps.length ? ` (${report.apps.length} apps)` : ""}`
+  );
   console.log(`- Level: ${report.achievedLevel || 1} (${levelName(report.achievedLevel || 1)})`);
 
   console.log(chalk.bold("\nPillars"));

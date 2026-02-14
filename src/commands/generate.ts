@@ -11,7 +11,11 @@ type GenerateOptions = {
   perApp?: boolean;
 };
 
-export async function generateCommand(type: string, repoPathArg: string | undefined, options: GenerateOptions): Promise<void> {
+export async function generateCommand(
+  type: string,
+  repoPathArg: string | undefined,
+  options: GenerateOptions
+): Promise<void> {
   const allowed = new Set(["mcp", "vscode", "instructions", "agents"]);
   if (!allowed.has(type)) {
     console.error("Invalid type. Use: instructions, agents, mcp, vscode.");
@@ -28,15 +32,17 @@ export async function generateCommand(type: string, repoPathArg: string | undefi
 
     if (options.perApp && analysis.isMonorepo && apps.length > 1) {
       for (const app of apps) {
-        const savePath = type === "instructions"
-          ? path.join(app.path, ".github", "copilot-instructions.md")
-          : path.join(app.path, "AGENTS.md");
+        const savePath =
+          type === "instructions"
+            ? path.join(app.path, ".github", "copilot-instructions.md")
+            : path.join(app.path, "AGENTS.md");
         targets.push({ repoPath: app.path, savePath, label: app.name });
       }
     } else {
-      const savePath = type === "instructions"
-        ? path.join(repoPath, ".github", "copilot-instructions.md")
-        : path.join(repoPath, "AGENTS.md");
+      const savePath =
+        type === "instructions"
+          ? path.join(repoPath, ".github", "copilot-instructions.md")
+          : path.join(repoPath, "AGENTS.md");
       targets.push({ repoPath, savePath, label: path.basename(repoPath) });
     }
 
@@ -44,7 +50,7 @@ export async function generateCommand(type: string, repoPathArg: string | undefi
       console.log(`Generating ${type} for ${target.label}...`);
       try {
         const content = await generateCopilotInstructions({
-          repoPath: target.repoPath,
+          repoPath: target.repoPath
         });
         if (!content.trim()) {
           console.error(`  No content generated for ${target.label}.`);

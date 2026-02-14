@@ -6,10 +6,7 @@ import React, { useEffect, useState } from "react";
 import simpleGit from "simple-git";
 
 import { DEFAULT_MODEL } from "../config";
-import type {
-  AzureDevOpsOrg,
-  AzureDevOpsProject,
-  AzureDevOpsRepo} from "../services/azureDevops";
+import type { AzureDevOpsOrg, AzureDevOpsProject, AzureDevOpsRepo } from "../services/azureDevops";
 import {
   listOrganizations,
   listProjects,
@@ -94,7 +91,7 @@ export function BatchTuiAzure({ token, outputPath }: Props): React.JSX.Element {
     setMessage("Fetching projects...");
 
     try {
-      const selectedOrgs = Array.from(selectedOrgIndices).map(i => orgs[i]);
+      const selectedOrgs = Array.from(selectedOrgIndices).map((i) => orgs[i]);
       let allProjects: AzureDevOpsProject[] = [];
 
       for (let idx = 0; idx < selectedOrgs.length; idx++) {
@@ -120,7 +117,7 @@ export function BatchTuiAzure({ token, outputPath }: Props): React.JSX.Element {
     setMessage("Fetching repositories...");
 
     try {
-      const selectedProjects = Array.from(selectedProjectIndices).map(i => projects[i]);
+      const selectedProjects = Array.from(selectedProjectIndices).map((i) => projects[i]);
       let allRepos: AzureDevOpsRepo[] = [];
 
       for (let idx = 0; idx < selectedProjects.length; idx++) {
@@ -144,7 +141,8 @@ export function BatchTuiAzure({ token, outputPath }: Props): React.JSX.Element {
       const reposWithStatus = await checkReposForInstructions(
         token,
         uniqueRepos,
-        (checked, total) => setMessage(`Checking for existing instructions (${checked}/${total})...`)
+        (checked, total) =>
+          setMessage(`Checking for existing instructions (${checked}/${total})...`)
       );
 
       reposWithStatus.sort((a, b) => {
@@ -152,14 +150,16 @@ export function BatchTuiAzure({ token, outputPath }: Props): React.JSX.Element {
         return a.hasInstructions ? 1 : -1;
       });
 
-      const withInstructions = reposWithStatus.filter(r => r.hasInstructions).length;
+      const withInstructions = reposWithStatus.filter((r) => r.hasInstructions).length;
       const withoutInstructions = reposWithStatus.length - withInstructions;
 
       setRepos(reposWithStatus);
       setCursorIndex(0);
       setSelectedRepoIndices(new Set());
       setStatus("select-repos");
-      setMessage(`Found ${reposWithStatus.length} repos (${withoutInstructions} need instructions, ${withInstructions} already have them)`);
+      setMessage(
+        `Found ${reposWithStatus.length} repos (${withoutInstructions} need instructions, ${withInstructions} already have them)`
+      );
     } catch (error) {
       setStatus("error");
       setErrorMessage(error instanceof Error ? error.message : "Failed to fetch repositories");
@@ -167,7 +167,7 @@ export function BatchTuiAzure({ token, outputPath }: Props): React.JSX.Element {
   }
 
   async function processRepos() {
-    const selectedRepos = Array.from(selectedRepoIndices).map(i => repos[i]);
+    const selectedRepos = Array.from(selectedRepoIndices).map((i) => repos[i]);
     setStatus("processing");
     setCurrentRepoIndex(0);
     setResults([]);
@@ -177,7 +177,9 @@ export function BatchTuiAzure({ token, outputPath }: Props): React.JSX.Element {
     for (let i = 0; i < selectedRepos.length; i++) {
       const repo = selectedRepos[i];
       setCurrentRepoIndex(i);
-      setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ${repo.organization}/${repo.project}/${repo.name}: Cloning...`);
+      setProcessingMessage(
+        `[${i + 1}/${selectedRepos.length}] ${repo.organization}/${repo.project}/${repo.name}: Cloning...`
+      );
 
       try {
         const cacheRoot = path.join(process.cwd(), ".primer-cache");
@@ -200,27 +202,37 @@ export function BatchTuiAzure({ token, outputPath }: Props): React.JSX.Element {
           await git.remote(["set-url", "origin", repo.cloneUrl]);
         }
 
-        setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ${repo.organization}/${repo.project}/${repo.name}: Creating branch...`);
+        setProcessingMessage(
+          `[${i + 1}/${selectedRepos.length}] ${repo.organization}/${repo.project}/${repo.name}: Creating branch...`
+        );
         const branch = "primer/add-instructions";
         await checkoutBranch(repoPath, branch);
 
-        setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ${repo.organization}/${repo.project}/${repo.name}: Generating instructions...`);
+        setProcessingMessage(
+          `[${i + 1}/${selectedRepos.length}] ${repo.organization}/${repo.project}/${repo.name}: Generating instructions...`
+        );
         const timeoutMs = 120000;
         const instructionsPromise = generateCopilotInstructions({
           repoPath,
           model: DEFAULT_MODEL,
           onProgress: (msg) => {
-            setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ${repo.organization}/${repo.project}/${repo.name}: ${msg}`);
+            setProcessingMessage(
+              `[${i + 1}/${selectedRepos.length}] ${repo.organization}/${repo.project}/${repo.name}: ${msg}`
+            );
           }
         });
 
         let timer: ReturnType<typeof setTimeout>;
         const timeoutPromise = new Promise<string>((_, reject) => {
-          timer = setTimeout(() => reject(new Error("Generation timed out after 2 minutes")), timeoutMs);
+          timer = setTimeout(
+            () => reject(new Error("Generation timed out after 2 minutes")),
+            timeoutMs
+          );
         });
 
-        const instructions = await Promise.race([instructionsPromise, timeoutPromise])
-          .finally(() => clearTimeout(timer));
+        const instructions = await Promise.race([instructionsPromise, timeoutPromise]).finally(() =>
+          clearTimeout(timer)
+        );
         // Prevent unhandled rejection if the losing promise rejects later
         instructionsPromise.catch(() => {});
 
@@ -232,13 +244,19 @@ export function BatchTuiAzure({ token, outputPath }: Props): React.JSX.Element {
         await fs.mkdir(path.dirname(instructionsPath), { recursive: true });
         await fs.writeFile(instructionsPath, instructions, "utf8");
 
-        setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ${repo.organization}/${repo.project}/${repo.name}: Committing...`);
+        setProcessingMessage(
+          `[${i + 1}/${selectedRepos.length}] ${repo.organization}/${repo.project}/${repo.name}: Committing...`
+        );
         await commitAll(repoPath, "chore: add copilot instructions via Primer");
 
-        setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ${repo.organization}/${repo.project}/${repo.name}: Pushing...`);
+        setProcessingMessage(
+          `[${i + 1}/${selectedRepos.length}] ${repo.organization}/${repo.project}/${repo.name}: Pushing...`
+        );
         await pushBranch(repoPath, branch, token, "azure");
 
-        setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ${repo.organization}/${repo.project}/${repo.name}: Creating PR...`);
+        setProcessingMessage(
+          `[${i + 1}/${selectedRepos.length}] ${repo.organization}/${repo.project}/${repo.name}: Creating PR...`
+        );
         const prUrl = await createPullRequest({
           token,
           organization: repo.organization,
@@ -251,11 +269,19 @@ export function BatchTuiAzure({ token, outputPath }: Props): React.JSX.Element {
           targetBranch: repo.defaultBranch
         });
 
-        nextResults.push({ repo: `${repo.organization}/${repo.project}/${repo.name}`, success: true, prUrl });
+        nextResults.push({
+          repo: `${repo.organization}/${repo.project}/${repo.name}`,
+          success: true,
+          prUrl
+        });
         setResults([...nextResults]);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : "Unknown error";
-        nextResults.push({ repo: `${repo.organization}/${repo.project}/${repo.name}`, success: false, error: errorMsg });
+        nextResults.push({
+          repo: `${repo.organization}/${repo.project}/${repo.name}`,
+          success: false,
+          error: errorMsg
+        });
         setResults([...nextResults]);
       }
     }
@@ -276,11 +302,11 @@ export function BatchTuiAzure({ token, outputPath }: Props): React.JSX.Element {
 
     if (status === "select-orgs") {
       if (key.upArrow) {
-        setCursorIndex(prev => Math.max(0, prev - 1));
+        setCursorIndex((prev) => Math.max(0, prev - 1));
       } else if (key.downArrow) {
-        setCursorIndex(prev => Math.min(orgs.length - 1, prev + 1));
+        setCursorIndex((prev) => Math.min(orgs.length - 1, prev + 1));
       } else if (input === " ") {
-        setSelectedOrgIndices(prev => {
+        setSelectedOrgIndices((prev) => {
           const next = new Set(prev);
           if (next.has(cursorIndex)) {
             next.delete(cursorIndex);
@@ -290,7 +316,7 @@ export function BatchTuiAzure({ token, outputPath }: Props): React.JSX.Element {
           return next;
         });
       } else if (key.return && selectedOrgIndices.size > 0) {
-        loadProjects().catch(err => {
+        loadProjects().catch((err) => {
           setStatus("error");
           setErrorMessage(err instanceof Error ? err.message : "Failed to load projects");
         });
@@ -299,11 +325,11 @@ export function BatchTuiAzure({ token, outputPath }: Props): React.JSX.Element {
 
     if (status === "select-projects") {
       if (key.upArrow) {
-        setCursorIndex(prev => Math.max(0, prev - 1));
+        setCursorIndex((prev) => Math.max(0, prev - 1));
       } else if (key.downArrow) {
-        setCursorIndex(prev => Math.min(projects.length - 1, prev + 1));
+        setCursorIndex((prev) => Math.min(projects.length - 1, prev + 1));
       } else if (input === " ") {
-        setSelectedProjectIndices(prev => {
+        setSelectedProjectIndices((prev) => {
           const next = new Set(prev);
           if (next.has(cursorIndex)) {
             next.delete(cursorIndex);
@@ -313,7 +339,7 @@ export function BatchTuiAzure({ token, outputPath }: Props): React.JSX.Element {
           return next;
         });
       } else if (key.return && selectedProjectIndices.size > 0) {
-        loadRepos().catch(err => {
+        loadRepos().catch((err) => {
           setStatus("error");
           setErrorMessage(err instanceof Error ? err.message : "Failed to load repos");
         });
@@ -322,11 +348,11 @@ export function BatchTuiAzure({ token, outputPath }: Props): React.JSX.Element {
 
     if (status === "select-repos") {
       if (key.upArrow) {
-        setCursorIndex(prev => Math.max(0, prev - 1));
+        setCursorIndex((prev) => Math.max(0, prev - 1));
       } else if (key.downArrow) {
-        setCursorIndex(prev => Math.min(repos.length - 1, prev + 1));
+        setCursorIndex((prev) => Math.min(repos.length - 1, prev + 1));
       } else if (input === " ") {
-        setSelectedRepoIndices(prev => {
+        setSelectedRepoIndices((prev) => {
           const next = new Set(prev);
           if (next.has(cursorIndex)) {
             next.delete(cursorIndex);
@@ -343,13 +369,15 @@ export function BatchTuiAzure({ token, outputPath }: Props): React.JSX.Element {
         setSelectedRepoIndices(new Set(indicesWithoutInstructions));
       } else if (key.return && selectedRepoIndices.size > 0) {
         setStatus("confirm");
-        setMessage(`Ready to process ${selectedRepoIndices.size} repositories. Press Y to confirm, N to go back.`);
+        setMessage(
+          `Ready to process ${selectedRepoIndices.size} repositories. Press Y to confirm, N to go back.`
+        );
       }
     }
 
     if (status === "confirm") {
       if (input.toLowerCase() === "y") {
-        processRepos().catch(err => {
+        processRepos().catch((err) => {
           setStatus("error");
           setErrorMessage(err instanceof Error ? err.message : "Processing failed");
         });
@@ -419,14 +447,17 @@ export function BatchTuiAzure({ token, outputPath }: Props): React.JSX.Element {
                 <Text key={`${project.organization}/${project.id}`}>
                   <Text color={isCursor ? "cyan" : undefined}>{isCursor ? "❯ " : "  "}</Text>
                   <Text color={isSelected ? "green" : "gray"}>{isSelected ? "◉" : "○"} </Text>
-                  <Text>{project.organization}/{project.name}</Text>
+                  <Text>
+                    {project.organization}/{project.name}
+                  </Text>
                 </Text>
               );
             });
           })()}
           {projects.length > windowSize && (
             <Text color="gray" dimColor>
-              Showing {Math.min(windowSize, projects.length)} of {projects.length} • Use ↑↓ to scroll
+              Showing {Math.min(windowSize, projects.length)} of {projects.length} • Use ↑↓ to
+              scroll
             </Text>
           )}
         </Box>
@@ -444,7 +475,9 @@ export function BatchTuiAzure({ token, outputPath }: Props): React.JSX.Element {
                 <Text key={`${repo.organization}/${repo.project}/${repo.name}`}>
                   <Text color={isCursor ? "cyan" : undefined}>{isCursor ? "❯ " : "  "}</Text>
                   <Text color={isSelected ? "green" : "gray"}>{isSelected ? "◉" : "○"} </Text>
-                  <Text color={repo.hasInstructions ? "green" : "red"}>{repo.hasInstructions ? "✓" : "✗"} </Text>
+                  <Text color={repo.hasInstructions ? "green" : "red"}>
+                    {repo.hasInstructions ? "✓" : "✗"}{" "}
+                  </Text>
                   <Text color={repo.hasInstructions ? "gray" : undefined}>
                     {repo.organization}/{repo.project}/{repo.name}
                   </Text>
@@ -487,7 +520,8 @@ export function BatchTuiAzure({ token, outputPath }: Props): React.JSX.Element {
       {status === "complete" && (
         <Box flexDirection="column" marginTop={1}>
           <Text color="green" bold>
-            ✓ Batch complete: {results.filter(r => r.success).length} succeeded, {results.filter(r => !r.success).length} failed
+            ✓ Batch complete: {results.filter((r) => r.success).length} succeeded,{" "}
+            {results.filter((r) => !r.success).length} failed
           </Text>
           <Box flexDirection="column" marginTop={1}>
             {results.map((r) => (
@@ -503,20 +537,18 @@ export function BatchTuiAzure({ token, outputPath }: Props): React.JSX.Element {
 
       <Box marginTop={1}>
         {status === "select-orgs" && (
-          <Text color="cyan">Keys: [Space] Toggle  [Enter] Confirm  [Q] Quit</Text>
+          <Text color="cyan">Keys: [Space] Toggle [Enter] Confirm [Q] Quit</Text>
         )}
         {status === "select-projects" && (
-          <Text color="cyan">Keys: [Space] Toggle  [Enter] Confirm  [Q] Quit</Text>
+          <Text color="cyan">Keys: [Space] Toggle [Enter] Confirm [Q] Quit</Text>
         )}
         {status === "select-repos" && (
-          <Text color="cyan">Keys: [Space] Toggle  [A] Select Missing  [Enter] Confirm  [Q] Quit</Text>
+          <Text color="cyan">Keys: [Space] Toggle [A] Select Missing [Enter] Confirm [Q] Quit</Text>
         )}
         {status === "confirm" && (
-          <Text color="cyan">Keys: [Y] Yes, proceed  [N] Go back  [Q] Quit</Text>
+          <Text color="cyan">Keys: [Y] Yes, proceed [N] Go back [Q] Quit</Text>
         )}
-        {(status === "complete" || status === "error") && (
-          <Text color="cyan">Keys: [Q] Quit</Text>
-        )}
+        {(status === "complete" || status === "error") && <Text color="cyan">Keys: [Q] Quit</Text>}
       </Box>
     </Box>
   );

@@ -7,16 +7,22 @@ type VisualReportOptions = {
 };
 
 export function generateVisualReport(options: VisualReportOptions): string {
-  const { reports, title = "AI Readiness Report", generatedAt = new Date().toISOString() } = options;
+  const {
+    reports,
+    title = "AI Readiness Report",
+    generatedAt = new Date().toISOString()
+  } = options;
 
-  const successfulReports = reports.filter(r => !r.error);
-  const failedReports = reports.filter(r => r.error);
+  const successfulReports = reports.filter((r) => !r.error);
+  const failedReports = reports.filter((r) => r.error);
 
   const totalRepos = reports.length;
   const successfulRepos = successfulReports.length;
-  const avgLevel = successfulReports.length > 0
-    ? successfulReports.reduce((sum, r) => sum + r.report.achievedLevel, 0) / successfulReports.length
-    : 0;
+  const avgLevel =
+    successfulReports.length > 0
+      ? successfulReports.reduce((sum, r) => sum + r.report.achievedLevel, 0) /
+        successfulReports.length
+      : 0;
 
   const pillarStats = calculatePillarStats(successfulReports);
   const aiToolingData = calculateAiToolingData(successfulReports);
@@ -395,17 +401,21 @@ export function generateVisualReport(options: VisualReportOptions): string {
       <div class="card">
         <div class="card-title">Success Rate</div>
         <div class="card-value">${totalRepos > 0 ? Math.round((successfulRepos / totalRepos) * 100) : 0}%</div>
-        <div class="card-subtitle">${failedReports.length > 0 ? failedReports.length + ' failed' : 'All succeeded'}</div>
+        <div class="card-subtitle">${failedReports.length > 0 ? failedReports.length + " failed" : "All succeeded"}</div>
       </div>
     </div>
 
-    ${successfulReports.length > 0 ? `
+    ${
+      successfulReports.length > 0
+        ? `
     ${buildAiToolingHeroHtml(aiToolingData, successfulReports)}
 
     <div class="section">
       <h2 class="section-title">Pillar Performance</h2>
       <div class="pillar-grid">
-        ${pillarStats.map(pillar => `
+        ${pillarStats
+          .map(
+            (pillar) => `
           <div class="pillar-card">
             <div class="pillar-name">${escapeHtml(pillar.name)}</div>
             <div class="pillar-stats">
@@ -415,52 +425,62 @@ export function generateVisualReport(options: VisualReportOptions): string {
               <span>${pillar.passed}/${pillar.total} (${Math.round(pillar.passRate * 100)}%)</span>
             </div>
           </div>
-        `).join('')}
+        `
+          )
+          .join("")}
       </div>
     </div>
 
     <div class="section">
       <h2 class="section-title">Maturity Model</h2>
       <div class="maturity-descriptions">
-        ${[1, 2, 3, 4, 5].map(level => {
-          const count = successfulReports.filter(r => r.report.achievedLevel === level).length;
-          return `
-            <div class="maturity-item${count > 0 ? ' has-repos' : ''}">
+        ${[1, 2, 3, 4, 5]
+          .map((level) => {
+            const count = successfulReports.filter((r) => r.report.achievedLevel === level).length;
+            return `
+            <div class="maturity-item${count > 0 ? " has-repos" : ""}">
               <div class="maturity-header">
                 <span class="level-badge level-${level}">${level}</span>
                 <span class="maturity-name">${getLevelName(level)}</span>
-                <span class="maturity-count">${count} repo${count !== 1 ? 's' : ''}</span>
+                <span class="maturity-count">${count} repo${count !== 1 ? "s" : ""}</span>
               </div>
               <div class="maturity-desc">${getLevelDescription(level)}</div>
             </div>
           `;
-        }).join('')}
+          })
+          .join("")}
       </div>
 
       <h3 style="font-size: 14px; font-weight: 600; color: var(--color-fg-default); margin-top: 20px; margin-bottom: 12px;">Distribution</h3>
       <div class="level-distribution">
-        ${[1, 2, 3, 4, 5].map(level => {
-          const count = successfulReports.filter(r => r.report.achievedLevel === level).length;
-          const percent = successfulReports.length > 0 ? (count / successfulReports.length) * 100 : 0;
-          const barHeight = count > 0 ? Math.max(40, percent * 2) : 0;
-          return `
+        ${[1, 2, 3, 4, 5]
+          .map((level) => {
+            const count = successfulReports.filter((r) => r.report.achievedLevel === level).length;
+            const percent =
+              successfulReports.length > 0 ? (count / successfulReports.length) * 100 : 0;
+            const barHeight = count > 0 ? Math.max(40, percent * 2) : 0;
+            return `
             <div class="level-bar">
               <div class="level-bar-count">${count}</div>
-              <div class="level-bar-fill${count === 0 ? ' empty' : ''}" style="height: ${barHeight}px"></div>
+              <div class="level-bar-fill${count === 0 ? " empty" : ""}" style="height: ${barHeight}px"></div>
               <div class="level-bar-label">${level}<br>${getLevelName(level)}</div>
             </div>
           `;
-        }).join('')}
+          })
+          .join("")}
       </div>
     </div>
-    ` : ''}
+    `
+        : ""
+    }
 
     <div class="section">
       <h2 class="section-title">Repository Details</h2>
       <div class="repo-list">
-        ${reports.map(({ repo, report, error }) => {
-          if (error) {
-            return `
+        ${reports
+          .map(({ repo, report, error }) => {
+            if (error) {
+              return `
               <div class="repo-item error">
                 <div class="repo-header">
                   <div class="repo-name">${escapeHtml(repo)}</div>
@@ -469,9 +489,9 @@ export function generateVisualReport(options: VisualReportOptions): string {
                 <div class="error-message">${escapeHtml(error)}</div>
               </div>
             `;
-          }
+            }
 
-          return `
+            return `
             <div class="repo-item">
               <div class="repo-header">
                 <div class="repo-name">${escapeHtml(repo)}</div>
@@ -479,11 +499,12 @@ export function generateVisualReport(options: VisualReportOptions): string {
                   Maturity ${report.achievedLevel}: ${getLevelName(report.achievedLevel)}
                 </div>
               </div>
-              ${report.isMonorepo ? `<div style="color: var(--color-fg-muted); font-size: 12px; margin-bottom: 8px;">Monorepo &middot; ${report.apps.length} apps</div>` : ''}
+              ${report.isMonorepo ? `<div style="color: var(--color-fg-muted); font-size: 12px; margin-bottom: 8px;">Monorepo &middot; ${report.apps.length} apps</div>` : ""}
               <div class="repo-pillars">
-                ${report.pillars.map(pillar => {
-                  const pillarCriteria = report.criteria.filter(c => c.pillar === pillar.id);
-                  return `
+                ${report.pillars
+                  .map((pillar) => {
+                    const pillarCriteria = report.criteria.filter((c) => c.pillar === pillar.id);
+                    return `
                   <div class="repo-pillar">
                     <details>
                       <summary>
@@ -491,39 +512,53 @@ export function generateVisualReport(options: VisualReportOptions): string {
                         <span class="repo-pillar-value">${pillar.passed}/${pillar.total} (${Math.round(pillar.passRate * 100)}%)</span>
                       </summary>
                       <div class="pillar-criteria-list">
-                        ${pillarCriteria.map(c => `
+                        ${pillarCriteria
+                          .map(
+                            (c) => `
                           <div class="criterion-row">
                             <span>${escapeHtml(c.title)}</span>
-                            <span class="criterion-status ${c.status}">${c.status === 'pass' ? 'Pass' : c.status === 'fail' ? 'Fail' : 'Skip'}</span>
+                            <span class="criterion-status ${c.status}">${c.status === "pass" ? "Pass" : c.status === "fail" ? "Fail" : "Skip"}</span>
                           </div>
-                        `).join('')}
-                        ${pillarCriteria.length === 0 ? '<div class="criterion-row" style="color: var(--color-fg-subtle);">No criteria</div>' : ''}
+                        `
+                          )
+                          .join("")}
+                        ${pillarCriteria.length === 0 ? '<div class="criterion-row" style="color: var(--color-fg-subtle);">No criteria</div>' : ""}
                       </div>
                     </details>
                   </div>
                 `;
-                }).join('')}
+                  })
+                  .join("")}
               </div>
               ${getTopFixesHtml(report)}
             </div>
           `;
-        }).join('')}
+          })
+          .join("")}
       </div>
     </div>
 
-    ${failedReports.length > 0 ? `
+    ${
+      failedReports.length > 0
+        ? `
     <div class="section">
       <h2 class="section-title">Failed Repositories</h2>
       <div class="repo-list">
-        ${failedReports.map(({ repo, error }) => `
+        ${failedReports
+          .map(
+            ({ repo, error }) => `
           <div class="repo-item error">
             <div class="repo-name">${escapeHtml(repo)}</div>
-            <div class="error-message">${escapeHtml(error || 'Unknown error')}</div>
+            <div class="error-message">${escapeHtml(error || "Unknown error")}</div>
           </div>
-        `).join('')}
+        `
+          )
+          .join("")}
       </div>
     </div>
-    ` : ''}
+    `
+        : ""
+    }
 
     <div class="footer">
       <p>Generated with <a href="https://github.com/pierceboggan/primer">Primer</a> &middot; AI Readiness Tool</p>
@@ -592,7 +627,7 @@ function calculatePillarStats(reports: Array<{ repo: string; report: ReadinessRe
 
 function getTopFixesHtml(report: ReadinessReport): string {
   const failedCriteria = report.criteria
-    .filter(c => c.status === "fail")
+    .filter((c) => c.status === "fail")
     .sort((a, b) => {
       const impactWeight = { high: 3, medium: 2, low: 1 };
       const effortWeight = { low: 1, medium: 2, high: 3 };
@@ -610,13 +645,17 @@ function getTopFixesHtml(report: ReadinessReport): string {
     <div style="margin-top: 12px;">
       <div style="font-size: 12px; font-weight: 600; color: var(--color-fg-muted); margin-bottom: 6px;">Top Fixes Needed</div>
       <ul style="list-style: none; padding-left: 0; font-size: 12px;">
-        ${failedCriteria.map(c => `
+        ${failedCriteria
+          .map(
+            (c) => `
           <li style="margin-bottom: 4px; color: var(--color-fg-muted);">
-            <span style="color: ${c.impact === 'high' ? 'var(--color-danger-fg)' : c.impact === 'medium' ? 'var(--color-attention-fg)' : 'var(--color-fg-subtle)'};">&#9679;</span>
+            <span style="color: ${c.impact === "high" ? "var(--color-danger-fg)" : c.impact === "medium" ? "var(--color-attention-fg)" : "var(--color-fg-subtle)"};">&#9679;</span>
             <span style="color: var(--color-fg-default);">${escapeHtml(c.title)}</span>
             <span style="color: var(--color-fg-subtle);">${c.impact} impact, ${c.effort} effort</span>
           </li>
-        `).join('')}
+        `
+          )
+          .join("")}
       </ul>
     </div>
   `;
@@ -669,11 +708,13 @@ type AiToolingData = {
   passRate: number;
 };
 
-function calculateAiToolingData(reports: Array<{ repo: string; report: ReadinessReport }>): AiToolingData {
+function calculateAiToolingData(
+  reports: Array<{ repo: string; report: ReadinessReport }>
+): AiToolingData {
   const criterionMap = new Map<string, AiToolingCriterionSummary>();
 
   for (const { report } of reports) {
-    const aiCriteria = report.criteria.filter(c => c.pillar === "ai-tooling");
+    const aiCriteria = report.criteria.filter((c) => c.pillar === "ai-tooling");
     for (const c of aiCriteria) {
       const existing = criterionMap.get(c.id);
       if (existing) {
@@ -694,13 +735,13 @@ function calculateAiToolingData(reports: Array<{ repo: string; report: Readiness
     }
   }
 
-  const criteria = Array.from(criterionMap.values()).map(c => ({
+  const criteria = Array.from(criterionMap.values()).map((c) => ({
     ...c,
     status: (c.passCount / c.totalRepos >= 0.5 ? "pass" : "fail") as "pass" | "fail",
     evidence: [...new Set(c.evidence)]
   }));
 
-  const passed = criteria.filter(c => c.status === "pass").length;
+  const passed = criteria.filter((c) => c.status === "pass").length;
   return {
     criteria,
     passed,
@@ -733,7 +774,10 @@ function getAiCriterionIcon(id: string): string {
   return icons[id] || "&#128295;";
 }
 
-function buildAiToolingHeroHtml(data: AiToolingData, reports: Array<{ repo: string; report: ReadinessReport }>): string {
+function buildAiToolingHeroHtml(
+  data: AiToolingData,
+  reports: Array<{ repo: string; report: ReadinessReport }>
+): string {
   if (data.criteria.length === 0) return "";
 
   const pct = Math.round(data.passRate * 100);
@@ -741,51 +785,63 @@ function buildAiToolingHeroHtml(data: AiToolingData, reports: Array<{ repo: stri
   const scoreLabel = getAiScoreLabel(data.passRate);
 
   const multiRepo = reports.length > 1;
-  const perRepoHtml = multiRepo ? `
+  const perRepoHtml = multiRepo
+    ? `
     <div style="margin-top: 16px; border-top: 1px solid var(--color-border-muted); padding-top: 12px;">
       <div style="font-size: 12px; font-weight: 600; color: var(--color-fg-muted); margin-bottom: 8px;">Per Repository</div>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 6px;">
-        ${reports.map(({ repo, report }) => {
-          const aiPillar = report.pillars.find(p => p.id === "ai-tooling");
-          const repoPct = aiPillar ? Math.round(aiPillar.passRate * 100) : 0;
-          const repoPass = aiPillar?.passed ?? 0;
-          const repoTotal = aiPillar?.total ?? 0;
-          return `<div style="display: flex; justify-content: space-between; padding: 6px 10px; background: var(--color-canvas-default); border: 1px solid var(--color-border-muted); border-radius: 6px; font-size: 12px;">
+        ${reports
+          .map(({ repo, report }) => {
+            const aiPillar = report.pillars.find((p) => p.id === "ai-tooling");
+            const repoPct = aiPillar ? Math.round(aiPillar.passRate * 100) : 0;
+            const repoPass = aiPillar?.passed ?? 0;
+            const repoTotal = aiPillar?.total ?? 0;
+            return `<div style="display: flex; justify-content: space-between; padding: 6px 10px; background: var(--color-canvas-default); border: 1px solid var(--color-border-muted); border-radius: 6px; font-size: 12px;">
             <span style="color: var(--color-accent-fg);">${escapeHtml(repo)}</span>
-            <span style="font-weight: 600; color: ${repoPct >= 60 ? 'var(--color-success-fg)' : repoPct >= 30 ? 'var(--color-attention-fg)' : 'var(--color-danger-fg)'};">${repoPass}/${repoTotal} (${repoPct}%)</span>
+            <span style="font-weight: 600; color: ${repoPct >= 60 ? "var(--color-success-fg)" : repoPct >= 30 ? "var(--color-attention-fg)" : "var(--color-danger-fg)"};">${repoPass}/${repoTotal} (${repoPct}%)</span>
           </div>`;
-        }).join('')}
+          })
+          .join("")}
       </div>
     </div>
-  ` : '';
+  `
+    : "";
 
   return `
     <div class="ai-hero">
       <h2 class="section-title">AI Tooling Readiness</h2>
-      <p class="ai-hero-subtitle">How well prepared ${multiRepo ? 'your repositories are' : 'this repository is'} for AI-assisted development</p>
+      <p class="ai-hero-subtitle">How well prepared ${multiRepo ? "your repositories are" : "this repository is"} for AI-assisted development</p>
 
       <div class="ai-score-header">
         <div class="ai-score-ring ${scoreClass}">${pct}%</div>
         <div class="ai-score-detail">
           <div class="ai-score-label">${scoreLabel}</div>
-          <div class="ai-score-desc">${data.passed} of ${data.total} AI tooling checks passing${multiRepo ? ` across ${reports.length} repositories` : ''}</div>
+          <div class="ai-score-desc">${data.passed} of ${data.total} AI tooling checks passing${multiRepo ? ` across ${reports.length} repositories` : ""}</div>
         </div>
       </div>
 
       <div class="ai-criteria-grid">
-        ${data.criteria.map(c => `
+        ${data.criteria
+          .map(
+            (c) => `
           <div class="ai-criterion">
             <div class="ai-criterion-icon ${c.status}">
-              ${c.status === 'pass' ? '&#10003;' : '&#10007;'}
+              ${c.status === "pass" ? "&#10003;" : "&#10007;"}
             </div>
             <div class="ai-criterion-text">
               <div class="ai-criterion-title">${getAiCriterionIcon(c.id)} ${escapeHtml(c.title)}</div>
-              <div class="ai-criterion-reason">${c.status === 'pass'
-                ? (multiRepo ? `${c.passCount}/${c.totalRepos} repos` : 'Detected')
-                : escapeHtml(c.reason)}</div>
+              <div class="ai-criterion-reason">${
+                c.status === "pass"
+                  ? multiRepo
+                    ? `${c.passCount}/${c.totalRepos} repos`
+                    : "Detected"
+                  : escapeHtml(c.reason)
+              }</div>
             </div>
           </div>
-        `).join('')}
+        `
+          )
+          .join("")}
       </div>
       ${perRepoHtml}
     </div>
@@ -800,5 +856,5 @@ function escapeHtml(text: string): string {
     '"': "&quot;",
     "'": "&#039;"
   };
-  return text.replace(/[&<>"']/g, m => map[m]);
+  return text.replace(/[&<>"']/g, (m) => map[m]);
 }

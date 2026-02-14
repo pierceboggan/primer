@@ -11,8 +11,7 @@ export type GenerateOptions = {
   force: boolean;
 };
 
-export async function generateConfigs(options: GenerateOptions): Promise<{ summary: string }>
-{
+export async function generateConfigs(options: GenerateOptions): Promise<{ summary: string }> {
   const { repoPath, analysis, selections, force } = options;
   const actions: string[] = [];
 
@@ -31,7 +30,6 @@ export async function generateConfigs(options: GenerateOptions): Promise<{ summa
     const result = await safeWriteFile(filePath, content, force);
     actions.push(result);
   }
-
 
   const summary = actions.length ? `\n${actions.join("\n")}` : "No changes made.";
   return { summary };
@@ -76,9 +74,7 @@ function renderVscodeSettings(analysis: RepoAnalysis): string {
       "github.copilot.chat.codeGeneration.instructions": [
         { file: ".github/copilot-instructions.md" }
       ],
-      "github.copilot.chat.reviewSelection.instructions": [
-        { text: reviewFocus }
-      ],
+      "github.copilot.chat.reviewSelection.instructions": [{ text: reviewFocus }],
       "chat.promptFiles": true,
       "chat.mcp.enabled": true
     },

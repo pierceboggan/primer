@@ -17,32 +17,75 @@ function makeReport(overrides: Partial<ReadinessReport> = {}): ReadinessReport {
       { id: "dev-environment", name: "Dev Environment", passed: 1, total: 2, passRate: 0.5 },
       { id: "code-quality", name: "Code Quality", passed: 1, total: 1, passRate: 1 },
       { id: "observability", name: "Observability", passed: 0, total: 1, passRate: 0 },
-      { id: "security-governance", name: "Security & Governance", passed: 2, total: 4, passRate: 0.5 },
-      { id: "ai-tooling", name: "AI Tooling", passed: 1, total: 4, passRate: 0.25 },
+      {
+        id: "security-governance",
+        name: "Security & Governance",
+        passed: 2,
+        total: 4,
+        passRate: 0.5
+      },
+      { id: "ai-tooling", name: "AI Tooling", passed: 1, total: 4, passRate: 0.25 }
     ],
     levels: [
       { level: 1, name: "Functional", passed: 5, total: 6, passRate: 0.83, achieved: true },
       { level: 2, name: "Documented", passed: 3, total: 6, passRate: 0.5, achieved: false },
       { level: 3, name: "Standardized", passed: 1, total: 4, passRate: 0.25, achieved: false },
       { level: 4, name: "Optimized", passed: 0, total: 0, passRate: 0, achieved: false },
-      { level: 5, name: "Autonomous", passed: 0, total: 0, passRate: 0, achieved: false },
+      { level: 5, name: "Autonomous", passed: 0, total: 0, passRate: 0, achieved: false }
     ],
     achievedLevel: 1,
     criteria: [
-      { id: "lint-config", title: "Linting configured", pillar: "style-validation", level: 1, scope: "repo", impact: "high", effort: "low", status: "pass" },
-      { id: "readme", title: "README present", pillar: "documentation", level: 1, scope: "repo", impact: "high", effort: "low", status: "pass" },
-      { id: "custom-instructions", title: "Custom AI instructions", pillar: "ai-tooling", level: 1, scope: "repo", impact: "high", effort: "low", status: "pass" },
-      { id: "mcp-config", title: "MCP config present", pillar: "ai-tooling", level: 2, scope: "repo", impact: "high", effort: "low", status: "fail", reason: "Missing MCP config." },
+      {
+        id: "lint-config",
+        title: "Linting configured",
+        pillar: "style-validation",
+        level: 1,
+        scope: "repo",
+        impact: "high",
+        effort: "low",
+        status: "pass"
+      },
+      {
+        id: "readme",
+        title: "README present",
+        pillar: "documentation",
+        level: 1,
+        scope: "repo",
+        impact: "high",
+        effort: "low",
+        status: "pass"
+      },
+      {
+        id: "custom-instructions",
+        title: "Custom AI instructions",
+        pillar: "ai-tooling",
+        level: 1,
+        scope: "repo",
+        impact: "high",
+        effort: "low",
+        status: "pass"
+      },
+      {
+        id: "mcp-config",
+        title: "MCP config present",
+        pillar: "ai-tooling",
+        level: 2,
+        scope: "repo",
+        impact: "high",
+        effort: "low",
+        status: "fail",
+        reason: "Missing MCP config."
+      }
     ],
     extras: [],
-    ...overrides,
+    ...overrides
   };
 }
 
 describe("generateVisualReport", () => {
   it("returns valid HTML", () => {
     const html = generateVisualReport({
-      reports: [{ repo: "test-repo", report: makeReport() }],
+      reports: [{ repo: "test-repo", report: makeReport() }]
     });
 
     expect(html).toContain("<!DOCTYPE html>");
@@ -52,7 +95,7 @@ describe("generateVisualReport", () => {
   it("includes the report title", () => {
     const html = generateVisualReport({
       reports: [{ repo: "test-repo", report: makeReport() }],
-      title: "My Custom Report",
+      title: "My Custom Report"
     });
 
     expect(html).toContain("My Custom Report");
@@ -60,7 +103,7 @@ describe("generateVisualReport", () => {
 
   it("includes repo name", () => {
     const html = generateVisualReport({
-      reports: [{ repo: "my-repo", report: makeReport() }],
+      reports: [{ repo: "my-repo", report: makeReport() }]
     });
 
     expect(html).toContain("my-repo");
@@ -68,7 +111,7 @@ describe("generateVisualReport", () => {
 
   it("includes pillar names", () => {
     const html = generateVisualReport({
-      reports: [{ repo: "test-repo", report: makeReport() }],
+      reports: [{ repo: "test-repo", report: makeReport() }]
     });
 
     expect(html).toContain("Style &amp; Validation");
@@ -78,7 +121,7 @@ describe("generateVisualReport", () => {
 
   it("includes maturity level badge", () => {
     const html = generateVisualReport({
-      reports: [{ repo: "test-repo", report: makeReport({ achievedLevel: 2 }) }],
+      reports: [{ repo: "test-repo", report: makeReport({ achievedLevel: 2 }) }]
     });
 
     expect(html).toContain("Maturity 2");
@@ -87,7 +130,7 @@ describe("generateVisualReport", () => {
 
   it("includes AI Tooling Readiness hero section", () => {
     const html = generateVisualReport({
-      reports: [{ repo: "test-repo", report: makeReport() }],
+      reports: [{ repo: "test-repo", report: makeReport() }]
     });
 
     expect(html).toContain("AI Tooling Readiness");
@@ -95,7 +138,7 @@ describe("generateVisualReport", () => {
 
   it("includes maturity model descriptions", () => {
     const html = generateVisualReport({
-      reports: [{ repo: "test-repo", report: makeReport() }],
+      reports: [{ repo: "test-repo", report: makeReport() }]
     });
 
     expect(html).toContain("Functional");
@@ -107,7 +150,7 @@ describe("generateVisualReport", () => {
 
   it("includes theme toggle", () => {
     const html = generateVisualReport({
-      reports: [{ repo: "test-repo", report: makeReport() }],
+      reports: [{ repo: "test-repo", report: makeReport() }]
     });
 
     expect(html).toContain("toggleTheme");
@@ -116,7 +159,7 @@ describe("generateVisualReport", () => {
 
   it("includes light theme CSS variables", () => {
     const html = generateVisualReport({
-      reports: [{ repo: "test-repo", report: makeReport() }],
+      reports: [{ repo: "test-repo", report: makeReport() }]
     });
 
     expect(html).toContain('[data-theme="light"]');
@@ -125,7 +168,7 @@ describe("generateVisualReport", () => {
 
   it("includes GitHub logo SVG", () => {
     const html = generateVisualReport({
-      reports: [{ repo: "test-repo", report: makeReport() }],
+      reports: [{ repo: "test-repo", report: makeReport() }]
     });
 
     expect(html).toContain("header-logo");
@@ -136,8 +179,8 @@ describe("generateVisualReport", () => {
     const html = generateVisualReport({
       reports: [
         { repo: "good-repo", report: makeReport() },
-        { repo: "bad-repo", report: makeReport(), error: "Clone failed" },
-      ],
+        { repo: "bad-repo", report: makeReport(), error: "Clone failed" }
+      ]
     });
 
     expect(html).toContain("bad-repo");
@@ -148,8 +191,8 @@ describe("generateVisualReport", () => {
     const html = generateVisualReport({
       reports: [
         { repo: "repo-1", report: makeReport() },
-        { repo: "repo-2", report: makeReport() },
-      ],
+        { repo: "repo-2", report: makeReport() }
+      ]
     });
 
     // Total repos should be 2
@@ -158,7 +201,7 @@ describe("generateVisualReport", () => {
 
   it("includes top fixes for failing criteria", () => {
     const html = generateVisualReport({
-      reports: [{ repo: "test-repo", report: makeReport() }],
+      reports: [{ repo: "test-repo", report: makeReport() }]
     });
 
     expect(html).toContain("Top Fixes");
@@ -168,12 +211,21 @@ describe("generateVisualReport", () => {
   it("shows all criteria passing when all pass", () => {
     const report = makeReport({
       criteria: [
-        { id: "lint-config", title: "Linting configured", pillar: "style-validation", level: 1, scope: "repo", impact: "high", effort: "low", status: "pass" },
-      ],
+        {
+          id: "lint-config",
+          title: "Linting configured",
+          pillar: "style-validation",
+          level: 1,
+          scope: "repo",
+          impact: "high",
+          effort: "low",
+          status: "pass"
+        }
+      ]
     });
 
     const html = generateVisualReport({
-      reports: [{ repo: "test-repo", report }],
+      reports: [{ repo: "test-repo", report }]
     });
 
     expect(html).toContain("All criteria passing");
@@ -181,7 +233,7 @@ describe("generateVisualReport", () => {
 
   it("escapes HTML in repo names", () => {
     const html = generateVisualReport({
-      reports: [{ repo: '<script>alert("xss")</script>', report: makeReport() }],
+      reports: [{ repo: '<script>alert("xss")</script>', report: makeReport() }]
     });
 
     expect(html).not.toContain('<script>alert("xss")</script>');

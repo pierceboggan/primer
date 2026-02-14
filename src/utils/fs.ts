@@ -5,7 +5,11 @@ export async function ensureDir(dirPath: string): Promise<void> {
   await fs.mkdir(dirPath, { recursive: true });
 }
 
-export async function safeWriteFile(filePath: string, content: string, force: boolean): Promise<string> {
+export async function safeWriteFile(
+  filePath: string,
+  content: string,
+  force: boolean
+): Promise<string> {
   const resolved = path.resolve(filePath);
 
   // Reject symlinks to prevent writing through them to unintended locations

@@ -30,7 +30,7 @@ export async function listCopilotModels(): Promise<string[]> {
 }
 
 async function findCopilotCliPath(): Promise<string> {
-  if (cachedCliPath && (Date.now() - cachedCliPathTimestamp) < CLI_CACHE_TTL_MS) {
+  if (cachedCliPath && Date.now() - cachedCliPathTimestamp < CLI_CACHE_TTL_MS) {
     return cachedCliPath;
   }
 
@@ -99,13 +99,16 @@ async function findCopilotCliPath(): Promise<string> {
     }
   }
 
-  const platformHint = process.platform === "win32"
-    ? " Searched APPDATA and VS Code extension paths."
-    : process.platform === "linux"
-      ? " Searched ~/.config/Code and VS Code extension paths."
-      : " Searched ~/Library/Application Support/Code and VS Code extension paths.";
+  const platformHint =
+    process.platform === "win32"
+      ? " Searched APPDATA and VS Code extension paths."
+      : process.platform === "linux"
+        ? " Searched ~/.config/Code and VS Code extension paths."
+        : " Searched ~/Library/Application Support/Code and VS Code extension paths.";
 
-  throw new Error(`Copilot CLI not found. Install GitHub Copilot Chat extension in VS Code.${platformHint}`);
+  throw new Error(
+    `Copilot CLI not found. Install GitHub Copilot Chat extension in VS Code.${platformHint}`
+  );
 }
 
 function extractModelChoices(helpText: string): string[] {
