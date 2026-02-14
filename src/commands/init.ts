@@ -1,19 +1,23 @@
-import path from "path";
 import fs from "fs/promises";
+import path from "path";
+
 import { checkbox, select } from "@inquirer/prompts";
+
 import { analyzeRepo } from "../services/analyzer";
-import { generateConfigs } from "../services/generator";
-import { GitHubRepo, listAccessibleRepos } from "../services/github";
-import {
+import type {
   AzureDevOpsOrg,
   AzureDevOpsProject,
-  AzureDevOpsRepo,
+  AzureDevOpsRepo} from "../services/azureDevops";
+import {
   getAzureDevOpsToken,
   listOrganizations,
   listProjects,
   listRepos
 } from "../services/azureDevops";
+import { generateConfigs } from "../services/generator";
 import { buildAuthedUrl, cloneRepo, isGitRepo } from "../services/git";
+import type { GitHubRepo} from "../services/github";
+import { listAccessibleRepos } from "../services/github";
 import { generateCopilotInstructions } from "../services/instructions";
 import { ensureDir, validateCachePath } from "../utils/fs";
 import { prettyPrintSummary } from "../utils/logger";

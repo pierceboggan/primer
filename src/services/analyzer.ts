@@ -1,8 +1,11 @@
 import fs from "fs/promises";
 import path from "path";
+
 import fg from "fast-glob";
-import { isGitRepo } from "./git";
+
 import { fileExists, safeReadDir, readJson } from "../utils/fs";
+
+import { isGitRepo } from "./git";
 
 export type RepoApp = {
   name: string;

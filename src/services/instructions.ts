@@ -1,6 +1,7 @@
-import { assertCopilotCliReady } from "./copilot";
 import { DEFAULT_MODEL } from "../config";
 import { withCwd } from "../utils/cwd";
+
+import { assertCopilotCliReady } from "./copilot";
 
 type GenerateInstructionsOptions = {
   repoPath: string;

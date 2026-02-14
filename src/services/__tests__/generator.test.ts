@@ -1,10 +1,11 @@
 import fs from "fs/promises";
 import os from "os";
 import path from "path";
+
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { generateConfigs } from "../generator";
 import type { RepoAnalysis } from "../analyzer";
+import { generateConfigs } from "../generator";
 
 describe("generateConfigs", () => {
   let tmpDir: string;

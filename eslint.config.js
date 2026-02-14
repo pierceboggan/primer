@@ -5,12 +5,13 @@ import eslintConfigPrettier from "eslint-config-prettier";
 import importPlugin from "eslint-plugin-import";
 import nPlugin from "eslint-plugin-n";
 import promisePlugin from "eslint-plugin-promise";
+import globals from "globals";
 
 const sourceGlobs = ["**/*.{ts,tsx,js,jsx}"];
 
 export default [
   {
-    ignores: ["dist/**", "node_modules/**", "coverage/**"]
+    ignores: ["dist/**", "node_modules/**", "coverage/**", "eslint.config.js", "*.config.ts"]
   },
   js.configs.recommended,
   {
@@ -21,6 +22,9 @@ export default [
         project: "./tsconfig.json",
         sourceType: "module",
         ecmaVersion: "latest"
+      },
+      globals: {
+        ...globals.node
       }
     },
     plugins: {
@@ -30,7 +34,8 @@ export default [
       promise: promisePlugin
     },
     rules: {
-      "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "destructuredArrayIgnorePattern": "^_" }],
       "@typescript-eslint/consistent-type-imports": ["warn", { "prefer": "type-imports" }],
       "import/order": [
         "warn",

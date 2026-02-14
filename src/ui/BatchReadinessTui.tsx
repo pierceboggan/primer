@@ -1,20 +1,25 @@
-import React, { useEffect, useState } from "react";
-import { Box, Text, useApp, useInput } from "ink";
-import path from "path";
 import fs from "fs/promises";
 import os from "os";
+import path from "path";
+
+import { Box, Text, useApp, useInput } from "ink";
+import React, { useEffect, useState } from "react";
 import simpleGit from "simple-git";
-import {
+
+import { buildAuthedUrl, cloneRepo } from "../services/git";
+import type {
   GitHubOrg,
-  GitHubRepo,
+  GitHubRepo} from "../services/github";
+import {
   listUserOrgs,
   listOrgRepos,
   listAccessibleRepos
 } from "../services/github";
-import { buildAuthedUrl, cloneRepo } from "../services/git";
-import { runReadinessReport, ReadinessReport } from "../services/readiness";
+import type { ReadinessReport } from "../services/readiness";
+import { runReadinessReport } from "../services/readiness";
 import { generateVisualReport } from "../services/visualReport";
 import { ensureDir } from "../utils/fs";
+
 import { StaticBanner } from "./AnimatedBanner";
 
 type Props = {

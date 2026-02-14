@@ -1,9 +1,10 @@
-import React from "react";
 import { render } from "ink";
-import { BatchTui } from "../ui/BatchTui";
-import { getGitHubToken } from "../services/github";
-import { BatchTuiAzure } from "../ui/BatchTuiAzure";
+import React from "react";
+
 import { getAzureDevOpsToken } from "../services/azureDevops";
+import { getGitHubToken } from "../services/github";
+import { BatchTui } from "../ui/BatchTui";
+import { BatchTuiAzure } from "../ui/BatchTuiAzure";
 
 type BatchOptions = {
   output?: string;

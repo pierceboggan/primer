@@ -1,7 +1,11 @@
 import fs from "fs/promises";
 import path from "path";
-import { analyzeRepo, RepoApp, RepoAnalysis } from "./analyzer";
+
 import { fileExists, safeReadDir, readJson } from "../utils/fs";
+
+import type { RepoApp, RepoAnalysis } from "./analyzer";
+import { analyzeRepo } from "./analyzer";
+
 
 export type ReadinessPillar =
   | "style-validation"

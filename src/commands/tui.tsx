@@ -1,6 +1,8 @@
 import path from "path";
-import React from "react";
+
 import { render } from "ink";
+import React from "react";
+
 import { PrimerTui } from "../ui/tui";
 
 type TuiOptions = {

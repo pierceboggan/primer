@@ -1,6 +1,8 @@
 import path from "path";
-import { RepoAnalysis } from "./analyzer";
+
 import { ensureDir, safeWriteFile } from "../utils/fs";
+
+import type { RepoAnalysis } from "./analyzer";
 
 export type GenerateOptions = {
   repoPath: string;

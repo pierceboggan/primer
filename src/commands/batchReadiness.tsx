@@ -1,7 +1,8 @@
-import React from "react";
 import { render } from "ink";
-import { BatchReadinessTui } from "../ui/BatchReadinessTui";
+import React from "react";
+
 import { getGitHubToken } from "../services/github";
+import { BatchReadinessTui } from "../ui/BatchReadinessTui";
 
 type BatchReadinessOptions = {
   output?: string;

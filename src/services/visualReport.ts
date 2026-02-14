@@ -1,5 +1,4 @@
-import path from "path";
-import { ReadinessReport, ReadinessCriterionResult } from "./readiness";
+import type { ReadinessReport } from "./readiness";
 
 type VisualReportOptions = {
   reports: Array<{ repo: string; report: ReadinessReport; error?: string }>;

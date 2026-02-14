@@ -1,6 +1,7 @@
-import { assertCopilotCliReady } from "./copilot";
 import { DEFAULT_MODEL } from "../config";
 import { withCwd } from "../utils/cwd";
+
+import { assertCopilotCliReady } from "./copilot";
 
 const EVAL_SCAFFOLD_TIMEOUT_MS = 600000;
 const EVAL_SCAFFOLD_RECOVERY_TIMEOUT_MS = 90000;
@@ -25,7 +26,7 @@ type EvalScaffoldOptions = {
   repoPath: string;
   count: number;
   model?: string;
-  onProgress?: (_message: string) => void;
+  onProgress?: (message: string) => void;
 };
 
 export async function generateEvalScaffold(options: EvalScaffoldOptions): Promise<EvalConfig> {

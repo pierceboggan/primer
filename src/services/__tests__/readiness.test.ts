@@ -1,9 +1,10 @@
 import fs from "fs/promises";
 import os from "os";
 import path from "path";
+
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { runReadinessReport, type ReadinessReport } from "../readiness";
+import { runReadinessReport } from "../readiness";
 
 describe("runReadinessReport", () => {
   let repoPath: string;

@@ -1,18 +1,19 @@
-import path from "path";
 import fs from "fs/promises";
+import path from "path";
+
+import { DEFAULT_MODEL } from "../config";
 import { analyzeRepo } from "../services/analyzer";
-import { generateConfigs } from "../services/generator";
-import { createPullRequest, getRepo } from "../services/github";
-import { generateCopilotInstructions } from "../services/instructions";
 import {
   createPullRequest as createAzurePullRequest,
   getAzureDevOpsToken,
   getRepo as getAzureRepo
 } from "../services/azureDevops";
+import { generateConfigs } from "../services/generator";
 import { buildAuthedUrl, checkoutBranch, cloneRepo, commitAll, isGitRepo, pushBranch } from "../services/git";
+import { createPullRequest, getRepo } from "../services/github";
+import { generateCopilotInstructions } from "../services/instructions";
 import { ensureDir, validateCachePath } from "../utils/fs";
 import { buildConfigsPrBody, buildInstructionsPrBody } from "../utils/pr";
-import { DEFAULT_MODEL } from "../config";
 
 type PrOptions = {
   branch?: string;

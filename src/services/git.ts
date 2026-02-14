@@ -1,6 +1,8 @@
 import fs from "fs/promises";
 import path from "path";
-import simpleGit, { SimpleGitProgressEvent } from "simple-git";
+
+import type { SimpleGitProgressEvent } from "simple-git";
+import simpleGit from "simple-git";
 
 export async function isGitRepo(repoPath: string): Promise<boolean> {
   try {

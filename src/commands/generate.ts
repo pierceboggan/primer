@@ -1,5 +1,6 @@
-import path from "path";
 import fs from "fs/promises";
+import path from "path";
+
 import { analyzeRepo } from "../services/analyzer";
 import { generateConfigs } from "../services/generator";
 import { generateCopilotInstructions } from "../services/instructions";

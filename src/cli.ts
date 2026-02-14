@@ -1,13 +1,14 @@
 import { Command } from "commander";
-import { initCommand } from "./commands/init";
-import { generateCommand } from "./commands/generate";
-import { prCommand } from "./commands/pr";
-import { evalCommand } from "./commands/eval";
-import { tuiCommand } from "./commands/tui";
-import { instructionsCommand } from "./commands/instructions";
+
 import { batchCommand } from "./commands/batch";
-import { readinessCommand } from "./commands/readiness";
 import { batchReadinessCommand } from "./commands/batchReadiness";
+import { evalCommand } from "./commands/eval";
+import { generateCommand } from "./commands/generate";
+import { initCommand } from "./commands/init";
+import { instructionsCommand } from "./commands/instructions";
+import { prCommand } from "./commands/pr";
+import { readinessCommand } from "./commands/readiness";
+import { tuiCommand } from "./commands/tui";
 import { DEFAULT_MODEL, DEFAULT_JUDGE_MODEL } from "./config";
 
 export function runCli(argv: string[]): void {

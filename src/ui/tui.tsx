@@ -1,18 +1,26 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Box, Key, Text, useApp, useInput } from "ink";
 import fs from "fs/promises";
 import path from "path";
-import { generateCopilotInstructions } from "../services/instructions";
-import { runEval, type EvalResult } from "../services/evaluator";
-import { generateEvalScaffold } from "../services/evalScaffold";
+
+import type { Key} from "ink";
+import { Box, Text, useApp, useInput } from "ink";
+import React, { useEffect, useMemo, useState } from "react";
+
+
+import type { RepoApp } from "../services/analyzer";
+import { analyzeRepo } from "../services/analyzer";
+import { getAzureDevOpsToken } from "../services/azureDevops";
 import { listCopilotModels } from "../services/copilot";
+import { generateEvalScaffold } from "../services/evalScaffold";
+import type { EvalConfig } from "../services/evalScaffold";
+import { runEval, type EvalResult } from "../services/evaluator";
+import { getGitHubToken } from "../services/github";
+import { generateCopilotInstructions } from "../services/instructions";
+import { safeWriteFile, buildTimestampedName } from "../utils/fs";
+
 import { AnimatedBanner, StaticBanner } from "./AnimatedBanner";
 import { BatchTui } from "./BatchTui";
 import { BatchTuiAzure } from "./BatchTuiAzure";
-import { getGitHubToken } from "../services/github";
-import { getAzureDevOpsToken } from "../services/azureDevops";
-import { safeWriteFile, buildTimestampedName } from "../utils/fs";
-import { analyzeRepo, RepoApp } from "../services/analyzer";
+
 
 type Props = {
   repoPath: string;
@@ -44,8 +52,6 @@ type LogEntry = {
   type: "info" | "success" | "error" | "progress";
   time: string;
 };
-
-import type { EvalConfig } from "../services/evalScaffold";
 
 const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 
@@ -157,7 +163,7 @@ export function PrimerTui({ repoPath, skipAnimation = false }: Props): React.JSX
     return index === -1 ? 0 : index;
   };
 
-  const openModelPicker = (target: "eval" | "judge"): void => {
+  const _openModelPicker = (target: "eval" | "judge"): void => {
     if (!availableModels.length) {
       setMessage("No Copilot CLI models detected; using defaults.");
       return;

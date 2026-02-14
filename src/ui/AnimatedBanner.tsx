@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
 import { Box, Text } from "ink";
+import React, { useState, useEffect } from "react";
 
 /**
  * Animation frames for the PRIMER banner fly-in effect.

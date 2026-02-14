@@ -1,18 +1,22 @@
-import React, { useEffect, useState } from "react";
-import { Box, Text, useApp, useInput } from "ink";
-import path from "path";
 import fs from "fs/promises";
-import {
+import path from "path";
+
+import { Box, Text, useApp, useInput } from "ink";
+import React, { useEffect, useState } from "react";
+import simpleGit from "simple-git";
+
+import { DEFAULT_MODEL } from "../config";
+import type {
   AzureDevOpsOrg,
   AzureDevOpsProject,
-  AzureDevOpsRepo,
+  AzureDevOpsRepo} from "../services/azureDevops";
+import {
   listOrganizations,
   listProjects,
   listRepos,
   checkReposForInstructions,
   createPullRequest
 } from "../services/azureDevops";
-import simpleGit from "simple-git";
 import {
   buildAuthedUrl,
   checkoutBranch,
@@ -24,7 +28,7 @@ import {
 import { generateCopilotInstructions } from "../services/instructions";
 import { ensureDir, validateCachePath } from "../utils/fs";
 import { buildInstructionsPrBody } from "../utils/pr";
-import { DEFAULT_MODEL } from "../config";
+
 import { StaticBanner } from "./AnimatedBanner";
 
 type Props = {
@@ -66,7 +70,7 @@ export function BatchTuiAzure({ token, outputPath }: Props): React.JSX.Element {
   const [cursorIndex, setCursorIndex] = useState(0);
 
   const [results, setResults] = useState<ProcessResult[]>([]);
-  const [currentRepoIndex, setCurrentRepoIndex] = useState(0);
+  const [_currentRepoIndex, setCurrentRepoIndex] = useState(0);
   const [processingMessage, setProcessingMessage] = useState("");
 
   useEffect(() => {

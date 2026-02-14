@@ -1,5 +1,6 @@
 import chalk from "chalk";
-import { RepoAnalysis } from "../services/analyzer";
+
+import type { RepoAnalysis } from "../services/analyzer";
 
 export function prettyPrintSummary(analysis: RepoAnalysis): void {
   console.log(chalk.bold("Repository analysis"));

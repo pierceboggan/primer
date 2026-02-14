@@ -1,6 +1,7 @@
-import { Octokit } from "@octokit/rest";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+
+import { Octokit } from "@octokit/rest";
 
 const execFileAsync = promisify(execFile);
 

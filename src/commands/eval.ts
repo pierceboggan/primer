@@ -1,9 +1,10 @@
-import path from "path";
 import fs from "fs/promises";
-import { runEval } from "../services/evaluator";
+import path from "path";
+
+import { DEFAULT_MODEL, DEFAULT_JUDGE_MODEL } from "../config";
 import { listCopilotModels } from "../services/copilot";
 import { generateEvalScaffold } from "../services/evalScaffold";
-import { DEFAULT_MODEL, DEFAULT_JUDGE_MODEL } from "../config";
+import { runEval } from "../services/evaluator";
 
 type EvalOptions = {
   repo?: string;

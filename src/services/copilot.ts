@@ -1,8 +1,9 @@
 import fs from "fs/promises";
-import path from "path";
-import fg from "fast-glob";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import path from "path";
+
+import fg from "fast-glob";
 
 const execFileAsync = promisify(execFile);
 

@@ -1,9 +1,12 @@
-import path from "path";
 import fs from "fs/promises";
+import path from "path";
+
 import chalk from "chalk";
-import {
+
+import type {
   ReadinessReport,
-  ReadinessCriterionResult,
+  ReadinessCriterionResult} from "../services/readiness";
+import {
   runReadinessReport
 } from "../services/readiness";
 import { generateVisualReport } from "../services/visualReport";

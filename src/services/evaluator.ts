@@ -1,12 +1,14 @@
 import fs from "fs/promises";
-import path from "path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { assertCopilotCliReady } from "./copilot";
-import { buildTimestampedName } from "../utils/fs";
-import type { EvalCase, EvalConfig } from "./evalScaffold";
+import path from "path";
 
-const execFileAsync = promisify(execFile);
+import { buildTimestampedName } from "../utils/fs";
+
+import { assertCopilotCliReady } from "./copilot";
+import type { EvalConfig } from "./evalScaffold";
+
+const _execFileAsync = promisify(execFile);
 
 const DEFAULT_SYSTEM_MESSAGE =
   "You are answering questions about this repository. Use tools to inspect the repo and cite its files. Avoid generic Copilot CLI details unless the prompt explicitly asks for them.";
@@ -874,7 +876,7 @@ function renderCaseDetails() {
     const scoreColor = score >= 80 ? 'var(--green)' : score >= 50 ? 'var(--yellow)' : 'var(--red)';
 
     html += '<div class="case-detail" id="detail-' + esc(r.id) + '">' +
-      '<div class="case-detail-header" onclick="this.parentElement.classList.toggle(\'open\')">' +
+      '<div class="case-detail-header" onclick="this.parentElement.classList.toggle(&#39;open&#39;)">' +
         '<div style="display:flex;align-items:center;gap:12px">' +
           '<span class="chevron">▶</span>' +
           '<span class="case-id">' + esc(r.id) + '</span>' +

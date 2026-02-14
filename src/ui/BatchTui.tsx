@@ -1,22 +1,26 @@
-import React, { useEffect, useState } from "react";
-import { Box, Text, useApp, useInput } from "ink";
-import path from "path";
 import fs from "fs/promises";
-import {
+import path from "path";
+
+import { Box, Text, useApp, useInput } from "ink";
+import React, { useEffect, useState } from "react";
+import simpleGit from "simple-git";
+
+import { DEFAULT_MODEL } from "../config";
+import { buildAuthedUrl, cloneRepo, checkoutBranch, commitAll, pushBranch, isGitRepo } from "../services/git";
+import type {
   GitHubOrg,
-  GitHubRepo,
+  GitHubRepo} from "../services/github";
+import {
   listUserOrgs,
   listOrgRepos,
   createPullRequest,
   listAccessibleRepos,
   checkReposForInstructions
 } from "../services/github";
-import simpleGit from "simple-git";
-import { buildAuthedUrl, cloneRepo, checkoutBranch, commitAll, pushBranch, isGitRepo, CloneOptions } from "../services/git";
 import { generateCopilotInstructions } from "../services/instructions";
 import { ensureDir, validateCachePath } from "../utils/fs";
 import { buildInstructionsPrBody } from "../utils/pr";
-import { DEFAULT_MODEL } from "../config";
+
 import { StaticBanner } from "./AnimatedBanner";
 
 type Props = {
@@ -56,7 +60,7 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
 
   // Processing
   const [results, setResults] = useState<ProcessResult[]>([]);
-  const [currentRepoIndex, setCurrentRepoIndex] = useState(0);
+  const [_currentRepoIndex, setCurrentRepoIndex] = useState(0);
   const [processingMessage, setProcessingMessage] = useState("");
 
   // Load orgs on mount
