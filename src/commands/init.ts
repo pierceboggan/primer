@@ -1,4 +1,3 @@
-import fs from "fs/promises";
 import path from "path";
 
 import { checkbox, select } from "@inquirer/prompts";
@@ -15,11 +14,11 @@ import {
   listRepos
 } from "../services/azureDevops";
 import { generateConfigs } from "../services/generator";
-import { buildAuthedUrl, cloneRepo, isGitRepo } from "../services/git";
+import { buildAuthedUrl, cloneRepo, isGitRepo, setRemoteUrl } from "../services/git";
 import type { GitHubRepo} from "../services/github";
 import { listAccessibleRepos } from "../services/github";
 import { generateCopilotInstructions } from "../services/instructions";
-import { ensureDir, validateCachePath } from "../utils/fs";
+import { ensureDir, safeWriteFile, validateCachePath } from "../utils/fs";
 import { prettyPrintSummary } from "../utils/logger";
 
 type InitOptions = {
@@ -133,6 +132,7 @@ export async function initCommand(repoPathArg: string | undefined, options: Init
     if (!hasGit) {
       const authedUrl = buildAuthedUrl(repoSelection.cloneUrl, token, "azure");
       await cloneRepo(authedUrl, repoPath);
+      await setRemoteUrl(repoPath, repoSelection.cloneUrl);
     }
   }
   const analysis = await analyzeRepo(repoPath);
@@ -154,8 +154,8 @@ export async function initCommand(repoPathArg: string | undefined, options: Init
     const outputPath = path.join(repoPath, ".github", "copilot-instructions.md");
     await ensureDir(path.dirname(outputPath));
     const content = await generateCopilotInstructions({ repoPath });
-    await fs.writeFile(outputPath, content, "utf8");
-    console.log(`Updated ${path.relative(process.cwd(), outputPath)}`);
+    const result = await safeWriteFile(outputPath, content, Boolean(options.force));
+    console.log(result);
   }
 
   const result = await generateConfigs({

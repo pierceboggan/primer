@@ -151,8 +151,11 @@ export async function checkRepoHasInstructions(token: string, owner: string, rep
       path: ".github/copilot-instructions.md"
     });
     return true;
-  } catch {
-    return false;
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "status" in error && (error as { status: number }).status === 404) {
+      return false;
+    }
+    throw error;
   }
 }
 

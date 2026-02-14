@@ -107,7 +107,7 @@ export async function analyzeRepo(repoPath: string): Promise<RepoAnalysis> {
   return analysis;
 }
 
-async function detectPackageManager(repoPath: string, files: string[]): Promise<string | undefined> {
+async function detectPackageManager(_repoPath: string, files: string[]): Promise<string | undefined> {
   for (const manager of PACKAGE_MANAGERS) {
     if (files.includes(manager.file)) return manager.name;
   }

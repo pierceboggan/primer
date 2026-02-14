@@ -49,6 +49,15 @@ export async function cloneRepo(
   await git.clone(repoUrl, destination, cloneArgs);
 }
 
+/**
+ * Replace the remote origin URL, typically to strip embedded credentials
+ * after cloning with an authenticated URL.
+ */
+export async function setRemoteUrl(repoPath: string, url: string): Promise<void> {
+  const git = simpleGit(repoPath);
+  await git.remote(["set-url", "origin", url]);
+}
+
 export async function checkoutBranch(repoPath: string, branch: string): Promise<void> {
   const git = simpleGit(repoPath);
   const branches = await git.branchLocal();

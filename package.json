@@ -1,5 +1,5 @@
 {
-  "name": "@anthropic/primer",
+  "name": "primer",
   "version": "1.0.0",
   "description": "Prime repositories for AI-assisted development",
   "main": "dist/index.js",
