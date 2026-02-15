@@ -47,6 +47,7 @@ export function runCli(argv: string[]): void {
     .option("--provider <provider>", "Repo provider (github|azure)")
     .option("--yes", "Accept defaults (generates instructions, MCP, and VS Code configs)")
     .option("--force", "Overwrite existing files")
+    .option("--model <name>", "Model for instructions generation", DEFAULT_MODEL)
     .action(withGlobalOpts(initCommand));
 
   program
@@ -68,6 +69,7 @@ export function runCli(argv: string[]): void {
     .argument("[repo]", "Repo identifier (github: owner/name, azure: org/project/repo)")
     .option("--branch <name>", "Branch name")
     .option("--provider <provider>", "Repo provider (github|azure)")
+    .option("--model <name>", "Model for instructions generation", DEFAULT_MODEL)
     .action(withGlobalOpts(prCommand));
 
   program

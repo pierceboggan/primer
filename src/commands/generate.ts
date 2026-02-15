@@ -114,12 +114,21 @@ export async function generateCommand(
   }
 
   const selections = [type];
-  const genResult = await generateConfigs({
-    repoPath,
-    analysis,
-    selections,
-    force: Boolean(options.force)
-  });
+  let genResult;
+  try {
+    genResult = await generateConfigs({
+      repoPath,
+      analysis,
+      selections,
+      force: Boolean(options.force)
+    });
+  } catch (error) {
+    outputError(
+      `Failed to generate configs: ${error instanceof Error ? error.message : String(error)}`,
+      Boolean(options.json)
+    );
+    return;
+  }
 
   if (options.json) {
     const { ok, status } = deriveFileStatus(genResult.files);

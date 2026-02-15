@@ -1,6 +1,5 @@
 import path from "path";
 
-import { DEFAULT_MODEL } from "../config";
 import { analyzeRepo } from "../services/analyzer";
 import {
   createPullRequest as createAzurePullRequest,
@@ -29,6 +28,7 @@ import { GITHUB_REPO_RE, AZURE_REPO_RE } from "../utils/repo";
 type PrOptions = {
   branch?: string;
   provider?: string;
+  model?: string;
   json?: boolean;
   quiet?: boolean;
 };
@@ -86,7 +86,7 @@ export async function prCommand(repo: string | undefined, options: PrOptions): P
       await checkoutBranch(repoPath, branch);
 
       progress.update("Generating instructions...");
-      const instructions = await generateCopilotInstructions({ repoPath, model: DEFAULT_MODEL });
+      const instructions = await generateCopilotInstructions({ repoPath, model: options.model });
       const instructionsPath = path.join(repoPath, ".github", "copilot-instructions.md");
       await ensureDir(path.dirname(instructionsPath));
       const { wrote } = await safeWriteFile(instructionsPath, instructions, true);

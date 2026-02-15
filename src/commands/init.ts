@@ -26,6 +26,7 @@ type InitOptions = {
   provider?: string;
   yes?: boolean;
   force?: boolean;
+  model?: string;
   json?: boolean;
   quiet?: boolean;
 };
@@ -189,7 +190,7 @@ export async function initCommand(
     const outputPath = path.join(repoPath, ".github", "copilot-instructions.md");
     await ensureDir(path.dirname(outputPath));
     try {
-      const content = await generateCopilotInstructions({ repoPath });
+      const content = await generateCopilotInstructions({ repoPath, model: options.model });
       const { wrote } = await safeWriteFile(outputPath, content, Boolean(options.force));
       allFiles.push({
         path: path.relative(process.cwd(), outputPath),
@@ -208,12 +209,21 @@ export async function initCommand(
     }
   }
 
-  const genResult = await generateConfigs({
-    repoPath,
-    analysis,
-    selections: selections.filter((item) => item !== "instructions"),
-    force: Boolean(options.force)
-  });
+  let genResult;
+  try {
+    genResult = await generateConfigs({
+      repoPath,
+      analysis,
+      selections: selections.filter((item) => item !== "instructions"),
+      force: Boolean(options.force)
+    });
+  } catch (error) {
+    outputError(
+      `Failed to generate configs: ${error instanceof Error ? error.message : String(error)}`,
+      Boolean(options.json)
+    );
+    return;
+  }
   allFiles.push(...genResult.files);
 
   if (options.json) {
