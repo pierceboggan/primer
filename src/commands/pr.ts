@@ -1,4 +1,3 @@
-import fs from "fs/promises";
 import path from "path";
 
 import { DEFAULT_MODEL } from "../config";
@@ -8,6 +7,7 @@ import {
   getAzureDevOpsToken,
   getRepo as getAzureRepo
 } from "../services/azureDevops";
+import { sanitizeError } from "../services/batch";
 import { generateConfigs } from "../services/generator";
 import {
   buildAuthedUrl,
@@ -18,129 +18,192 @@ import {
   pushBranch,
   setRemoteUrl
 } from "../services/git";
-import { createPullRequest, getRepo } from "../services/github";
+import { createPullRequest, getRepo, getGitHubToken } from "../services/github";
 import { generateCopilotInstructions } from "../services/instructions";
-import { ensureDir, validateCachePath } from "../utils/fs";
+import { ensureDir, safeWriteFile, validateCachePath } from "../utils/fs";
+import type { CommandResult } from "../utils/output";
+import { outputResult, outputError, createProgressReporter, shouldLog } from "../utils/output";
 import { buildConfigsPrBody, buildInstructionsPrBody } from "../utils/pr";
+import { GITHUB_REPO_RE, AZURE_REPO_RE } from "../utils/repo";
 
 type PrOptions = {
   branch?: string;
   provider?: string;
+  json?: boolean;
+  quiet?: boolean;
 };
 
 export async function prCommand(repo: string | undefined, options: PrOptions): Promise<void> {
   const provider = options.provider ?? "github";
+  const progress = createProgressReporter(!shouldLog(options));
+
   if (provider !== "github" && provider !== "azure") {
-    console.error("Invalid provider. Use github or azure.");
-    process.exitCode = 1;
+    outputError("Invalid provider. Use github or azure.", Boolean(options.json));
     return;
   }
 
   if (!repo) {
-    console.error("Provide a repo identifier (github: owner/name, azure: org/project/repo).");
-    process.exitCode = 1;
+    outputError(
+      "Provide a repo identifier (github: owner/name, azure: org/project/repo).",
+      Boolean(options.json)
+    );
     return;
   }
 
   if (provider === "azure") {
     const token = getAzureDevOpsToken();
     if (!token) {
-      console.error("Set AZURE_DEVOPS_PAT (or AZDO_PAT) to use Azure DevOps PR automation.");
-      process.exitCode = 1;
+      outputError(
+        "Set AZURE_DEVOPS_PAT (or AZDO_PAT) to use Azure DevOps PR automation.",
+        Boolean(options.json)
+      );
       return;
     }
 
-    const [organization, project, name] = repo.split("/");
-    if (!organization || !project || !name) {
-      console.error("Invalid Azure DevOps repo format. Use org/project/repo.");
-      process.exitCode = 1;
+    const match = repo.match(AZURE_REPO_RE);
+    if (!match) {
+      outputError("Invalid Azure DevOps repo format. Use org/project/repo.", Boolean(options.json));
       return;
     }
+    const [, organization, project, name] = match;
 
-    const repoInfo = await getAzureRepo(token, organization, project, name);
+    try {
+      progress.update("Fetching repo info...");
+      const repoInfo = await getAzureRepo(token, organization, project, name);
+      const cacheRoot = path.join(process.cwd(), ".primer-cache");
+      const repoPath = validateCachePath(cacheRoot, organization, project, name);
+      await ensureDir(repoPath);
+
+      if (!(await isGitRepo(repoPath))) {
+        progress.update("Cloning...");
+        const authedUrl = buildAuthedUrl(repoInfo.cloneUrl, token, "azure");
+        await cloneRepo(authedUrl, repoPath);
+        await setRemoteUrl(repoPath, repoInfo.cloneUrl);
+      }
+
+      const branch = options.branch ?? "primer/add-instructions";
+      progress.update("Creating branch...");
+      await checkoutBranch(repoPath, branch);
+
+      progress.update("Generating instructions...");
+      const instructions = await generateCopilotInstructions({ repoPath, model: DEFAULT_MODEL });
+      const instructionsPath = path.join(repoPath, ".github", "copilot-instructions.md");
+      await ensureDir(path.dirname(instructionsPath));
+      const { wrote } = await safeWriteFile(instructionsPath, instructions, true);
+      if (!wrote) {
+        throw new Error("Refused to write instructions (path is a symlink)");
+      }
+
+      progress.update("Committing...");
+      await commitAll(repoPath, "chore: add copilot instructions via Primer");
+      progress.update("Pushing...");
+      await pushBranch(repoPath, branch, token, "azure");
+
+      progress.update("Creating PR...");
+      const prUrl = await createAzurePullRequest({
+        token,
+        organization,
+        project,
+        repoId: repoInfo.id,
+        repoName: repoInfo.name,
+        title: "🤖 Add Copilot instructions via Primer",
+        body: buildInstructionsPrBody(),
+        sourceBranch: branch,
+        targetBranch: repoInfo.defaultBranch
+      });
+
+      if (options.json) {
+        const result: CommandResult<{ repo: string; branch: string; prUrl: string }> = {
+          ok: true,
+          status: "success",
+          data: { repo, branch, prUrl }
+        };
+        outputResult(result, true);
+      } else {
+        progress.succeed(`Created PR: ${prUrl}`);
+      }
+    } catch (error) {
+      outputError(
+        sanitizeError(`PR failed: ${error instanceof Error ? error.message : String(error)}`),
+        Boolean(options.json)
+      );
+    }
+    return;
+  }
+
+  // GitHub provider
+  const token = await getGitHubToken();
+  if (!token) {
+    outputError(
+      "Set GITHUB_TOKEN or GH_TOKEN, or authenticate with GitHub CLI.",
+      Boolean(options.json)
+    );
+    return;
+  }
+
+  const match = repo.match(GITHUB_REPO_RE);
+  if (!match) {
+    outputError("Invalid repo format. Use owner/name.", Boolean(options.json));
+    return;
+  }
+  const [, owner, name] = match;
+
+  try {
+    progress.update("Fetching repo info...");
+    const repoInfo = await getRepo(token, owner, name);
     const cacheRoot = path.join(process.cwd(), ".primer-cache");
-    const repoPath = validateCachePath(cacheRoot, organization, project, name);
+    const repoPath = validateCachePath(cacheRoot, owner, name);
     await ensureDir(repoPath);
 
     if (!(await isGitRepo(repoPath))) {
-      const authedUrl = buildAuthedUrl(repoInfo.cloneUrl, token, "azure");
-      await cloneRepo(authedUrl, repoPath);
-      await setRemoteUrl(repoPath, repoInfo.cloneUrl);
+      progress.update("Cloning...");
+      await cloneRepo(repoInfo.cloneUrl, repoPath);
     }
 
-    const branch = options.branch ?? "primer/add-instructions";
+    const branch = options.branch ?? "primer/add-configs";
+    progress.update("Creating branch...");
     await checkoutBranch(repoPath, branch);
 
-    const instructions = await generateCopilotInstructions({ repoPath, model: DEFAULT_MODEL });
-    const instructionsPath = path.join(repoPath, ".github", "copilot-instructions.md");
-    await ensureDir(path.dirname(instructionsPath));
-    await fs.writeFile(instructionsPath, instructions, "utf8");
-
-    await commitAll(repoPath, "chore: add copilot instructions via Primer");
-    await pushBranch(repoPath, branch, token, "azure");
-
-    const prUrl = await createAzurePullRequest({
-      token,
-      organization,
-      project,
-      repoId: repoInfo.id,
-      repoName: repoInfo.name,
-      title: "🤖 Add Copilot instructions via Primer",
-      body: buildInstructionsPrBody(),
-      sourceBranch: branch,
-      targetBranch: repoInfo.defaultBranch
+    progress.update("Analyzing...");
+    const analysis = await analyzeRepo(repoPath);
+    progress.update("Generating configs...");
+    await generateConfigs({
+      repoPath,
+      analysis,
+      selections: ["mcp", "vscode"],
+      force: true
     });
 
-    console.log(`Created PR: ${prUrl}`);
-    return;
+    progress.update("Committing...");
+    await commitAll(repoPath, "chore: add AI configurations via Primer");
+    progress.update("Pushing...");
+    await pushBranch(repoPath, branch, token, "github");
+
+    progress.update("Creating PR...");
+    const prUrl = await createPullRequest({
+      token,
+      owner,
+      repo: name,
+      title: "🤖 Prime this repo for AI",
+      body: buildConfigsPrBody(),
+      head: `${owner}:${branch}`,
+      base: repoInfo.defaultBranch
+    });
+
+    if (options.json) {
+      const result: CommandResult<{ repo: string; branch: string; prUrl: string }> = {
+        ok: true,
+        status: "success",
+        data: { repo, branch, prUrl }
+      };
+      outputResult(result, true);
+    } else {
+      progress.succeed(`Created PR: ${prUrl}`);
+    }
+  } catch (error) {
+    outputError(
+      sanitizeError(`PR failed: ${error instanceof Error ? error.message : String(error)}`),
+      Boolean(options.json)
+    );
   }
-
-  const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN;
-  if (!token) {
-    console.error("Set GITHUB_TOKEN or GH_TOKEN to use PR automation.");
-    process.exitCode = 1;
-    return;
-  }
-
-  const [owner, name] = repo.split("/");
-  if (!owner || !name) {
-    console.error("Invalid repo format. Use owner/name.");
-    process.exitCode = 1;
-    return;
-  }
-
-  const repoInfo = await getRepo(token, owner, name);
-  const cacheRoot = path.join(process.cwd(), ".primer-cache");
-  const repoPath = validateCachePath(cacheRoot, owner, name);
-  await ensureDir(repoPath);
-
-  if (!(await isGitRepo(repoPath))) {
-    await cloneRepo(repoInfo.cloneUrl, repoPath);
-  }
-
-  const branch = options.branch ?? "primer/add-configs";
-  await checkoutBranch(repoPath, branch);
-
-  const analysis = await analyzeRepo(repoPath);
-  await generateConfigs({
-    repoPath,
-    analysis,
-    selections: ["mcp", "vscode"],
-    force: true
-  });
-
-  await commitAll(repoPath, "chore: add AI configurations via Primer");
-  await pushBranch(repoPath, branch, token, "github");
-
-  const prUrl = await createPullRequest({
-    token,
-    owner,
-    repo: name,
-    title: "🤖 Prime this repo for AI",
-    body: buildConfigsPrBody(),
-    head: `${owner}:${branch}`,
-    base: repoInfo.defaultBranch
-  });
-
-  console.log(`Created PR: ${prUrl}`);
 }

@@ -49,17 +49,19 @@ describe("safeWriteFile", () => {
 
     const content = await fs.readFile(filePath, "utf8");
     expect(content).toBe("hello");
-    expect(result).toContain("Wrote");
+    expect(result.wrote).toBe(true);
+    expect(result.reason).toBeUndefined();
   });
 
-  it("skips existing file without force", async () => {
+  it("skips existing file without force and reports reason", async () => {
     const filePath = path.join(tmpDir, "test.txt");
     await fs.writeFile(filePath, "original");
     const result = await safeWriteFile(filePath, "new content", false);
 
     const content = await fs.readFile(filePath, "utf8");
     expect(content).toBe("original");
-    expect(result).toContain("Skipped");
+    expect(result.wrote).toBe(false);
+    expect(result.reason).toBe("exists");
   });
 
   it("overwrites existing file with force", async () => {
@@ -69,6 +71,7 @@ describe("safeWriteFile", () => {
 
     const content = await fs.readFile(filePath, "utf8");
     expect(content).toBe("new content");
-    expect(result).toContain("Wrote");
+    expect(result.wrote).toBe(true);
+    expect(result.reason).toBeUndefined();
   });
 });

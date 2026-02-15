@@ -1,30 +1,17 @@
 import fs from "fs/promises";
-import path from "path";
 
 import { Box, Text, useApp, useInput } from "ink";
 import React, { useEffect, useState } from "react";
-import simpleGit from "simple-git";
 
-import { DEFAULT_MODEL } from "../config";
 import type { AzureDevOpsOrg, AzureDevOpsProject, AzureDevOpsRepo } from "../services/azureDevops";
 import {
   listOrganizations,
   listProjects,
   listRepos,
-  checkReposForInstructions,
-  createPullRequest
+  checkReposForInstructions
 } from "../services/azureDevops";
-import {
-  buildAuthedUrl,
-  checkoutBranch,
-  cloneRepo,
-  commitAll,
-  isGitRepo,
-  pushBranch
-} from "../services/git";
-import { generateCopilotInstructions } from "../services/instructions";
-import { ensureDir, validateCachePath } from "../utils/fs";
-import { buildInstructionsPrBody } from "../utils/pr";
+import { processAzureRepo } from "../services/batch";
+import type { ProcessResult } from "../services/batch";
 
 import { StaticBanner } from "./AnimatedBanner";
 
@@ -45,13 +32,6 @@ type Status =
   | "complete"
   | "error";
 
-type ProcessResult = {
-  repo: string;
-  success: boolean;
-  prUrl?: string;
-  error?: string;
-};
-
 export function BatchTuiAzure({ token, outputPath }: Props): React.JSX.Element {
   const app = useApp();
   const [status, setStatus] = useState<Status>("loading-orgs");
@@ -67,7 +47,6 @@ export function BatchTuiAzure({ token, outputPath }: Props): React.JSX.Element {
   const [cursorIndex, setCursorIndex] = useState(0);
 
   const [results, setResults] = useState<ProcessResult[]>([]);
-  const [_currentRepoIndex, setCurrentRepoIndex] = useState(0);
   const [processingMessage, setProcessingMessage] = useState("");
 
   useEffect(() => {
@@ -169,125 +148,32 @@ export function BatchTuiAzure({ token, outputPath }: Props): React.JSX.Element {
   async function processRepos() {
     const selectedRepos = Array.from(selectedRepoIndices).map((i) => repos[i]);
     setStatus("processing");
-    setCurrentRepoIndex(0);
     setResults([]);
 
-    const nextResults: ProcessResult[] = [];
+    const localResults: ProcessResult[] = [];
 
     for (let i = 0; i < selectedRepos.length; i++) {
       const repo = selectedRepos[i];
-      setCurrentRepoIndex(i);
-      setProcessingMessage(
-        `[${i + 1}/${selectedRepos.length}] ${repo.organization}/${repo.project}/${repo.name}: Cloning...`
-      );
+      const label = `${repo.organization}/${repo.project}/${repo.name}`;
+      setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ${label}: Starting...`);
 
-      try {
-        const cacheRoot = path.join(process.cwd(), ".primer-cache");
-        const repoPath = validateCachePath(cacheRoot, repo.organization, repo.project, repo.name);
-        await ensureDir(repoPath);
-
-        if (!(await isGitRepo(repoPath))) {
-          const authedUrl = buildAuthedUrl(repo.cloneUrl, token, "azure");
-          await cloneRepo(authedUrl, repoPath, {
-            shallow: true,
-            timeoutMs: 120000,
-            onProgress: (stage, progress) => {
-              setProcessingMessage(
-                `[${i + 1}/${selectedRepos.length}] ${repo.organization}/${repo.project}/${repo.name}: Cloning (${stage} ${progress}%)...`
-              );
-            }
-          });
-          // Strip credentials from persisted remote URL
-          const git = simpleGit(repoPath);
-          await git.remote(["set-url", "origin", repo.cloneUrl]);
+      const result = await processAzureRepo({
+        repo,
+        token,
+        progress: {
+          update: (msg) => setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ${msg}`),
+          succeed: (msg) => setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ✓ ${msg}`),
+          fail: (msg) => setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ✗ ${msg}`),
+          done: () => {}
         }
+      });
 
-        setProcessingMessage(
-          `[${i + 1}/${selectedRepos.length}] ${repo.organization}/${repo.project}/${repo.name}: Creating branch...`
-        );
-        const branch = "primer/add-instructions";
-        await checkoutBranch(repoPath, branch);
-
-        setProcessingMessage(
-          `[${i + 1}/${selectedRepos.length}] ${repo.organization}/${repo.project}/${repo.name}: Generating instructions...`
-        );
-        const timeoutMs = 120000;
-        const instructionsPromise = generateCopilotInstructions({
-          repoPath,
-          model: DEFAULT_MODEL,
-          onProgress: (msg) => {
-            setProcessingMessage(
-              `[${i + 1}/${selectedRepos.length}] ${repo.organization}/${repo.project}/${repo.name}: ${msg}`
-            );
-          }
-        });
-
-        let timer: ReturnType<typeof setTimeout>;
-        const timeoutPromise = new Promise<string>((_, reject) => {
-          timer = setTimeout(
-            () => reject(new Error("Generation timed out after 2 minutes")),
-            timeoutMs
-          );
-        });
-
-        const instructions = await Promise.race([instructionsPromise, timeoutPromise]).finally(() =>
-          clearTimeout(timer)
-        );
-        // Prevent unhandled rejection if the losing promise rejects later
-        instructionsPromise.catch(() => {});
-
-        if (!instructions.trim()) {
-          throw new Error("Generated instructions were empty");
-        }
-
-        const instructionsPath = path.join(repoPath, ".github", "copilot-instructions.md");
-        await fs.mkdir(path.dirname(instructionsPath), { recursive: true });
-        await fs.writeFile(instructionsPath, instructions, "utf8");
-
-        setProcessingMessage(
-          `[${i + 1}/${selectedRepos.length}] ${repo.organization}/${repo.project}/${repo.name}: Committing...`
-        );
-        await commitAll(repoPath, "chore: add copilot instructions via Primer");
-
-        setProcessingMessage(
-          `[${i + 1}/${selectedRepos.length}] ${repo.organization}/${repo.project}/${repo.name}: Pushing...`
-        );
-        await pushBranch(repoPath, branch, token, "azure");
-
-        setProcessingMessage(
-          `[${i + 1}/${selectedRepos.length}] ${repo.organization}/${repo.project}/${repo.name}: Creating PR...`
-        );
-        const prUrl = await createPullRequest({
-          token,
-          organization: repo.organization,
-          project: repo.project,
-          repoId: repo.id,
-          repoName: repo.name,
-          title: "🤖 Add Copilot instructions via Primer",
-          body: buildInstructionsPrBody(),
-          sourceBranch: branch,
-          targetBranch: repo.defaultBranch
-        });
-
-        nextResults.push({
-          repo: `${repo.organization}/${repo.project}/${repo.name}`,
-          success: true,
-          prUrl
-        });
-        setResults([...nextResults]);
-      } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : "Unknown error";
-        nextResults.push({
-          repo: `${repo.organization}/${repo.project}/${repo.name}`,
-          success: false,
-          error: errorMsg
-        });
-        setResults([...nextResults]);
-      }
+      localResults.push(result);
+      setResults([...localResults]);
     }
 
     if (outputPath) {
-      await fs.writeFile(outputPath, JSON.stringify(nextResults, null, 2), "utf8");
+      await fs.writeFile(outputPath, JSON.stringify(localResults, null, 2), "utf8");
     }
 
     setStatus("complete");

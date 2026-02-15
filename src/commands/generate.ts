@@ -2,13 +2,18 @@ import fs from "fs/promises";
 import path from "path";
 
 import { analyzeRepo } from "../services/analyzer";
+import type { FileAction } from "../services/generator";
 import { generateConfigs } from "../services/generator";
 import { generateCopilotInstructions } from "../services/instructions";
 import { ensureDir } from "../utils/fs";
+import type { CommandResult } from "../utils/output";
+import { outputResult, outputError, deriveFileStatus, shouldLog } from "../utils/output";
 
 type GenerateOptions = {
   force?: boolean;
   perApp?: boolean;
+  json?: boolean;
+  quiet?: boolean;
 };
 
 export async function generateCommand(
@@ -18,13 +23,22 @@ export async function generateCommand(
 ): Promise<void> {
   const allowed = new Set(["mcp", "vscode", "instructions", "agents"]);
   if (!allowed.has(type)) {
-    console.error("Invalid type. Use: instructions, agents, mcp, vscode.");
-    process.exitCode = 1;
+    outputError("Invalid type. Use: instructions, agents, mcp, vscode.", Boolean(options.json));
     return;
   }
 
   const repoPath = path.resolve(repoPathArg ?? process.cwd());
-  const analysis = await analyzeRepo(repoPath);
+  let analysis;
+  try {
+    analysis = await analyzeRepo(repoPath);
+  } catch (error) {
+    outputError(
+      `Failed to analyze repo: ${error instanceof Error ? error.message : String(error)}`,
+      Boolean(options.json)
+    );
+    return;
+  }
+  const allFiles: FileAction[] = [];
 
   if (type === "instructions" || type === "agents") {
     const apps = analysis.apps ?? [];
@@ -47,32 +61,73 @@ export async function generateCommand(
     }
 
     for (const target of targets) {
-      console.log(`Generating ${type} for ${target.label}...`);
+      if (shouldLog(options)) {
+        process.stderr.write(`Generating ${type} for ${target.label}...\n`);
+      }
       try {
         const content = await generateCopilotInstructions({
           repoPath: target.repoPath
         });
         if (!content.trim()) {
-          console.error(`  No content generated for ${target.label}.`);
+          if (shouldLog(options)) {
+            process.stderr.write(`  No content generated for ${target.label}.\n`);
+          }
+          allFiles.push({ path: path.relative(process.cwd(), target.savePath), action: "skipped" });
           continue;
         }
         await ensureDir(path.dirname(target.savePath));
         await fs.writeFile(target.savePath, content, "utf8");
-        console.log(`  ✓ ${path.relative(process.cwd(), target.savePath)}`);
+        const rel = path.relative(process.cwd(), target.savePath);
+        allFiles.push({ path: rel, action: "wrote" });
+        if (shouldLog(options)) {
+          process.stderr.write(`  ✓ ${rel}\n`);
+        }
       } catch (error) {
-        console.error(`  ✗ ${error instanceof Error ? error.message : String(error)}`);
+        if (shouldLog(options)) {
+          process.stderr.write(`  ✗ ${error instanceof Error ? error.message : String(error)}\n`);
+        }
+        allFiles.push({ path: path.relative(process.cwd(), target.savePath), action: "skipped" });
       }
+    }
+
+    if (options.json) {
+      const { ok, status } = deriveFileStatus(allFiles);
+      const result: CommandResult<{ type: string; files: FileAction[] }> = {
+        ok,
+        status,
+        data: { type, files: allFiles }
+      };
+      outputResult(result, true);
+      if (!ok) process.exitCode = 1;
     }
     return;
   }
 
   const selections = [type];
-  const result = await generateConfigs({
+  const genResult = await generateConfigs({
     repoPath,
     analysis,
     selections,
     force: Boolean(options.force)
   });
 
-  console.log(result.summary);
+  if (options.json) {
+    const { ok, status } = deriveFileStatus(genResult.files);
+    const result: CommandResult<{ type: string; files: FileAction[] }> = {
+      ok,
+      status,
+      data: { type, files: genResult.files }
+    };
+    outputResult(result, true);
+    if (!ok) process.exitCode = 1;
+  } else {
+    for (const file of genResult.files) {
+      if (shouldLog(options)) {
+        process.stderr.write(`${file.action === "wrote" ? "Wrote" : "Skipped"} ${file.path}\n`);
+      }
+    }
+    if (genResult.files.length === 0 && shouldLog(options)) {
+      process.stderr.write("No changes made.\n");
+    }
+  }
 }

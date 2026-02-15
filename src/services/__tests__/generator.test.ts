@@ -30,7 +30,7 @@ describe("generateConfigs", () => {
 
   it("generates valid mcp.json", async () => {
     const analysis = makeAnalysis();
-    const { summary } = await generateConfigs({
+    const { files } = await generateConfigs({
       repoPath: tmpDir,
       analysis,
       selections: ["mcp"],
@@ -43,7 +43,7 @@ describe("generateConfigs", () => {
     expect(parsed.servers).toBeDefined();
     expect(parsed.servers.github).toBeDefined();
     expect(parsed.servers.filesystem).toBeDefined();
-    expect(summary).toContain("Wrote");
+    expect(files.some((f) => f.action === "wrote")).toBe(true);
   });
 
   it("generates valid vscode settings with frameworks", async () => {
@@ -86,7 +86,7 @@ describe("generateConfigs", () => {
     await fs.writeFile(path.join(tmpDir, ".vscode", "mcp.json"), "original", "utf8");
 
     const analysis = makeAnalysis();
-    const { summary } = await generateConfigs({
+    const { files } = await generateConfigs({
       repoPath: tmpDir,
       analysis,
       selections: ["mcp"],
@@ -95,7 +95,7 @@ describe("generateConfigs", () => {
 
     const content = await fs.readFile(path.join(tmpDir, ".vscode", "mcp.json"), "utf8");
     expect(content).toBe("original");
-    expect(summary).toContain("Skipped");
+    expect(files.some((f) => f.action === "skipped")).toBe(true);
   });
 
   it("overwrites existing files with force", async () => {
@@ -103,7 +103,7 @@ describe("generateConfigs", () => {
     await fs.writeFile(path.join(tmpDir, ".vscode", "mcp.json"), "original", "utf8");
 
     const analysis = makeAnalysis();
-    const { summary } = await generateConfigs({
+    const { files } = await generateConfigs({
       repoPath: tmpDir,
       analysis,
       selections: ["mcp"],
@@ -112,18 +112,18 @@ describe("generateConfigs", () => {
 
     const content = await fs.readFile(path.join(tmpDir, ".vscode", "mcp.json"), "utf8");
     expect(content).not.toBe("original");
-    expect(summary).toContain("Wrote");
+    expect(files.some((f) => f.action === "wrote")).toBe(true);
   });
 
   it("does nothing with empty selections", async () => {
     const analysis = makeAnalysis();
-    const { summary } = await generateConfigs({
+    const { files } = await generateConfigs({
       repoPath: tmpDir,
       analysis,
       selections: [],
       force: false
     });
 
-    expect(summary).toBe("No changes made.");
+    expect(files).toHaveLength(0);
   });
 });

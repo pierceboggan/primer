@@ -6,9 +6,12 @@ import chalk from "chalk";
 import type { ReadinessReport, ReadinessCriterionResult } from "../services/readiness";
 import { runReadinessReport } from "../services/readiness";
 import { generateVisualReport } from "../services/visualReport";
+import type { CommandResult } from "../utils/output";
+import { outputResult, outputError, shouldLog } from "../utils/output";
 
 type ReadinessOptions = {
   json?: boolean;
+  quiet?: boolean;
   output?: string;
   visual?: boolean;
 };
@@ -18,8 +21,18 @@ export async function readinessCommand(
   options: ReadinessOptions
 ): Promise<void> {
   const repoPath = path.resolve(repoPathArg ?? process.cwd());
-  const report = await runReadinessReport({ repoPath });
   const repoName = path.basename(repoPath);
+
+  let report: ReadinessReport;
+  try {
+    report = await runReadinessReport({ repoPath });
+  } catch (error) {
+    outputError(
+      `Failed to generate readiness report: ${error instanceof Error ? error.message : String(error)}`,
+      Boolean(options.json)
+    );
+    return;
+  }
 
   // Generate visual HTML report
   if (options.visual || (options.output && options.output.endsWith(".html"))) {
@@ -34,45 +47,57 @@ export async function readinessCommand(
       : path.join(repoPath, "readiness-report.html");
 
     await fs.writeFile(outputPath, html, "utf8");
-    console.log(chalk.green(`✓ Visual report generated: ${outputPath}`));
+    if (shouldLog(options)) {
+      process.stderr.write(chalk.green(`✓ Visual report generated: ${outputPath}`) + "\n");
+    }
     return;
   }
 
-  // Output JSON
+  // Output to JSON file
   if (options.output && options.output.endsWith(".json")) {
     const outputPath = path.resolve(options.output);
     await fs.writeFile(outputPath, JSON.stringify(report, null, 2), "utf8");
-    console.log(chalk.green(`✓ JSON report saved: ${outputPath}`));
+    if (shouldLog(options)) {
+      process.stderr.write(chalk.green(`✓ JSON report saved: ${outputPath}`) + "\n");
+    }
     return;
   }
 
   if (options.json) {
-    console.log(JSON.stringify(report, null, 2));
+    const result: CommandResult<ReadinessReport> = {
+      ok: true,
+      status: "success",
+      data: report
+    };
+    outputResult(result, true);
     return;
   }
 
-  printReadinessChecklist(report);
+  if (shouldLog(options)) {
+    printReadinessChecklist(report);
+  }
 }
 
 function printReadinessChecklist(report: ReadinessReport): void {
-  console.log(chalk.bold("Readiness report"));
-  console.log(`- Repo: ${report.repoPath}`);
-  console.log(
+  const log = (msg: string) => process.stderr.write(msg + "\n");
+  log(chalk.bold("Readiness report"));
+  log(`- Repo: ${report.repoPath}`);
+  log(
     `- Monorepo: ${report.isMonorepo ? "yes" : "no"}${report.apps.length ? ` (${report.apps.length} apps)` : ""}`
   );
-  console.log(`- Level: ${report.achievedLevel || 1} (${levelName(report.achievedLevel || 1)})`);
+  log(`- Level: ${report.achievedLevel || 1} (${levelName(report.achievedLevel || 1)})`);
 
-  console.log(chalk.bold("\nPillars"));
+  log(chalk.bold("\nPillars"));
   for (const pillar of report.pillars) {
     const rate = formatPercent(pillar.passRate);
     const icon = pillar.passRate >= 0.8 ? chalk.green("●") : chalk.yellow("●");
-    console.log(`${icon} ${pillar.name}: ${pillar.passed}/${pillar.total} (${rate})`);
+    log(`${icon} ${pillar.name}: ${pillar.passed}/${pillar.total} (${rate})`);
   }
 
-  console.log(chalk.bold("\nFix first"));
+  log(chalk.bold("\nFix first"));
   const fixes = rankFixes(report.criteria);
   if (!fixes.length) {
-    console.log(chalk.green("✔ No failing criteria detected."));
+    log(chalk.green("✔ No failing criteria detected."));
   } else {
     for (const fix of fixes) {
       const impact = colorImpact(fix.impact);
@@ -81,21 +106,21 @@ function printReadinessChecklist(report: ReadinessReport): void {
       const detail = fix.appSummary
         ? ` (${fix.appSummary.passed}/${fix.appSummary.total} apps)`
         : "";
-      console.log(`- ${impact} impact / ${effort} effort • ${fix.title}${detail} [${scope}]`);
+      log(`- ${impact} impact / ${effort} effort • ${fix.title}${detail} [${scope}]`);
       if (fix.reason) {
-        console.log(`  ${chalk.dim(fix.reason)}`);
+        log(`  ${chalk.dim(fix.reason)}`);
       }
       if (fix.appFailures?.length) {
-        console.log(`  ${chalk.dim(`Apps: ${fix.appFailures.join(", ")}`)}`);
+        log(`  ${chalk.dim(`Apps: ${fix.appFailures.join(", ")}`)}`);
       }
     }
   }
 
   if (report.extras.length) {
-    console.log(chalk.bold("\nAI readiness extras"));
+    log(chalk.bold("\nAI readiness extras"));
     for (const extra of report.extras) {
       const icon = extra.status === "pass" ? chalk.green("✔") : chalk.red("✖");
-      console.log(`${icon} ${extra.title}`);
+      log(`${icon} ${extra.title}`);
     }
   }
 }

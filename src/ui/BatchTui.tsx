@@ -1,30 +1,17 @@
 import fs from "fs/promises";
-import path from "path";
 
 import { Box, Text, useApp, useInput } from "ink";
 import React, { useEffect, useState } from "react";
-import simpleGit from "simple-git";
 
-import { DEFAULT_MODEL } from "../config";
-import {
-  buildAuthedUrl,
-  cloneRepo,
-  checkoutBranch,
-  commitAll,
-  pushBranch,
-  isGitRepo
-} from "../services/git";
 import type { GitHubOrg, GitHubRepo } from "../services/github";
 import {
   listUserOrgs,
   listOrgRepos,
-  createPullRequest,
   listAccessibleRepos,
   checkReposForInstructions
 } from "../services/github";
-import { generateCopilotInstructions } from "../services/instructions";
-import { ensureDir, validateCachePath } from "../utils/fs";
-import { buildInstructionsPrBody } from "../utils/pr";
+import { processGitHubRepo } from "../services/batch";
+import type { ProcessResult } from "../services/batch";
 
 import { StaticBanner } from "./AnimatedBanner";
 
@@ -43,13 +30,6 @@ type Status =
   | "complete"
   | "error";
 
-type ProcessResult = {
-  repo: string;
-  success: boolean;
-  prUrl?: string;
-  error?: string;
-};
-
 export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
   const app = useApp();
   const [status, setStatus] = useState<Status>("loading-orgs");
@@ -65,7 +45,6 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
 
   // Processing
   const [results, setResults] = useState<ProcessResult[]>([]);
-  const [_currentRepoIndex, setCurrentRepoIndex] = useState(0);
   const [processingMessage, setProcessingMessage] = useState("");
 
   // Load orgs on mount
@@ -160,109 +139,27 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
   async function processRepos() {
     const selectedRepos = Array.from(selectedRepoIndices).map((i) => repos[i]);
     setStatus("processing");
-    setCurrentRepoIndex(0);
     setResults([]);
 
     const localResults: ProcessResult[] = [];
 
     for (let i = 0; i < selectedRepos.length; i++) {
       const repo = selectedRepos[i];
-      setCurrentRepoIndex(i);
-      setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ${repo.fullName}: Cloning...`);
+      setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ${repo.fullName}: Starting...`);
 
-      try {
-        // Clone
-        const cacheRoot = path.join(process.cwd(), ".primer-cache");
-        const repoPath = validateCachePath(cacheRoot, repo.owner, repo.name);
-        await ensureDir(repoPath);
-
-        if (!(await isGitRepo(repoPath))) {
-          const authedUrl = buildAuthedUrl(repo.cloneUrl, token, "github");
-          await cloneRepo(authedUrl, repoPath, {
-            shallow: true,
-            timeoutMs: 120000, // 2 minute timeout for clone
-            onProgress: (stage, progress) => {
-              setProcessingMessage(
-                `[${i + 1}/${selectedRepos.length}] ${repo.fullName}: Cloning (${stage} ${progress}%)...`
-              );
-            }
-          });
-          // Strip credentials from persisted remote URL
-          const git = simpleGit(repoPath);
-          await git.remote(["set-url", "origin", repo.cloneUrl]);
+      const result = await processGitHubRepo({
+        repo,
+        token,
+        progress: {
+          update: (msg) => setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ${msg}`),
+          succeed: (msg) => setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ✓ ${msg}`),
+          fail: (msg) => setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ✗ ${msg}`),
+          done: () => {}
         }
+      });
 
-        // Branch
-        setProcessingMessage(
-          `[${i + 1}/${selectedRepos.length}] ${repo.fullName}: Creating branch...`
-        );
-        const branch = "primer/add-instructions";
-        await checkoutBranch(repoPath, branch);
-
-        // Generate instructions with timeout
-        setProcessingMessage(
-          `[${i + 1}/${selectedRepos.length}] ${repo.fullName}: Generating instructions...`
-        );
-
-        const timeoutMs = 120000; // 2 minute timeout per repo
-        const instructionsPromise = generateCopilotInstructions({
-          repoPath,
-          model: DEFAULT_MODEL,
-          onProgress: (msg) => {
-            setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ${repo.fullName}: ${msg}`);
-          }
-        });
-
-        let timer: ReturnType<typeof setTimeout>;
-        const timeoutPromise = new Promise<string>((_, reject) => {
-          timer = setTimeout(
-            () => reject(new Error("Generation timed out after 2 minutes")),
-            timeoutMs
-          );
-        });
-
-        const instructions = await Promise.race([instructionsPromise, timeoutPromise]).finally(() =>
-          clearTimeout(timer)
-        );
-        // Prevent unhandled rejection if the losing promise rejects later
-        instructionsPromise.catch(() => {});
-
-        if (!instructions.trim()) {
-          throw new Error("Generated instructions were empty");
-        }
-
-        // Write instructions
-        const instructionsPath = path.join(repoPath, ".github", "copilot-instructions.md");
-        await fs.mkdir(path.dirname(instructionsPath), { recursive: true });
-        await fs.writeFile(instructionsPath, instructions, "utf8");
-
-        // Commit
-        setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ${repo.fullName}: Committing...`);
-        await commitAll(repoPath, "chore: add copilot instructions via Primer");
-
-        // Push
-        setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ${repo.fullName}: Pushing...`);
-        await pushBranch(repoPath, branch, token);
-
-        // Create PR
-        setProcessingMessage(`[${i + 1}/${selectedRepos.length}] ${repo.fullName}: Creating PR...`);
-        const prUrl = await createPullRequest({
-          token,
-          owner: repo.owner,
-          repo: repo.name,
-          title: "🤖 Add Copilot instructions via Primer",
-          body: buildInstructionsPrBody(),
-          head: branch,
-          base: repo.defaultBranch
-        });
-
-        localResults.push({ repo: repo.fullName, success: true, prUrl });
-        setResults([...localResults]);
-      } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : "Unknown error";
-        localResults.push({ repo: repo.fullName, success: false, error: errorMsg });
-        setResults([...localResults]);
-      }
+      localResults.push(result);
+      setResults([...localResults]);
     }
 
     // Write results if output path specified

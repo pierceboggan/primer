@@ -5,28 +5,30 @@ export async function ensureDir(dirPath: string): Promise<void> {
   await fs.mkdir(dirPath, { recursive: true });
 }
 
+export type WriteResult = { wrote: boolean; reason?: "symlink" | "exists" };
+
 export async function safeWriteFile(
   filePath: string,
   content: string,
   force: boolean
-): Promise<string> {
+): Promise<WriteResult> {
   const resolved = path.resolve(filePath);
 
   // Reject symlinks to prevent writing through them to unintended locations
   try {
     const stat = await fs.lstat(resolved);
     if (stat.isSymbolicLink()) {
-      return `Skipped ${path.relative(process.cwd(), filePath)} (symlink)`;
+      return { wrote: false, reason: "symlink" };
     }
     if (!force) {
-      return `Skipped ${path.relative(process.cwd(), filePath)} (exists)`;
+      return { wrote: false, reason: "exists" };
     }
   } catch {
     // File does not exist — safe to create
   }
 
   await fs.writeFile(resolved, content, "utf8");
-  return `Wrote ${path.relative(process.cwd(), filePath)}`;
+  return { wrote: true };
 }
 
 /**

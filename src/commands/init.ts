@@ -10,19 +10,24 @@ import {
   listProjects,
   listRepos
 } from "../services/azureDevops";
+import type { FileAction } from "../services/generator";
 import { generateConfigs } from "../services/generator";
 import { buildAuthedUrl, cloneRepo, isGitRepo, setRemoteUrl } from "../services/git";
 import type { GitHubRepo } from "../services/github";
-import { listAccessibleRepos } from "../services/github";
+import { getGitHubToken, listAccessibleRepos } from "../services/github";
 import { generateCopilotInstructions } from "../services/instructions";
 import { ensureDir, safeWriteFile, validateCachePath } from "../utils/fs";
 import { prettyPrintSummary } from "../utils/logger";
+import type { CommandResult } from "../utils/output";
+import { outputResult, outputError, deriveFileStatus, shouldLog } from "../utils/output";
 
 type InitOptions = {
   github?: boolean;
   provider?: string;
   yes?: boolean;
   force?: boolean;
+  json?: boolean;
+  quiet?: boolean;
 };
 
 export async function initCommand(
@@ -33,23 +38,36 @@ export async function initCommand(
   const provider = options.provider ?? (options.github ? "github" : undefined);
 
   if (provider && provider !== "github" && provider !== "azure") {
-    console.error("Invalid provider. Use github or azure.");
-    process.exitCode = 1;
+    outputError("Invalid provider. Use github or azure.", Boolean(options.json));
+    return;
+  }
+
+  if (options.json && !options.yes) {
+    outputError("--json requires --yes to skip interactive prompts.", true);
+    return;
+  }
+
+  if (options.json && provider) {
+    outputError(
+      "--json with --provider is not supported. Use 'primer pr' for non-interactive provider workflows.",
+      true
+    );
     return;
   }
 
   if (provider === "github") {
-    const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN;
+    const token = await getGitHubToken();
     if (!token) {
-      console.error("Set GITHUB_TOKEN or GH_TOKEN to use GitHub mode.");
-      process.exitCode = 1;
+      outputError(
+        "Set GITHUB_TOKEN or GH_TOKEN, or authenticate with GitHub CLI.",
+        Boolean(options.json)
+      );
       return;
     }
 
     const repos = await listAccessibleRepos(token);
     if (repos.length === 0) {
-      console.error("No accessible repositories found.");
-      process.exitCode = 1;
+      outputError("No accessible repositories found.", Boolean(options.json));
       return;
     }
 
@@ -74,15 +92,16 @@ export async function initCommand(
   if (provider === "azure") {
     const token = getAzureDevOpsToken();
     if (!token) {
-      console.error("Set AZURE_DEVOPS_PAT (or AZDO_PAT) to use Azure DevOps mode.");
-      process.exitCode = 1;
+      outputError(
+        "Set AZURE_DEVOPS_PAT (or AZDO_PAT) to use Azure DevOps mode.",
+        Boolean(options.json)
+      );
       return;
     }
 
     const orgs = await listOrganizations(token);
     if (orgs.length === 0) {
-      console.error("No Azure DevOps organizations found.");
-      process.exitCode = 1;
+      outputError("No Azure DevOps organizations found.", Boolean(options.json));
       return;
     }
 
@@ -96,8 +115,7 @@ export async function initCommand(
 
     const projects = await listProjects(token, orgSelection.name);
     if (projects.length === 0) {
-      console.error("No Azure DevOps projects found.");
-      process.exitCode = 1;
+      outputError("No Azure DevOps projects found.", Boolean(options.json));
       return;
     }
 
@@ -111,8 +129,7 @@ export async function initCommand(
 
     const repos = await listRepos(token, orgSelection.name, projectSelection.name);
     if (repos.length === 0) {
-      console.error("No Azure DevOps repositories found.");
-      process.exitCode = 1;
+      outputError("No Azure DevOps repositories found.", Boolean(options.json));
       return;
     }
 
@@ -140,8 +157,19 @@ export async function initCommand(
       await setRemoteUrl(repoPath, repoSelection.cloneUrl);
     }
   }
-  const analysis = await analyzeRepo(repoPath);
-  prettyPrintSummary(analysis);
+  let analysis;
+  try {
+    analysis = await analyzeRepo(repoPath);
+  } catch (error) {
+    outputError(
+      `Failed to analyze repo: ${error instanceof Error ? error.message : String(error)}`,
+      Boolean(options.json)
+    );
+    return;
+  }
+  if (shouldLog(options)) {
+    prettyPrintSummary(analysis);
+  }
 
   const selections = options.yes
     ? ["instructions", "mcp", "vscode"]
@@ -155,20 +183,54 @@ export async function initCommand(
         required: true
       });
 
+  const allFiles: FileAction[] = [];
+
   if (selections.includes("instructions")) {
     const outputPath = path.join(repoPath, ".github", "copilot-instructions.md");
     await ensureDir(path.dirname(outputPath));
-    const content = await generateCopilotInstructions({ repoPath });
-    const result = await safeWriteFile(outputPath, content, Boolean(options.force));
-    console.log(result);
+    try {
+      const content = await generateCopilotInstructions({ repoPath });
+      const { wrote } = await safeWriteFile(outputPath, content, Boolean(options.force));
+      allFiles.push({
+        path: path.relative(process.cwd(), outputPath),
+        action: wrote ? "wrote" : "skipped"
+      });
+      if (shouldLog(options)) {
+        const rel = path.relative(process.cwd(), outputPath);
+        process.stderr.write((wrote ? `Wrote ${rel}` : `Skipped ${rel} (exists)`) + "\n");
+      }
+    } catch (error) {
+      outputError(
+        `Failed to generate instructions: ${error instanceof Error ? error.message : String(error)}`,
+        Boolean(options.json)
+      );
+      return;
+    }
   }
 
-  const result = await generateConfigs({
+  const genResult = await generateConfigs({
     repoPath,
     analysis,
     selections: selections.filter((item) => item !== "instructions"),
     force: Boolean(options.force)
   });
+  allFiles.push(...genResult.files);
 
-  console.log(result.summary);
+  if (options.json) {
+    const { ok, status } = deriveFileStatus(allFiles);
+    const result: CommandResult<{
+      selections: string[];
+      files: FileAction[];
+      analysis: typeof analysis;
+    }> = {
+      ok,
+      status,
+      data: { selections, files: allFiles, analysis }
+    };
+    outputResult(result, true);
+  } else if (shouldLog(options)) {
+    for (const file of genResult.files) {
+      process.stderr.write(`${file.action === "wrote" ? "Wrote" : "Skipped"} ${file.path}\n`);
+    }
+  }
 }

@@ -58,6 +58,27 @@ primer init
 primer init --yes
 ```
 
+## Global Options
+
+All commands support these flags:
+
+| Flag      | Description                                         |
+| --------- | --------------------------------------------------- |
+| `--json`  | Output structured JSON to stdout (machine-readable) |
+| `--quiet` | Suppress all non-essential output                   |
+
+When `--json` is set, commands emit a `CommandResult<T>` envelope:
+
+```json
+{
+  "ok": true,
+  "status": "success",
+  "data": { ... }
+}
+```
+
+Status is one of `"success"`, `"partial"`, `"noop"`, or `"error"`. Errors include an `errors` array.
+
 ## Commands
 
 ### `primer readiness`
@@ -128,8 +149,28 @@ Results include an interactive HTML trajectory viewer comparing responses with/w
 Batch-process repos across an organization:
 
 ```bash
-primer batch                              # GitHub repos
-primer batch --provider azure             # Azure DevOps repos
+primer batch                              # GitHub repos (interactive TUI)
+primer batch --provider azure             # Azure DevOps repos (interactive TUI)
+```
+
+**Headless mode** — pass repos as arguments or via stdin for CI/automation:
+
+```bash
+# GitHub repos
+primer batch owner/repo1 owner/repo2 --json
+echo "owner/repo1\nowner/repo2" | primer batch --json
+
+# Azure DevOps repos
+primer batch org/project/repo1 org/project/repo2 --provider azure --json
+```
+
+### `primer analyze`
+
+Analyze a repository's tech stack:
+
+```bash
+primer analyze                            # human-readable summary
+primer analyze /path/to/repo --json       # structured JSON output
 ```
 
 ### `primer pr`
@@ -183,6 +224,7 @@ src/
 ├── commands/             # CLI subcommands
 ├── services/             # Core logic
 │   ├── analyzer.ts        # Repo scanning (languages, frameworks, monorepos)
+│   ├── batch.ts           # Shared batch processing (GitHub + Azure DevOps)
 │   ├── readiness.ts       # 9-pillar scoring engine
 │   ├── visualReport.ts    # HTML report generator
 │   ├── instructions.ts    # Copilot SDK integration
@@ -194,7 +236,7 @@ src/
 │   ├── azureDevops.ts     # Azure DevOps API
 │   └── __tests__/         # Test suite
 ├── ui/                   # Ink/React terminal UI
-└── utils/                # Shared utilities (fs, logger, cwd)
+└── utils/                # Shared utilities (fs, logger, cwd, output)
 ```
 
 ## Troubleshooting
