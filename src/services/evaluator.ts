@@ -96,9 +96,9 @@ export async function runEval(
   const runStartedAt = Date.now();
 
   progress("Starting Copilot SDK...");
-  const cliPath = await assertCopilotCliReady();
+  const cliConfig = await assertCopilotCliReady();
   const sdk = await import("@github/copilot-sdk");
-  const client = new sdk.CopilotClient({ cliPath });
+  const client = new sdk.CopilotClient(cliConfig);
 
   try {
     const results: EvalResult[] = [];
