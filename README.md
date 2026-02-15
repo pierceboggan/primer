@@ -2,290 +2,209 @@
 
 > Prime your repositories for AI-assisted development.
 
-Primer is a CLI tool that analyzes your codebase and generates `.github/copilot-instructions.md` files to help AI coding assistants understand your project better. It supports single repos, batch processing across organizations, and includes an evaluation framework to measure instruction effectiveness.
+[![CI](https://github.com/pierceboggan/primer/actions/workflows/ci.yml/badge.svg)](https://github.com/pierceboggan/primer/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-![Primer](primer.png)
+Primer is a CLI tool that helps teams prepare repositories for AI-assisted development. It generates custom instructions, assesses AI readiness with a maturity model, and supports batch processing across organizations — with an interactive TUI and beautiful visual reports.
+
+```bash
+npx github:pierceboggan/primer readiness --visual
+```
 
 ## Features
 
-- **Repository Analysis** - Detects languages, frameworks, and package managers
-- **AI-Powered Generation** - Uses the Copilot SDK to analyze your codebase and generate context-aware instructions
-- **Batch Processing** - Process multiple repos across organizations with a single command
-- **Evaluation Framework** - Test and measure how well your instructions improve AI responses
-- **GitHub Integration** - Clone repos, create branches, and open PRs automatically
-- **Interactive TUI** - Beautiful terminal interface built with Ink
-- **Config Generation** - Generate MCP and VS Code configurations
+- **AI Readiness Reports** — Score repos across 9 pillars with a maturity model (Functional → Autonomous), including an AI tooling pillar that checks for MCP, custom agents, Copilot skills, and custom instructions
+- **Visual Reports** — GitHub-themed HTML reports with light/dark toggle, expandable pillar details, and maturity model descriptions
+- **Instruction Generation** — Generate `copilot-instructions.md` or `AGENTS.md` using the Copilot SDK, with per-app support for monorepos
+- **Batch Processing** — Process multiple repos across GitHub or Azure DevOps organizations
+- **Evaluation Framework** — Measure how instructions improve AI responses with a judge model
+- **Interactive TUI** — Ink-based terminal UI with submenus, model picker, activity log, and animated banner
+- **Config Generation** — Generate MCP and VS Code configurations
+- **GitHub Integration** — Clone repos, create branches, and open PRs automatically
 
 ## Prerequisites
 
-1. **Node.js 18+**
-2. **GitHub Copilot CLI** - Installed via VS Code's Copilot Chat extension
-3. **Copilot CLI Authentication** - Run `copilot` then `/login` to authenticate
-4. **GitHub CLI (optional)** - For batch processing and PR creation: `brew install gh && gh auth login`
+| Requirement                       | Notes                                                                    |
+| --------------------------------- | ------------------------------------------------------------------------ |
+| **Node.js 20+**                   | Runtime                                                                  |
+| **GitHub Copilot CLI**            | Bundled with the VS Code Copilot Chat extension                          |
+| **Copilot authentication**        | Run `copilot` → `/login`                                                 |
+| **GitHub CLI** _(optional)_       | For batch processing and PR creation: `brew install gh && gh auth login` |
+| **Azure DevOps PAT** _(optional)_ | Set `AZURE_DEVOPS_PAT` for Azure DevOps workflows                        |
 
 ## Installation
 
 ```bash
-# Clone and install
 git clone https://github.com/pierceboggan/primer.git
 cd primer
 npm install
+npm run build
+npm link
 ```
 
-## Usage
-
-### Quick Start (Init)
-
-The easiest way to get started is with the `init` command:
+Verify:
 
 ```bash
-# Interactive setup for current directory
-npx tsx src/index.ts init
-
-# Accept defaults and generate instructions automatically
-npx tsx src/index.ts init --yes
-
-# Work with a GitHub repository
-npx tsx src/index.ts init --github
+primer --help
 ```
 
-### Interactive Mode (TUI)
+## Quick Start
 
 ```bash
-# Run TUI in current directory
-npx tsx src/index.ts tui
+# Interactive setup — generates instructions, MCP, and VS Code configs
+primer init
 
-# Run on a specific repo
-npx tsx src/index.ts tui --repo /path/to/repo
-
-# Skip the animated intro
-npx tsx src/index.ts tui --no-animation
+# Non-interactive with defaults
+primer init --yes
 ```
 
-**Keys:**
-- `[A]` Analyze - Detect languages, frameworks, and package manager
-- `[G]` Generate - Generate copilot-instructions.md using Copilot SDK
-- `[S]` Save - Save generated instructions (in preview mode)
-- `[D]` Discard - Discard generated instructions (in preview mode)
-- `[Q]` Quit
+## Commands
 
-### Generate Instructions
+### `primer readiness`
+
+Score a repo's AI readiness across 9 pillars:
 
 ```bash
-# Generate instructions for current directory
-npx tsx src/index.ts instructions
-
-# Generate for specific repo with custom output
-npx tsx src/index.ts instructions --repo /path/to/repo --output ./instructions.md
-
-# Use a specific model
-npx tsx src/index.ts instructions --model gpt-5
+primer readiness                        # terminal summary
+primer readiness --visual               # GitHub-themed HTML report
+primer readiness --json                 # machine-readable JSON
+primer readiness /path/to/repo --output report.html
 ```
 
-### Batch Processing
+**Maturity levels:**
 
-Process multiple repositories across organizations:
+| Level | Name         | Description                                         |
+| ----- | ------------ | --------------------------------------------------- |
+| 1     | Functional   | Builds, tests, basic tooling in place               |
+| 2     | Documented   | README, CONTRIBUTING, custom AI instructions exist  |
+| 3     | Standardized | CI/CD, security policies, CODEOWNERS, observability |
+| 4     | Optimized    | MCP servers, custom agents, AI skills configured    |
+| 5     | Autonomous   | Full AI-native development with minimal oversight   |
+
+**AI Tooling checks** include `copilot-instructions.md`, `CLAUDE.md`, `AGENTS.md`, `.cursorrules`, MCP configs, custom agents, and Copilot/Claude skills.
+
+### `primer batch-readiness`
+
+Consolidated visual readiness report across multiple repositories:
 
 ```bash
-# Launch batch TUI
-npx tsx src/index.ts batch
-
-# Save results to file
-npx tsx src/index.ts batch --output results.json
+primer batch-readiness
+primer batch-readiness --output team-readiness.html
 ```
 
-**Batch TUI Keys:**
-- `[Space]` Toggle selection
-- `[A]` Select all repos
-- `[Enter]` Confirm selection
-- `[Y/N]` Confirm/cancel processing
-- `[Q]` Quit
+### `primer generate`
 
-### Analyze Repository
+Generate AI configuration files using the Copilot SDK:
 
 ```bash
-# Analyze current directory
-npx tsx src/index.ts analyze
-
-# Analyze specific path with JSON output
-npx tsx src/index.ts analyze /path/to/repo --json
+primer generate instructions             # copilot-instructions.md
+primer generate agents                    # AGENTS.md
+primer generate instructions --per-app    # per-app in monorepos
+primer generate mcp                       # .vscode/mcp.json
+primer generate vscode --force            # .vscode/settings.json (overwrite)
 ```
 
-### Generate Configs
-
-Generate configuration files for your repo:
+Standalone shortcut for instructions:
 
 ```bash
-# Generate MCP config
-npx tsx src/index.ts generate mcp
-
-# Generate VS Code settings
-npx tsx src/index.ts generate vscode --force
-
-# Generate custom prompts
-npx tsx src/index.ts generate prompts
-
-# Generate agent configs
-npx tsx src/index.ts generate agents
-
-# Generate .aiignore file
-npx tsx src/index.ts generate aiignore
+primer instructions --repo /path/to/repo --model claude-sonnet-4.5
 ```
 
-### Manage Templates
+### `primer eval`
 
-View available instruction templates:
+Measure how instructions improve AI responses:
 
 ```bash
-npx tsx src/index.ts templates
+primer eval --init                        # scaffold eval config from codebase analysis
+primer eval primer.eval.json --repo .     # run evaluation (default model: claude-sonnet-4.5)
+primer eval --model gpt-4.1 --judge-model claude-sonnet-4.5
+primer eval --list-models                 # list available Copilot CLI models
 ```
 
-### Configuration
+Results include an interactive HTML trajectory viewer comparing responses with/without instructions, with token usage, tool-call counts, and duration.
 
-View and manage Primer configuration:
+### `primer batch`
+
+Batch-process repos across an organization:
 
 ```bash
-npx tsx src/index.ts config
+primer batch                              # GitHub repos
+primer batch --provider azure             # Azure DevOps repos
 ```
 
-### Update
+### `primer pr`
 
-Check for and apply updates:
+Clone a repo, generate configs, and open a PR:
 
 ```bash
-npx tsx src/index.ts update
+primer pr owner/repo-name
+primer pr my-org/my-project/my-repo --provider azure
 ```
 
-### Create Pull Requests
+### `primer tui`
 
-Automatically create a PR to add Primer configs to a repository:
+Interactive terminal UI:
 
 ```bash
-# Create PR for a GitHub repo
-npx tsx src/index.ts pr owner/repo-name
-
-# Use custom branch name
-npx tsx src/index.ts pr owner/repo-name --branch primer/custom-branch
+primer tui
+primer tui --repo /path/to/repo --no-animation
 ```
 
-### Evaluation Framework
-
-Test how well your instructions improve AI responses:
-
-```bash
-# Create a starter eval config
-npx tsx src/index.ts eval --init
-
-# Run evaluation
-npx tsx src/index.ts eval primer.eval.json --repo /path/to/repo
-
-# Save results and use specific models
-npx tsx src/index.ts eval --output results.json --model gpt-5 --judge-model gpt-5
-```
-
-Example `primer.eval.json`:
-```json
-{
-  "instructionFile": ".github/copilot-instructions.md",
-  "cases": [
-    {
-      "id": "project-overview",
-      "prompt": "Summarize what this project does and list the main entry points.",
-      "expectation": "Should mention the primary purpose and key files/directories."
-    }
-  ]
-}
-```
-
-## How It Works
-
-1. **Analysis** - Scans the repository for:
-   - Language files (`.ts`, `.js`, `.py`, `.go`, etc.)
-   - Framework indicators (`package.json`, `tsconfig.json`, etc.)
-   - Package manager lock files
-
-2. **Generation** - Uses the Copilot SDK to:
-   - Start a Copilot CLI session
-   - Let the AI agent explore your codebase using tools (`glob`, `view`, `grep`)
-   - Generate concise, project-specific instructions
-
-3. **Batch Processing** - For multiple repos:
-   - Select organizations and repositories via TUI
-   - Clone, branch, generate, commit, push, and create PRs
-   - Track success/failure for each repository
-
-4. **Evaluation** - Measure instruction quality:
-   - Run prompts with and without instructions
-   - Use a judge model to score responses
-   - Generate comparison reports
-
-## Project Structure
-
-```
-primer/
-├── src/
-│   ├── index.ts              # Entry point
-│   ├── cli.ts                # Commander CLI setup
-│   ├── commands/             # CLI commands
-│   │   ├── analyze.ts        # Repository analysis
-│   │   ├── batch.tsx         # Batch processing
-│   │   ├── config.ts         # Config management
-│   │   ├── eval.ts           # Evaluation framework
-│   │   ├── generate.ts       # Config generation
-│   │   ├── init.ts           # Interactive setup
-│   │   ├── instructions.tsx  # Instructions generation
-│   │   ├── pr.ts             # PR creation
-│   │   ├── templates.ts      # Template management
-│   │   ├── tui.tsx           # TUI launcher
-│   │   └── update.ts         # Update command
-│   ├── services/             # Core business logic
-│   │   ├── analyzer.ts       # Repository analysis
-│   │   ├── evaluator.ts      # Eval runner
-│   │   ├── generator.ts      # Config generation
-│   │   ├── git.ts            # Git operations
-│   │   ├── github.ts         # GitHub API
-│   │   └── instructions.ts   # Copilot SDK integration
-│   ├── ui/                   # Terminal UI
-│   │   ├── AnimatedBanner.tsx
-│   │   ├── BatchTui.tsx      # Batch processing UI
-│   │   └── tui.tsx           # Main TUI
-│   └── utils/                # Helpers
-│       ├── fs.ts
-│       └── logger.ts
-├── package.json
-├── tsconfig.json
-├── primer.eval.json          # Example eval config
-└── PLAN.md                   # Project roadmap
-```
+| Key       | Action                             |
+| --------- | ---------------------------------- |
+| `G`       | Generate instructions or AGENTS.md |
+| `E`       | Run evals or init eval config      |
+| `B`       | Batch — GitHub or Azure DevOps     |
+| `M` / `J` | Pick eval / judge model            |
+| `Q`       | Quit                               |
 
 ## Development
 
 ```bash
-# Type check
-npx tsc -p tsconfig.json --noEmit
+npm run typecheck        # type check
+npm run lint             # ESLint (flat config + Prettier)
+npm run test             # 51+ Vitest tests
+npm run test:coverage    # with coverage via @vitest/coverage-v8
+npm run build            # production build via tsup
 
-# Run in dev mode
-npx tsx src/index.ts
+# Run from source (no build needed)
+npx tsx src/index.ts --help
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for workflow and code style guidelines.
+
+## Project Structure
+
+```
+src/
+├── index.ts              # Entry point
+├── cli.ts                # Commander CLI wiring
+├── config.ts             # Default models (claude-sonnet-4.5)
+├── commands/             # CLI subcommands
+├── services/             # Core logic
+│   ├── analyzer.ts        # Repo scanning (languages, frameworks, monorepos)
+│   ├── readiness.ts       # 9-pillar scoring engine
+│   ├── visualReport.ts    # HTML report generator
+│   ├── instructions.ts    # Copilot SDK integration
+│   ├── evaluator.ts       # Eval runner + trajectory viewer
+│   ├── evalScaffold.ts    # AI-powered eval config generation
+│   ├── generator.ts       # MCP/VS Code config generation
+│   ├── git.ts             # Git operations (clone, branch, push)
+│   ├── github.ts          # GitHub API (Octokit)
+│   ├── azureDevops.ts     # Azure DevOps API
+│   └── __tests__/         # Test suite
+├── ui/                   # Ink/React terminal UI
+└── utils/                # Shared utilities (fs, logger, cwd)
 ```
 
 ## Troubleshooting
 
-### "Copilot CLI not found"
-Install the GitHub Copilot Chat extension in VS Code. The CLI is bundled with it.
+**"Copilot CLI not found"** — Install the GitHub Copilot Chat extension in VS Code. The CLI is bundled with it.
 
-### "Copilot CLI not logged in"
-Run `copilot` in your terminal, then type `/login` to authenticate.
+**"Copilot CLI not logged in"** — Run `copilot` in your terminal, then `/login` to authenticate.
 
-### "GitHub authentication required" (batch/PR commands)
-Install GitHub CLI and authenticate: `brew install gh && gh auth login`
-
-Or set a token: `export GITHUB_TOKEN=<your-token>`
-
-### Generation hangs or times out
-- Ensure you're authenticated with the Copilot CLI
-- Check your network connection
-- Try a smaller repository first
+**"GitHub authentication required"** — Install GitHub CLI (`brew install gh && gh auth login`) or set `GITHUB_TOKEN` / `GH_TOKEN`.
 
 ## License
 
-MIT
+[MIT](LICENSE)

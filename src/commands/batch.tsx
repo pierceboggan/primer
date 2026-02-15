@@ -1,15 +1,41 @@
-import React from "react";
 import { render } from "ink";
-import { BatchTui } from "../ui/BatchTui";
+import React from "react";
+
+import { getAzureDevOpsToken } from "../services/azureDevops";
 import { getGitHubToken } from "../services/github";
+import { BatchTui } from "../ui/BatchTui";
+import { BatchTuiAzure } from "../ui/BatchTuiAzure";
 
 type BatchOptions = {
   output?: string;
+  provider?: string;
 };
 
 export async function batchCommand(options: BatchOptions): Promise<void> {
+  const provider = options.provider ?? "github";
+  if (provider !== "github" && provider !== "azure") {
+    console.error("Invalid provider. Use github or azure.");
+    process.exitCode = 1;
+    return;
+  }
+
+  if (provider === "azure") {
+    const token = getAzureDevOpsToken();
+    if (!token) {
+      console.error("Error: Azure DevOps authentication required.");
+      console.error("");
+      console.error("Set a PAT environment variable:");
+      console.error("  export AZURE_DEVOPS_PAT=<your-pat>");
+      process.exitCode = 1;
+      return;
+    }
+
+    const { waitUntilExit } = render(<BatchTuiAzure token={token} outputPath={options.output} />);
+    await waitUntilExit();
+    return;
+  }
+
   const token = await getGitHubToken();
-  
   if (!token) {
     console.error("Error: GitHub authentication required.");
     console.error("");
@@ -22,10 +48,7 @@ export async function batchCommand(options: BatchOptions): Promise<void> {
     return;
   }
 
-  const { waitUntilExit } = render(
-    <BatchTui token={token} outputPath={options.output} />
-  );
-
+  const { waitUntilExit } = render(<BatchTui token={token} outputPath={options.output} />);
 
   await waitUntilExit();
 }

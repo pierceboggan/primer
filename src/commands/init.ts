@@ -1,24 +1,44 @@
 import path from "path";
-import fs from "fs/promises";
+
 import { checkbox, select } from "@inquirer/prompts";
+
 import { analyzeRepo } from "../services/analyzer";
+import type { AzureDevOpsOrg, AzureDevOpsProject, AzureDevOpsRepo } from "../services/azureDevops";
+import {
+  getAzureDevOpsToken,
+  listOrganizations,
+  listProjects,
+  listRepos
+} from "../services/azureDevops";
 import { generateConfigs } from "../services/generator";
-import { GitHubRepo, listAccessibleRepos } from "../services/github";
-import { cloneRepo, isGitRepo } from "../services/git";
+import { buildAuthedUrl, cloneRepo, isGitRepo, setRemoteUrl } from "../services/git";
+import type { GitHubRepo } from "../services/github";
+import { listAccessibleRepos } from "../services/github";
 import { generateCopilotInstructions } from "../services/instructions";
-import { ensureDir } from "../utils/fs";
+import { ensureDir, safeWriteFile, validateCachePath } from "../utils/fs";
 import { prettyPrintSummary } from "../utils/logger";
 
 type InitOptions = {
   github?: boolean;
+  provider?: string;
   yes?: boolean;
   force?: boolean;
 };
 
-export async function initCommand(repoPathArg: string | undefined, options: InitOptions): Promise<void> {
+export async function initCommand(
+  repoPathArg: string | undefined,
+  options: InitOptions
+): Promise<void> {
   let repoPath = path.resolve(repoPathArg ?? process.cwd());
+  const provider = options.provider ?? (options.github ? "github" : undefined);
 
-  if (options.github) {
+  if (provider && provider !== "github" && provider !== "azure") {
+    console.error("Invalid provider. Use github or azure.");
+    process.exitCode = 1;
+    return;
+  }
+
+  if (provider === "github") {
     const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN;
     if (!token) {
       console.error("Set GITHUB_TOKEN or GH_TOKEN to use GitHub mode.");
@@ -42,7 +62,7 @@ export async function initCommand(repoPathArg: string | undefined, options: Init
     });
 
     const cacheRoot = path.join(process.cwd(), ".primer-cache");
-    repoPath = path.join(cacheRoot, selection.owner, selection.name);
+    repoPath = validateCachePath(cacheRoot, selection.owner, selection.name);
     await ensureDir(repoPath);
 
     const hasGit = await isGitRepo(repoPath);
@@ -50,11 +70,81 @@ export async function initCommand(repoPathArg: string | undefined, options: Init
       await cloneRepo(selection.cloneUrl, repoPath);
     }
   }
+
+  if (provider === "azure") {
+    const token = getAzureDevOpsToken();
+    if (!token) {
+      console.error("Set AZURE_DEVOPS_PAT (or AZDO_PAT) to use Azure DevOps mode.");
+      process.exitCode = 1;
+      return;
+    }
+
+    const orgs = await listOrganizations(token);
+    if (orgs.length === 0) {
+      console.error("No Azure DevOps organizations found.");
+      process.exitCode = 1;
+      return;
+    }
+
+    const orgSelection = await select<AzureDevOpsOrg>({
+      message: "Choose an Azure DevOps organization",
+      choices: orgs.map((org) => ({
+        name: org.name,
+        value: org
+      }))
+    });
+
+    const projects = await listProjects(token, orgSelection.name);
+    if (projects.length === 0) {
+      console.error("No Azure DevOps projects found.");
+      process.exitCode = 1;
+      return;
+    }
+
+    const projectSelection = await select<AzureDevOpsProject>({
+      message: "Choose an Azure DevOps project",
+      choices: projects.map((project) => ({
+        name: project.name,
+        value: project
+      }))
+    });
+
+    const repos = await listRepos(token, orgSelection.name, projectSelection.name);
+    if (repos.length === 0) {
+      console.error("No Azure DevOps repositories found.");
+      process.exitCode = 1;
+      return;
+    }
+
+    const repoSelection = await select<AzureDevOpsRepo>({
+      message: "Choose a repository",
+      choices: repos.map((repo) => ({
+        name: `${repo.name}${repo.isPrivate ? " (private)" : ""}`,
+        value: repo
+      }))
+    });
+
+    const cacheRoot = path.join(process.cwd(), ".primer-cache");
+    repoPath = validateCachePath(
+      cacheRoot,
+      orgSelection.name,
+      projectSelection.name,
+      repoSelection.name
+    );
+    await ensureDir(repoPath);
+
+    const hasGit = await isGitRepo(repoPath);
+    if (!hasGit) {
+      const authedUrl = buildAuthedUrl(repoSelection.cloneUrl, token, "azure");
+      await cloneRepo(authedUrl, repoPath);
+      await setRemoteUrl(repoPath, repoSelection.cloneUrl);
+    }
+  }
   const analysis = await analyzeRepo(repoPath);
   prettyPrintSummary(analysis);
 
   const selections = options.yes
-    ? ["instructions"]
+    ? ["instructions", "mcp", "vscode"]
     : await checkbox({
         message: "What would you like to generate?",
         choices: [
@@ -69,8 +159,8 @@ export async function initCommand(repoPathArg: string | undefined, options: Init
     const outputPath = path.join(repoPath, ".github", "copilot-instructions.md");
     await ensureDir(path.dirname(outputPath));
     const content = await generateCopilotInstructions({ repoPath });
-    await fs.writeFile(outputPath, content, "utf8");
-    console.log(`Updated ${path.relative(process.cwd(), outputPath)}`);
+    const result = await safeWriteFile(outputPath, content, Boolean(options.force));
+    console.log(result);
   }
 
   const result = await generateConfigs({

@@ -1,18 +1,97 @@
+import fs from "fs/promises";
 import path from "path";
+
+import { DEFAULT_MODEL } from "../config";
 import { analyzeRepo } from "../services/analyzer";
+import {
+  createPullRequest as createAzurePullRequest,
+  getAzureDevOpsToken,
+  getRepo as getAzureRepo
+} from "../services/azureDevops";
 import { generateConfigs } from "../services/generator";
+import {
+  buildAuthedUrl,
+  checkoutBranch,
+  cloneRepo,
+  commitAll,
+  isGitRepo,
+  pushBranch,
+  setRemoteUrl
+} from "../services/git";
 import { createPullRequest, getRepo } from "../services/github";
-import { checkoutBranch, cloneRepo, commitAll, isGitRepo, pushBranch } from "../services/git";
-import { ensureDir } from "../utils/fs";
+import { generateCopilotInstructions } from "../services/instructions";
+import { ensureDir, validateCachePath } from "../utils/fs";
+import { buildConfigsPrBody, buildInstructionsPrBody } from "../utils/pr";
 
 type PrOptions = {
   branch?: string;
+  provider?: string;
 };
 
 export async function prCommand(repo: string | undefined, options: PrOptions): Promise<void> {
-  if (!repo) {
-    console.error("Provide a repo in owner/name form.");
+  const provider = options.provider ?? "github";
+  if (provider !== "github" && provider !== "azure") {
+    console.error("Invalid provider. Use github or azure.");
     process.exitCode = 1;
+    return;
+  }
+
+  if (!repo) {
+    console.error("Provide a repo identifier (github: owner/name, azure: org/project/repo).");
+    process.exitCode = 1;
+    return;
+  }
+
+  if (provider === "azure") {
+    const token = getAzureDevOpsToken();
+    if (!token) {
+      console.error("Set AZURE_DEVOPS_PAT (or AZDO_PAT) to use Azure DevOps PR automation.");
+      process.exitCode = 1;
+      return;
+    }
+
+    const [organization, project, name] = repo.split("/");
+    if (!organization || !project || !name) {
+      console.error("Invalid Azure DevOps repo format. Use org/project/repo.");
+      process.exitCode = 1;
+      return;
+    }
+
+    const repoInfo = await getAzureRepo(token, organization, project, name);
+    const cacheRoot = path.join(process.cwd(), ".primer-cache");
+    const repoPath = validateCachePath(cacheRoot, organization, project, name);
+    await ensureDir(repoPath);
+
+    if (!(await isGitRepo(repoPath))) {
+      const authedUrl = buildAuthedUrl(repoInfo.cloneUrl, token, "azure");
+      await cloneRepo(authedUrl, repoPath);
+      await setRemoteUrl(repoPath, repoInfo.cloneUrl);
+    }
+
+    const branch = options.branch ?? "primer/add-instructions";
+    await checkoutBranch(repoPath, branch);
+
+    const instructions = await generateCopilotInstructions({ repoPath, model: DEFAULT_MODEL });
+    const instructionsPath = path.join(repoPath, ".github", "copilot-instructions.md");
+    await ensureDir(path.dirname(instructionsPath));
+    await fs.writeFile(instructionsPath, instructions, "utf8");
+
+    await commitAll(repoPath, "chore: add copilot instructions via Primer");
+    await pushBranch(repoPath, branch, token, "azure");
+
+    const prUrl = await createAzurePullRequest({
+      token,
+      organization,
+      project,
+      repoId: repoInfo.id,
+      repoName: repoInfo.name,
+      title: "🤖 Add Copilot instructions via Primer",
+      body: buildInstructionsPrBody(),
+      sourceBranch: branch,
+      targetBranch: repoInfo.defaultBranch
+    });
+
+    console.log(`Created PR: ${prUrl}`);
     return;
   }
 
@@ -32,7 +111,7 @@ export async function prCommand(repo: string | undefined, options: PrOptions): P
 
   const repoInfo = await getRepo(token, owner, name);
   const cacheRoot = path.join(process.cwd(), ".primer-cache");
-  const repoPath = path.join(cacheRoot, owner, name);
+  const repoPath = validateCachePath(cacheRoot, owner, name);
   await ensureDir(repoPath);
 
   if (!(await isGitRepo(repoPath))) {
@@ -51,41 +130,17 @@ export async function prCommand(repo: string | undefined, options: PrOptions): P
   });
 
   await commitAll(repoPath, "chore: add AI configurations via Primer");
-  await pushBranch(repoPath, branch);
+  await pushBranch(repoPath, branch, token, "github");
 
   const prUrl = await createPullRequest({
     token,
     owner,
     repo: name,
     title: "🤖 Prime this repo for AI",
-    body: buildPrBody(),
+    body: buildConfigsPrBody(),
     head: `${owner}:${branch}`,
     base: repoInfo.defaultBranch
   });
 
   console.log(`Created PR: ${prUrl}`);
-}
-
-function buildPrBody(): string {
-  return [
-    "## 🤖 Primed for AI",
-    "",
-    "This PR adds configurations to prime this repository for AI coding assistants.",
-    "",
-    "### Added Files",
-    "",
-    "| File | Purpose |",
-    "|------|---------|",
-    "| `.vscode/settings.json` | VS Code settings for optimal AI assistance |",
-    "| `.vscode/mcp.json` | Model Context Protocol server configuration |",
-    "",
-    "### How to Use",
-    "",
-    "1. Merge this PR",
-    "2. Open the project in VS Code",
-    "3. Start chatting with Copilot — it now understands your project!",
-    "",
-    "---",
-    "*Generated by Primer*"
-  ].join("\n");
 }
