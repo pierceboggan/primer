@@ -10,7 +10,7 @@
 - Place new CLI commands in src/commands/, core logic in src/services/, and TUI in src/ui/.
 - All CLI commands MUST support --json, --quiet and arguments for automation-friendly output.
 - Do not add new build/lint/test tools unless necessary; use existing npm scripts.
-- Ensure Windows/macOS/Linux compatibility
+- Windows/macOS/Linux compatibility is required; consider path handling and shell commands carefully.
 
 ## Overview
 
