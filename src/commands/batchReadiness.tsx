@@ -21,7 +21,15 @@ export async function batchReadinessCommand(options: BatchReadinessOptions): Pro
     return;
   }
 
-  const { waitUntilExit } = render(<BatchReadinessTui token={token} outputPath={options.output} />);
-
-  await waitUntilExit();
+  try {
+    const { waitUntilExit } = render(
+      <BatchReadinessTui token={token} outputPath={options.output} />
+    );
+    await waitUntilExit();
+  } catch (error) {
+    outputError(
+      `TUI failed: ${error instanceof Error ? error.message : String(error)}`,
+      Boolean(options.json)
+    );
+  }
 }

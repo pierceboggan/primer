@@ -68,8 +68,15 @@ export async function batchCommand(repos: string[], options: BatchOptions): Prom
       return;
     }
 
-    const { waitUntilExit } = render(<BatchTuiAzure token={token} outputPath={options.output} />);
-    await waitUntilExit();
+    try {
+      const { waitUntilExit } = render(<BatchTuiAzure token={token} outputPath={options.output} />);
+      await waitUntilExit();
+    } catch (error) {
+      outputError(
+        `TUI failed: ${error instanceof Error ? error.message : String(error)}`,
+        Boolean(options.json)
+      );
+    }
     return;
   }
 
@@ -82,8 +89,15 @@ export async function batchCommand(repos: string[], options: BatchOptions): Prom
     return;
   }
 
-  const { waitUntilExit } = render(<BatchTui token={token} outputPath={options.output} />);
-  await waitUntilExit();
+  try {
+    const { waitUntilExit } = render(<BatchTui token={token} outputPath={options.output} />);
+    await waitUntilExit();
+  } catch (error) {
+    outputError(
+      `TUI failed: ${error instanceof Error ? error.message : String(error)}`,
+      Boolean(options.json)
+    );
+  }
 }
 
 // ── Headless implementation ──

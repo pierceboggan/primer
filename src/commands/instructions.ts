@@ -94,8 +94,9 @@ export async function instructionsCommand(options: InstructionsOptions): Promise
         return;
       }
 
-      const targetAreas = options.area
-        ? areas.filter((a) => a.name.toLowerCase() === options.area!.toLowerCase())
+      const areaFilter = options.area?.toLowerCase();
+      const targetAreas = areaFilter
+        ? areas.filter((a) => a.name.toLowerCase() === areaFilter)
         : areas;
 
       if (options.area && targetAreas.length === 0) {

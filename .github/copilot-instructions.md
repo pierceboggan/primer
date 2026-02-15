@@ -8,9 +8,9 @@
 - Only overwrite config files (e.g., .vscode/settings.json, .vscode/mcp.json) with --force.
 - All Copilot/VS Code settings reference this file and enable MCP.
 - Place new CLI commands in src/commands/, core logic in src/services/, and TUI in src/ui/.
+- All CLI commands MUST support --json, --quiet and arguments for automation-friendly output.
 - Do not add new build/lint/test tools unless necessary; use existing npm scripts.
 - Ensure Windows/macOS/Linux compatibility
-- All CLI commands should support --json and --quiet for scripting, and break
 
 ## Overview
 
