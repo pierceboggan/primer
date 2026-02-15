@@ -82,6 +82,7 @@ export function runCli(argv: string[]): void {
     .option("--output <path>", "Write results JSON to file")
     .option("--init", "Create a starter primer.eval.json file")
     .option("--count <number>", "Number of eval cases to generate (with --init)")
+    .option("--fail-threshold <number>", "Exit with error if pass rate (%) falls below threshold")
     .action(withGlobalOpts(evalCommand));
 
   program

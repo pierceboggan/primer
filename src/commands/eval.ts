@@ -16,6 +16,7 @@ type EvalOptions = {
   init?: boolean;
   count?: string;
   listModels?: boolean;
+  failThreshold?: string;
   json?: boolean;
   quiet?: boolean;
 };
@@ -108,7 +109,7 @@ export async function evalCommand(
 
   try {
     const progress = createProgressReporter(!shouldLog(options));
-    const { summary, viewerPath } = await runEval({
+    const { summary, results, viewerPath } = await runEval({
       configPath,
       repoPath,
       model: options.model ?? DEFAULT_MODEL,
@@ -128,6 +129,19 @@ export async function evalCommand(
       process.stderr.write(summary + "\n");
       if (viewerPath) {
         process.stderr.write(`Trajectory viewer: ${viewerPath}\n`);
+      }
+    }
+
+    const threshold = Number.parseInt(options.failThreshold ?? "", 10);
+    if (Number.isFinite(threshold)) {
+      const total = results.length;
+      const passed = results.filter((r) => r.verdict === "pass").length;
+      const passRate = total > 0 ? Math.round((passed / total) * 100) : 0;
+      if (passRate < threshold) {
+        outputError(
+          `Pass rate ${passRate}% (${passed}/${total}) is below threshold ${threshold}%`,
+          Boolean(options.json)
+        );
       }
     }
   } catch (error) {
