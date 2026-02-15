@@ -24,13 +24,11 @@ export async function generateCopilotInstructions(
 
   return withCwd(repoPath, async () => {
     progress("Checking Copilot CLI...");
-    const cliPath = await assertCopilotCliReady();
+    const cliConfig = await assertCopilotCliReady();
 
     progress("Starting Copilot SDK...");
     const sdk = await import("@github/copilot-sdk");
-    const client = new sdk.CopilotClient({
-      cliPath
-    });
+    const client = new sdk.CopilotClient(cliConfig);
 
     try {
       progress("Creating session...");
@@ -113,11 +111,11 @@ export async function generateAreaInstructions(
 
   return withCwd(repoPath, async () => {
     progress(`Checking Copilot CLI for area "${area.name}"...`);
-    const cliPath = await assertCopilotCliReady();
+    const cliConfig = await assertCopilotCliReady();
 
     progress(`Starting Copilot SDK for area "${area.name}"...`);
     const sdk = await import("@github/copilot-sdk");
-    const client = new sdk.CopilotClient({ cliPath });
+    const client = new sdk.CopilotClient(cliConfig);
 
     try {
       const applyToPatterns = Array.isArray(area.applyTo) ? area.applyTo : [area.applyTo];

@@ -39,11 +39,11 @@ export async function generateEvalScaffold(options: EvalScaffoldOptions): Promis
 
   return withCwd(repoPath, async () => {
     progress("Checking Copilot CLI...");
-    const cliPath = await assertCopilotCliReady();
+    const cliConfig = await assertCopilotCliReady();
 
     progress("Starting Copilot SDK...");
     const sdk = await import("@github/copilot-sdk");
-    const client = new sdk.CopilotClient({ cliPath });
+    const client = new sdk.CopilotClient(cliConfig);
 
     try {
       progress("Creating session...");
