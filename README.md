@@ -2,25 +2,29 @@
 
 > Prime your repositories for AI-assisted development.
 
-[![CI](https://github.com/pierceboggan/primer/actions/workflows/ci.yml/badge.svg)](https://github.com/pierceboggan/primer/actions/workflows/ci.yml)
+[![CI](https://github.com/digitarald/primer/actions/workflows/ci.yml/badge.svg)](https://github.com/digitarald/primer/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-Primer is a CLI tool that helps teams prepare repositories for AI-assisted development. It generates custom instructions, assesses AI readiness with a maturity model, and supports batch processing across organizations — with an interactive TUI and beautiful visual reports.
+Primer is a CLI and VS Code extension that helps teams prepare repositories for AI-assisted development. It generates custom instructions, assesses AI readiness with a maturity model, and supports batch processing across organizations — with an interactive TUI, visual reports, and a policy system for org-wide standards.
 
 ```bash
-npx github:pierceboggan/primer readiness --visual
+npx github:digitarald/primer readiness --visual
 ```
 
 ## Features
 
 - **AI Readiness Reports** — Score repos across 9 pillars with a maturity model (Functional → Autonomous), including an AI tooling pillar that checks for MCP, custom agents, Copilot skills, and custom instructions. Supports per-area breakdowns for monorepos and multi-domain projects
 - **Visual Reports** — GitHub-themed HTML reports with light/dark toggle, expandable pillar details, and maturity model descriptions
+- **Readiness Policies** — Customize which criteria are evaluated, override metadata, and tune pass-rate thresholds with chainable JSON policies
 - **Instruction Generation** — Generate `copilot-instructions.md` or `AGENTS.md` using the Copilot SDK, with per-app support for monorepos. Generate file-based `.instructions.md` files for detected areas (frontend, backend, infra, etc.)
+- **VS Code Extension** — All CLI workflows accessible from command palette, sidebar tree views, and webview panels
 - **Batch Processing** — Process multiple repos across GitHub or Azure DevOps organizations
 - **Evaluation Framework** — Measure how instructions improve AI responses with a judge model
+- **Monorepo Detection** — Supports npm/pnpm/yarn, Cargo, Go, .NET, Gradle, Maven, Bazel, Nx, Pants, and Turborepo workspaces
 - **Interactive TUI** — Ink-based terminal UI with submenus, model picker, activity log, and animated banner
 - **Config Generation** — Generate MCP and VS Code configurations
-- **GitHub Integration** — Clone repos, create branches, and open PRs automatically
+- **GitHub & Azure DevOps** — Clone repos, create branches, and open PRs across both platforms
+- **Cross-Platform** — Works on macOS, Linux, and Windows (including `.cmd`/`.bat` Copilot CLI wrappers)
 
 ## Prerequisites
 
@@ -35,7 +39,7 @@ npx github:pierceboggan/primer readiness --visual
 ## Installation
 
 ```bash
-git clone https://github.com/pierceboggan/primer.git
+git clone https://github.com/digitarald/primer.git
 cd primer
 npm install
 npm run build
@@ -260,12 +264,23 @@ primer tui --repo /path/to/repo --no-animation
 ```bash
 npm run typecheck        # type check
 npm run lint             # ESLint (flat config + Prettier)
-npm run test             # 51+ Vitest tests
+npm run test             # 267 Vitest tests
 npm run test:coverage    # with coverage via @vitest/coverage-v8
 npm run build            # production build via tsup
 
 # Run from source (no build needed)
 npx tsx src/index.ts --help
+```
+
+### VS Code Extension
+
+```bash
+cd vscode-extension
+npm install
+npm run build            # esbuild bundle
+npm run watch            # watch mode
+npm run typecheck        # TypeScript check
+# Press F5 to launch Extension Development Host
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for workflow and code style guidelines.
@@ -287,12 +302,22 @@ src/
 │   ├── evaluator.ts       # Eval runner + trajectory viewer
 │   ├── evalScaffold.ts    # AI-powered eval config generation
 │   ├── generator.ts       # MCP/VS Code config generation
+│   ├── policy.ts          # Readiness policy loading and chain resolution
 │   ├── git.ts             # Git operations (clone, branch, push)
 │   ├── github.ts          # GitHub API (Octokit)
 │   ├── azureDevops.ts     # Azure DevOps API
-│   └── __tests__/         # Test suite
+│   └── __tests__/         # Test suite (267 tests)
 ├── ui/                   # Ink/React terminal UI
-└── utils/                # Shared utilities (fs, logger, cwd, output)
+└── utils/                # Shared utilities (fs, logger, output, repo, pr)
+
+vscode-extension/
+├── src/
+│   ├── extension.ts       # Extension entry point
+│   ├── commands/          # VS Code command handlers
+│   ├── views/             # Tree view providers (Analysis, Readiness)
+│   ├── services.ts        # Bridge to CLI services
+│   └── webview.ts         # Webview panel management
+└── package.json           # Extension manifest
 ```
 
 ## Troubleshooting
