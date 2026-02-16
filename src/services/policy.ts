@@ -165,7 +165,7 @@ export async function loadPolicy(
   const jsonOnly = options?.jsonOnly ?? false;
 
   // Local file path (relative or absolute)
-  if (source.startsWith(".") || source.startsWith("/")) {
+  if (source.startsWith(".") || path.isAbsolute(source)) {
     const resolved = path.resolve(source);
     if (resolved.endsWith(".json")) {
       const data = await readJson(resolved);
