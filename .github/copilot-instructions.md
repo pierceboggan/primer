@@ -2,66 +2,103 @@
 
 ## Development Checklist
 
-- Use ESM syntax everywhere (see "type": "module" in package.json).
-- TypeScript is strict; target ES2022, module ESNext (see tsconfig.json).
-- Use Commander for CLI, Ink/React for TUI, and simple-git/Octokit for GitHub automation.
-- Only overwrite config files (e.g., .vscode/settings.json, .vscode/mcp.json) with --force.
-- All Copilot/VS Code settings reference this file and enable MCP.
-- Place new CLI commands in src/commands/, core logic in src/services/, and TUI in src/ui/.
-- All CLI commands MUST support --json, --quiet and arguments for automation-friendly output.
-- Do not add new build/lint/test tools unless necessary; use existing npm scripts.
-- Windows/macOS/Linux compatibility is required; consider path handling and shell commands carefully.
+- Use ESM syntax everywhere (`"type": "module"` in package.json).
+- TypeScript strict mode; target ES2022, module ESNext (see tsconfig.json).
+- Use Commander for CLI, Ink/React for TUI, simple-git/Octokit for GitHub, Azure DevOps REST for Azure.
+- Place CLI commands in `src/commands/`, business logic in `src/services/`, TUI components in `src/ui/`.
+- All CLI commands MUST support `--json` and `--quiet` flags for automation-friendly output.
+- Only overwrite config files with `--force`; use `safeWriteFile()` from `src/utils/fs.ts`.
+- Windows/macOS/Linux compatibility required — use `path.join()`, avoid shell-specific syntax.
+- Do not add new build/lint/test tools; use existing npm scripts.
 
 ## Overview
 
-**Primer** is a TypeScript CLI tool for priming repositories for AI-assisted development and evaluation.
+**Primer** is a TypeScript CLI for priming repositories for AI-assisted development — generating Copilot instructions, VS Code configs, MCP configs, and evaluating AI agent effectiveness.
 
-- **Tech Stack:** TypeScript (ESM, strict), Node.js, React (Ink for TUI)
-- **Entrypoint:** `src/index.ts` (calls `runCli` in `src/cli.ts`)
-- **Key Directories:**
-  - `src/commands/` — CLI subcommands
-  - `src/services/` — core logic (analyzer, instructions, generator, git, github, evaluator)
-  - `src/ui/` — Ink/React-based terminal UI
-  - `.github/` — Copilot instructions
-  - `.vscode/` — Editor settings
+- **Entrypoint:** `src/index.ts` → `runCli()` in `src/cli.ts`
+- **Tech:** TypeScript (ESM, strict), Node.js, React 19 (Ink 6 for TUI), Copilot SDK
+
+## Build & Test
+
+```sh
+npm run build          # tsup → dist/
+npm run dev            # tsx watch for development
+npm run typecheck      # tsc --noEmit
+npm run lint           # eslint (flat config)
+npm run format         # prettier --write
+npm run test           # vitest
+npm run test:coverage  # vitest with v8 coverage → ./coverage/
+```
+
+Run locally without building: `npx tsx src/index.ts <command> [options]`
 
 ## Architecture
 
-- **CLI:** Uses `commander` to wire subcommands to service functions.
-- **Analyzer:** Scans repo files to infer languages, frameworks, and package manager.
-- **Instructions:** Generates `.github/copilot-instructions.md` from convention files.
-- **Config Generation:** Writes `.vscode/settings.json` and `.vscode/mcp.json` (safe overwrite).
-- **Git/GitHub:** Automates clone/branch/PR via `simple-git` and Octokit.
-- **Evaluation:** Compares agent responses with/without instructions using Copilot sessions.
-- **TUI:** `src/ui/tui.tsx` (Ink/React) for interactive terminal usage.
+### Commands (`src/commands/`)
 
-## Usage
+Commands are thin orchestrators — they parse options, call services, and format output.
 
-- **Run locally (no build step):**
-  - `npx tsx src/index.ts --help`
-  - `npx tsx src/index.ts analyze [path] --json`
-  - `npx tsx src/index.ts generate mcp|vscode [path] [--force]`
-  - `npx tsx src/index.ts instructions [--repo <path>] [--output <path>] [--model gpt-5]`
-  - `npx tsx src/index.ts tui [--repo <path>]`
-  - `npx tsx src/index.ts pr <owner/name> [--branch primer/add-configs]`
-  - `npx tsx src/index.ts eval [configPath] --repo <path> [--model gpt-5] [--judge-model gpt-5] [--output results.json]`
+| Command           | File                 | Purpose                                                                |
+| ----------------- | -------------------- | ---------------------------------------------------------------------- |
+| `init`            | `init.ts`            | Interactive/headless repo setup (local, GitHub, Azure)                 |
+| `analyze`         | `analyze.ts`         | Detect languages, frameworks, monorepo structure, areas                |
+| `generate`        | `generate.ts`        | Generate instructions, agents, mcp, vscode configs                     |
+| `instructions`    | `instructions.ts`    | Generate root + per-area `.instructions.md` files                      |
+| `pr`              | `pr.ts`              | Create PR with configs on GitHub or Azure DevOps                       |
+| `eval`            | `eval.ts`            | Compare responses with/without instructions; `--init` scaffolds config |
+| `readiness`       | `readiness.ts`       | AI readiness assessment across 9 pillars                               |
+| `tui`             | `tui.tsx`            | Full interactive TUI (model picker, areas, eval)                       |
+| `batch`           | `batch.tsx`          | Bulk-process repos (GitHub or Azure); TUI or headless                  |
+| `batch-readiness` | `batchReadiness.tsx` | Batch readiness HTML report generation                                 |
+
+### Services (`src/services/`)
+
+Services contain all business logic. Commands never access APIs or filesystem directly.
+
+| Service           | Key Exports                                                            | Purpose                                                         |
+| ----------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `analyzer.ts`     | `analyzeRepo()`, `loadPrimerConfig()`                                  | Repo analysis: languages, frameworks, monorepo detection, areas |
+| `instructions.ts` | `generateCopilotInstructions()`, `generateAreaInstructions()`          | Copilot SDK sessions for instruction generation                 |
+| `generator.ts`    | `generateConfigs()`                                                    | Write `.vscode/mcp.json` and `.vscode/settings.json`            |
+| `evaluator.ts`    | `runEval()`                                                            | Run evals comparing with/without instructions                   |
+| `evalScaffold.ts` | `generateEvalScaffold()`                                               | Auto-generate `primer.eval.json` test cases                     |
+| `readiness.ts`    | `runReadinessReport()`                                                 | 9-pillar readiness assessment                                   |
+| `git.ts`          | `cloneRepo()`, `checkoutBranch()`, `commitAll()`, `pushBranch()`       | Git operations with sanitized auth URLs                         |
+| `github.ts`       | `createGitHubClient()`, `createPullRequest()`, `listAccessibleRepos()` | GitHub API via Octokit                                          |
+| `azureDevops.ts`  | `listOrganizations()`, `listRepos()`, `createPullRequest()`            | Azure DevOps REST API; PAT auth                                 |
+| `batch.ts`        | `processGitHubRepo()`, `processAzureRepo()`                            | Batch clone → generate → PR pipeline                            |
+| `copilot.ts`      | `assertCopilotCliReady()`, `listCopilotModels()`                       | Validate Copilot CLI availability; discover models              |
+| `visualReport.ts` | `generateVisualReport()`                                               | HTML readiness report with dark/light themes                    |
+
+### UI (`src/ui/`)
+
+Ink/React components for interactive terminal workflows:
+
+- `tui.tsx` — Main TUI state machine (intro → idle → generating → …)
+- `BatchTui.tsx` / `BatchTuiAzure.tsx` — GitHub/Azure batch processing UIs
+- `BatchReadinessTui.tsx` — Batch readiness report UI
+- `AnimatedBanner.tsx` — Intro animation (skip with `--no-animation`)
+
+### Utils (`src/utils/`)
+
+- `output.ts` — `CommandResult<T>` type (`{ ok, status, data?, errors? }`), `ProgressReporter` interface
+- `fs.ts` — `safeWriteFile()` (rejects symlinks, requires `--force`), `validateCachePath()` (prevents path traversal)
+- `cwd.ts` — `withCwd()` serialized lock for Copilot SDK process directory
+- `logger.ts` — Structured logging
+- `repo.ts` / `pr.ts` — Shared repo/PR helpers
 
 ## Conventions
 
-- **ESM everywhere** (`"type": "module"` in `package.json`)
-- **Strict TypeScript** (`tsconfig.json` targets ES2022, module ESNext, strict mode)
-- **Single glob pass** for convention sources (see `src/services/instructions.ts`)
-- **Safe file writes:** Overwrites only with `--force`
-- **VS Code Copilot settings** reference this file and enable MCP
+- **Output discipline:** `stdout` is for JSON only (with `--json`); human-readable output goes to `stderr`
+- **CommandResult pattern:** All commands return `CommandResult<T>` with `{ ok, status, data?, errors? }`
+- **Safe writes:** `safeWriteFile()` rejects symlinks and skips existing files unless `--force`
+- **Path safety:** `validateCachePath()` prevents traversal in `.primer-cache/`
+- **Copilot SDK:** Sessions require `withCwd()` for process working directory serialization
+- **Monorepo-aware:** Analyzer detects npm/pnpm/yarn/cargo/go/dotnet/gradle/maven workspaces; `Area` type scopes instructions via `applyTo` globs
+- **Single glob pass** for convention source discovery (see `src/services/instructions.ts`)
 
 ## Prerequisites
 
-- **Copilot CLI** must be installed and authenticated for SDK calls.
-- **GitHub automation** requires `GITHUB_TOKEN` or `GH_TOKEN` in the environment.
-
-## Key Files
-
-- `.github/copilot-instructions.md` — This file
-- `src/index.ts` — CLI entrypoint
-- `src/services/` — Core logic
-- `.vscode/settings.json` — Copilot/VS Code integration
+- **Copilot CLI** must be installed and authenticated for SDK calls (`copilot.ts` validates this)
+- **GitHub:** `GITHUB_TOKEN` or `GH_TOKEN` env var, or `gh` CLI for token extraction
+- **Azure DevOps:** `AZURE_DEVOPS_PAT` env var for Azure operations
