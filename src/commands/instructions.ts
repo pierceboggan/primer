@@ -55,11 +55,7 @@ export async function instructionsCommand(options: InstructionsOptions): Promise
 
       if (content) {
         await ensureDir(path.dirname(outputPath));
-        const { wrote, reason } = await safeWriteFile(
-          outputPath,
-          content,
-          Boolean(options.force)
-        );
+        const { wrote, reason } = await safeWriteFile(outputPath, content, Boolean(options.force));
 
         if (!wrote) {
           const relPath = path.relative(process.cwd(), outputPath);
@@ -78,11 +74,12 @@ export async function instructionsCommand(options: InstructionsOptions): Promise
           const byteCount = Buffer.byteLength(content, "utf8");
 
           if (options.json) {
-            const result: CommandResult<{ outputPath: string; model: string; byteCount: number }> = {
-              ok: true,
-              status: "success",
-              data: { outputPath, model: options.model ?? "default", byteCount }
-            };
+            const result: CommandResult<{ outputPath: string; model: string; byteCount: number }> =
+              {
+                ok: true,
+                status: "success",
+                data: { outputPath, model: options.model ?? "default", byteCount }
+              };
             outputResult(result, true);
           } else if (shouldLog(options)) {
             progress.succeed(`Updated ${path.relative(process.cwd(), outputPath)}`);
