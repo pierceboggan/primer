@@ -93,7 +93,7 @@ export function activate(context: vscode.ExtensionContext): void {
         updateAnalysisView();
         updateStatusBar();
       })
-      .catch(() => {});
+      .catch((err) => console.error("Primer auto-analyze failed:", err));
   }
 }
 

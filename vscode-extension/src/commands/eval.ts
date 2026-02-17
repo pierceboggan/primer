@@ -31,6 +31,7 @@ export async function evalCommand(): Promise<void> {
 
   const config = vscode.workspace.getConfiguration("primer");
   const model = config.get<string>("model") ?? DEFAULT_MODEL;
+  const judgeModel = config.get<string>("judgeModel") ?? model;
 
   await vscode.window.withProgress(
     {
@@ -47,7 +48,7 @@ export async function evalCommand(): Promise<void> {
           configPath,
           repoPath: workspacePath,
           model,
-          judgeModel: model,
+          judgeModel,
           onProgress: (msg) => reporter.update(msg)
         });
 

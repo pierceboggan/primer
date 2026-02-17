@@ -14,11 +14,11 @@ export class VscodeProgressReporter implements ProgressReporter {
   }
 
   succeed(message: string): void {
-    this.progress.report({ message: `$(check) ${message}` });
+    this.progress.report({ message: `✓ ${message}` });
   }
 
   fail(message: string): void {
-    this.progress.report({ message: `$(error) ${message}` });
+    this.progress.report({ message: `✗ ${message}` });
   }
 
   done(): void {

@@ -81,12 +81,16 @@ export async function instructionsCommand(): Promise<void> {
           onProgress: (msg) => reporter.update(msg)
         });
 
+        let rootSkipped = false;
         if (content.trim()) {
           const dir = path.dirname(instructionFile);
           await vscode.workspace.fs.createDirectory(vscode.Uri.file(dir));
-          await safeWriteFile(instructionFile, content, true);
+          const { wrote } = await safeWriteFile(instructionFile, content, false);
+          if (!wrote) rootSkipped = true;
         }
 
+        let areasSkipped = 0;
+        const areaBodies = new Map<string, string>();
         if (selectedAreas) {
           for (const area of selectedAreas) {
             reporter.update(`Generating instructions for ${area.name}…`);
@@ -96,13 +100,51 @@ export async function instructionsCommand(): Promise<void> {
               model,
               onProgress: (msg) => reporter.update(msg)
             });
+            areaBodies.set(area.name, body);
             if (body.trim()) {
-              await writeAreaInstruction(workspacePath, area, body, true);
+              const result = await writeAreaInstruction(workspacePath, area, body, false);
+              if (result.status === "skipped") areasSkipped++;
             }
           }
         }
 
-        reporter.succeed("Instructions generated.");
+        const totalSkipped = (rootSkipped ? 1 : 0) + areasSkipped;
+        const areasWithContent = selectedAreas
+          ? selectedAreas.filter((a) => (areaBodies.get(a.name) ?? "").trim()).length
+          : 0;
+        const totalFiles = (content.trim() ? 1 : 0) + areasWithContent;
+
+        if (totalSkipped > 0 && totalSkipped === totalFiles) {
+          reporter.succeed("All instruction files already exist.");
+          const overwrite = "Overwrite";
+          const action = await vscode.window.showWarningMessage(
+            `Primer: All ${totalSkipped} instruction files already exist.`,
+            overwrite
+          );
+          if (action === overwrite) {
+            try {
+              reporter.update("Overwriting instructions…");
+              if (content.trim()) {
+                await safeWriteFile(instructionFile, content, true);
+              }
+              if (selectedAreas) {
+                for (const area of selectedAreas) {
+                  const body = areaBodies.get(area.name) ?? "";
+                  if (body.trim()) {
+                    await writeAreaInstruction(workspacePath, area, body, true);
+                  }
+                }
+              }
+              reporter.succeed("Instructions overwritten.");
+            } catch (err) {
+              vscode.window.showErrorMessage(
+                `Primer: Instruction overwrite failed — ${err instanceof Error ? err.message : String(err)}`
+              );
+            }
+          }
+        } else {
+          reporter.succeed("Instructions generated.");
+        }
 
         // Open the generated file
         try {
