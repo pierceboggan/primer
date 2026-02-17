@@ -67,7 +67,7 @@ export async function generateCommand(): Promise<void> {
   } else if (skipped.length > 0) {
     const overwrite = "Overwrite";
     const action = await vscode.window.showWarningMessage(
-      "Primer: All config files already exist.",
+      `Primer: All ${skipped.length} config files already exist.`,
       overwrite
     );
     if (action === overwrite) {
@@ -77,16 +77,22 @@ export async function generateCommand(): Promise<void> {
           title: `Primer: Overwriting configs…`
         },
         async () => {
-          const forceResult = await generateConfigs({
-            repoPath: workspacePath,
-            analysis: analysis!,
-            selections: picked.map((p) => p.value),
-            force: true
-          });
-          const forceWrote = forceResult.files.filter((f) => f.action === "wrote");
-          if (forceWrote.length > 0) {
-            const doc = await vscode.workspace.openTextDocument(forceWrote[0]!.path);
-            await vscode.window.showTextDocument(doc);
+          try {
+            const forceResult = await generateConfigs({
+              repoPath: workspacePath,
+              analysis: analysis!,
+              selections: picked.map((p) => p.value),
+              force: true
+            });
+            const forceWrote = forceResult.files.filter((f) => f.action === "wrote");
+            if (forceWrote.length > 0) {
+              const doc = await vscode.workspace.openTextDocument(forceWrote[0]!.path);
+              await vscode.window.showTextDocument(doc);
+            }
+          } catch (err) {
+            vscode.window.showErrorMessage(
+              `Primer: Config overwrite failed — ${err instanceof Error ? err.message : String(err)}`
+            );
           }
         }
       );

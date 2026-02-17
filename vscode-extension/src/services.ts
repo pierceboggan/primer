@@ -10,5 +10,11 @@ export { generateEvalScaffold } from "primer/services/evalScaffold.js";
 export { runReadinessReport, groupPillars } from "primer/services/readiness.js";
 export { generateVisualReport } from "primer/services/visualReport.js";
 export { createPullRequest } from "primer/services/github.js";
+export {
+  detectGitHubRemote,
+  getBranchInfo,
+  getPrimerFilesFromStatus,
+  commitAndPush
+} from "primer/services/localPr.js";
 export { safeWriteFile } from "primer/utils/fs.js";
 export { DEFAULT_MODEL } from "primer/config.js";

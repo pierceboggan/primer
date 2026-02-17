@@ -63,6 +63,54 @@ export async function initCommand(): Promise<void> {
           skipped.push({ path: ".github/copilot-instructions.md", action: "skipped" });
         else if (instructionsContent.trim())
           wrote.push({ path: ".github/copilot-instructions.md", action: "wrote" });
+
+        if (wrote.length === 0 && skipped.length > 0) {
+          reporter.succeed("All files already exist.");
+          const overwrite = "Overwrite";
+          const action = await vscode.window.showWarningMessage(
+            `Primer: All ${skipped.length} files already exist.`,
+            overwrite
+          );
+          if (action === overwrite) {
+            try {
+              reporter.update("Overwriting configs…");
+
+              if (instructionsContent.trim()) {
+                const instrPath = path.join(workspacePath, ".github", "copilot-instructions.md");
+                await safeWriteFile(instrPath, instructionsContent, true);
+              }
+
+              await generateConfigs({
+                repoPath: workspacePath,
+                analysis,
+                selections: ["mcp", "vscode"],
+                force: true
+              });
+              reporter.succeed("Configs overwritten.");
+
+              const instructionsPath = path.join(
+                workspacePath,
+                ".github",
+                "copilot-instructions.md"
+              );
+              try {
+                const doc = await vscode.workspace.openTextDocument(instructionsPath);
+                await vscode.window.showTextDocument(doc);
+              } catch {
+                // File may not exist if generation was skipped
+              }
+
+              vscode.window.showInformationMessage(`Primer: ${skipped.length} files overwritten.`);
+            } catch (err) {
+              vscode.window.showErrorMessage(
+                `Primer: Config overwrite failed — ${err instanceof Error ? err.message : String(err)}`
+              );
+            }
+          }
+
+          return;
+        }
+
         const parts: string[] = [];
         if (wrote.length) parts.push(`${wrote.length} files generated`);
         if (skipped.length) parts.push(`${skipped.length} skipped (already exist)`);

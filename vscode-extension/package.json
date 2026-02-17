@@ -194,6 +194,10 @@
           "type": "boolean",
           "default": false,
           "description": "Automatically analyze repository on workspace open."
+        },
+        "primer.judgeModel": {
+          "type": "string",
+          "description": "Copilot model to use for judging eval responses (defaults to primer.model if unset)."
         }
       }
     },
