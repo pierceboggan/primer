@@ -103,6 +103,7 @@ async function replaceFileWindows(targetPath: string, content: string): Promise<
   let movedOriginal = false;
   let placedReplacement = false;
   let restoredOriginal = false;
+  let restoreFailed = false;
   try {
     try {
       const stat = await fs.lstat(targetPath);
@@ -134,8 +135,14 @@ async function replaceFileWindows(targetPath: string, content: string): Promise<
         await fs.rename(backupPath, targetPath);
         restoredOriginal = true;
       } catch {
-        // Best effort restore
+        restoreFailed = true;
       }
+    }
+
+    if (restoreFailed) {
+      throw new Error(
+        `Failed to restore original file after replacement failure; backup retained at ${backupPath}`
+      );
     }
 
     const code = (error as NodeJS.ErrnoException).code;
