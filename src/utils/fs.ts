@@ -272,8 +272,10 @@ function isAllowedSystemAlias(originalPath: string, realPath: string): boolean {
 }
 
 /**
- * Validate that a constructed path stays within the expected root directory.
- * Prevents path traversal via malicious repo names or owner slugs.
+ * Validate that constructed path segments stay within the expected root directory.
+ * Prevents traversal in the relative segments (e.g. "../../../etc") but does NOT
+ * validate the cacheRoot itself — callers are responsible for ensuring cacheRoot
+ * is a trusted path before passing it here.
  */
 export function validateCachePath(cacheRoot: string, ...segments: string[]): string {
   const resolvedRoot = path.resolve(cacheRoot);

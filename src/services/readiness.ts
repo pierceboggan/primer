@@ -7,6 +7,9 @@ import type { RepoApp, RepoAnalysis, Area } from "./analyzer";
 import { analyzeRepo, sanitizeAreaName, loadPrimerConfig } from "./analyzer";
 import type { ExtraDefinition, PolicyConfig } from "./policy";
 import { loadPolicy, resolveChain } from "./policy";
+import { executePlugins } from "./policy/engine";
+import { loadPluginChain } from "./policy/loader";
+import type { Grade, PolicyContext, PolicyWarning, Recommendation, Signal } from "./policy/types";
 
 export type ReadinessPillar =
   | "style-validation"
@@ -113,6 +116,14 @@ export type ReadinessReport = {
   extras: ReadinessExtraResult[];
   areaReports?: AreaReadinessReport[];
   policies?: { chain: string[]; criteriaCount: number };
+  /** New plugin engine data (populated when using the unified engine). */
+  engine?: {
+    signals: ReadonlyArray<Signal>;
+    recommendations: ReadonlyArray<Recommendation>;
+    policyWarnings: ReadonlyArray<PolicyWarning>;
+    score: number;
+    grade: Grade;
+  };
 };
 
 type ReadinessOptions = {
@@ -120,6 +131,8 @@ type ReadinessOptions = {
   includeExtras?: boolean;
   perArea?: boolean;
   policies?: string[];
+  /** Run the plugin engine alongside the legacy path and populate report.engine. */
+  shadow?: boolean;
 };
 
 export type ReadinessContext = {
@@ -166,11 +179,15 @@ export async function runReadinessReport(options: ReadinessOptions): Promise<Rea
 
   // ── Policy resolution ──
   let policySources = options.policies;
+  // isConfigSourced tracks whether policies were loaded from config (vs CLI --policy flag).
+  // Used to restrict config-sourced policies to JSON-only, preventing dynamic import() calls.
+  let isConfigSourced = false;
   if (!policySources?.length) {
     // Check primer.config.json for policy config
     const primerConfig = await loadPrimerConfig(repoPath);
     if (primerConfig?.policies?.length) {
       policySources = primerConfig.policies;
+      isConfigSourced = true;
     }
   }
 
@@ -183,8 +200,6 @@ export async function runReadinessReport(options: ReadinessOptions): Promise<Rea
 
   if (policySources?.length) {
     const policyConfigs: PolicyConfig[] = [];
-    // Config-sourced policies are restricted to JSON-only (no import())
-    const isConfigSourced = policySources !== options.policies;
     for (const source of policySources) {
       policyConfigs.push(await loadPolicy(source, { jsonOnly: isConfigSourced }));
     }
@@ -352,6 +367,26 @@ export async function runReadinessReport(options: ReadinessOptions): Promise<Rea
 
   const extras = options.includeExtras === false ? [] : await runExtras(context, resolvedExtras);
 
+  // ── Plugin engine: run shadow comparison when opts.shadow is enabled ──
+  let engine: ReadinessReport["engine"];
+  if (options.shadow) {
+    const policyCtx: PolicyContext = {
+      repoPath,
+      rootFiles,
+      rootPackageJson,
+      cache: new Map()
+    };
+    const engineChain = await loadPluginChain(policySources ?? [], { jsonOnly: isConfigSourced });
+    const engineReport = await executePlugins(engineChain.plugins, policyCtx, engineChain.options);
+    engine = {
+      signals: engineReport.signals,
+      recommendations: engineReport.recommendations,
+      policyWarnings: engineReport.policyWarnings,
+      score: engineReport.score,
+      grade: engineReport.grade
+    };
+  }
+
   return {
     repoPath,
     generatedAt: new Date().toISOString(),
@@ -363,7 +398,8 @@ export async function runReadinessReport(options: ReadinessOptions): Promise<Rea
     criteria: criteriaResults,
     extras,
     areaReports,
-    policies: policyInfo
+    policies: policyInfo,
+    engine
   };
 }
 
