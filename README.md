@@ -168,6 +168,8 @@ Policies can also be set in `primer.config.json` (`{ "policies": ["./my-policy.j
 
 > **Security:** Config-sourced policies are restricted to JSON files only — JS/TS module policies must be passed via `--policy`.
 
+See [docs/plugins.md](docs/plugins.md) for the full plugin authoring guide, including imperative TypeScript plugins, lifecycle hooks, and the trust model.
+
 ## Development
 
 ```bash
@@ -203,6 +205,7 @@ src/
 │   ├── evaluator.ts       # Eval runner + trajectory viewer
 │   ├── generator.ts       # MCP/VS Code config generation
 │   ├── policy.ts          # Readiness policy loading and chain resolution
+│   ├── policy/            # Plugin engine (types, compiler, loader, adapter, shadow)
 │   ├── git.ts             # Git operations (clone, branch, push)
 │   ├── github.ts          # GitHub API (Octokit)
 │   └── azureDevops.ts     # Azure DevOps API
