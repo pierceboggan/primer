@@ -5,8 +5,12 @@
   "version": "0.0.1",
   "publisher": "digitarald",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/digitarald/primer.git"
+  },
   "engines": {
-    "vscode": "^1.100.0"
+    "vscode": "^1.109.0"
   },
   "categories": [
     "Machine Learning",
