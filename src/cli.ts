@@ -17,7 +17,8 @@ export function runCli(argv: string[]): void {
   program
     .name("primer")
     .description("Prime repositories for AI-assisted development")
-    .version("0.1.0");
+    .version("0.1.0")
+    .option("--accessible", "Enable screen reader friendly output (removes box-drawing characters, replaces Unicode symbols with text)");
 
   program
     .command("init")

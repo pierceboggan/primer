@@ -1,5 +1,6 @@
 import React from "react";
 import { render } from "ink";
+import { Command } from "commander";
 import { BatchTui } from "../ui/BatchTui";
 import { getGitHubToken } from "../services/github";
 
@@ -7,9 +8,9 @@ type BatchOptions = {
   output?: string;
 };
 
-export async function batchCommand(options: BatchOptions): Promise<void> {
+export async function batchCommand(options: BatchOptions, cmd: Command): Promise<void> {
   const token = await getGitHubToken();
-  
+
   if (!token) {
     console.error("Error: GitHub authentication required.");
     console.error("");
@@ -22,10 +23,11 @@ export async function batchCommand(options: BatchOptions): Promise<void> {
     return;
   }
 
+  const accessible = cmd.parent?.opts().accessible || process.env.INK_SCREEN_READER === "true";
   const { waitUntilExit } = render(
-    <BatchTui token={token} outputPath={options.output} />
+    <BatchTui token={token} outputPath={options.output} accessible={accessible} />,
+    { isScreenReaderEnabled: accessible }
   );
-
 
   await waitUntilExit();
 }

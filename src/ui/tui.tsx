@@ -12,11 +12,12 @@ import { getGitHubToken } from "../services/github";
 type Props = {
   repoPath: string;
   skipAnimation?: boolean;
+  accessible?: boolean;
 };
 
 type Status = "intro" | "idle" | "analyzing" | "generating" | "evaluating" | "preview" | "done" | "error" | "batch";
 
-export function PrimerTui({ repoPath, skipAnimation = false }: Props): React.JSX.Element {
+export function PrimerTui({ repoPath, skipAnimation = false, accessible = false }: Props): React.JSX.Element {
   const app = useApp();
   const [status, setStatus] = useState<Status>(skipAnimation ? "idle" : "intro");
   const [analysis, setAnalysis] = useState<RepoAnalysis | null>(null);
@@ -161,15 +162,15 @@ export function PrimerTui({ repoPath, skipAnimation = false }: Props): React.JSX
 
   // Render BatchTui when in batch mode
   if (status === "batch" && batchToken) {
-    return <BatchTui token={batchToken} />;
+    return <BatchTui token={batchToken} accessible={accessible} />;
   }
 
   return (
-    <Box flexDirection="column" padding={1} borderStyle="round">
+    <Box flexDirection="column" padding={1} borderStyle={accessible ? undefined : "round"}>
       {status === "intro" ? (
         <AnimatedBanner onComplete={handleAnimationComplete} />
       ) : (
-        <StaticBanner />
+        <StaticBanner accessible={accessible} />
       )}
       <Text color="cyan">Prime your repo for AI.</Text>
       <Text color="gray">Repo: {repoLabel}</Text>
@@ -187,17 +188,17 @@ export function PrimerTui({ repoPath, skipAnimation = false }: Props): React.JSX
         <Text>{message}</Text>
       </Box>
       {status === "preview" && generatedContent && (
-        <Box flexDirection="column" marginTop={1} borderStyle="single" borderColor="gray" paddingX={1}>
+        <Box flexDirection="column" marginTop={1} borderStyle={accessible ? undefined : "single"} borderColor="gray" paddingX={1}>
           <Text color="cyan" bold>Preview (.github/copilot-instructions.md):</Text>
           <Text color="gray">{truncatedPreview}</Text>
         </Box>
       )}
       {evalResults && evalResults.length > 0 && (
-        <Box flexDirection="column" marginTop={1} borderStyle="single" borderColor="gray" paddingX={1}>
+        <Box flexDirection="column" marginTop={1} borderStyle={accessible ? undefined : "single"} borderColor="gray" paddingX={1}>
           <Text color="cyan" bold>Eval Results:</Text>
           {evalResults.map((r) => (
             <Text key={r.id} color={r.verdict === "pass" ? "green" : r.verdict === "fail" ? "red" : "yellow"}>
-              {r.verdict === "pass" ? "✓" : r.verdict === "fail" ? "✗" : "?"} {r.id}: {r.verdict} (score: {r.score})
+              {r.verdict === "pass" ? (accessible ? "PASS" : "✓") : r.verdict === "fail" ? (accessible ? "FAIL" : "✗") : "?"} {r.id}: {r.verdict} (score: {r.score})
             </Text>
           ))}
         </Box>

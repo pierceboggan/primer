@@ -19,6 +19,7 @@ import { StaticBanner } from "./AnimatedBanner";
 type Props = {
   token: string;
   outputPath?: string;
+  accessible?: boolean;
 };
 
 type Status =
@@ -38,7 +39,7 @@ type ProcessResult = {
   error?: string;
 };
 
-export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
+export function BatchTui({ token, outputPath, accessible = false }: Props): React.JSX.Element {
   const app = useApp();
   const [status, setStatus] = useState<Status>("loading-orgs");
   const [message, setMessage] = useState<string>("Fetching organizations...");
@@ -315,8 +316,8 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
   };
 
   return (
-    <Box flexDirection="column" padding={1} borderStyle="round">
-      <StaticBanner />
+    <Box flexDirection="column" padding={1} borderStyle={accessible ? undefined : "round"}>
+      <StaticBanner accessible={accessible} />
       <Text color="cyan">Batch Processing - Prime repositories at scale</Text>
       <Box marginTop={1}>
         <Text>{message}</Text>
@@ -338,8 +339,8 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
               const isCursor = realIndex === cursorIndex;
               return (
                 <Text key={org.login}>
-                  <Text color={isCursor ? "cyan" : undefined}>{isCursor ? "❯ " : "  "}</Text>
-                  <Text color={isSelected ? "green" : "gray"}>{isSelected ? "◉" : "○"} </Text>
+                  <Text color={isCursor ? "cyan" : undefined}>{isCursor ? (accessible ? "> " : "❯ ") : "  "}</Text>
+                  <Text color={isSelected ? "green" : "gray"}>{isSelected ? (accessible ? "[x]" : "◉") : (accessible ? "[ ]" : "○")} </Text>
                   <Text>{org.name ?? org.login}</Text>
                   <Text color="gray"> ({org.login})</Text>
                 </Text>
@@ -364,9 +365,9 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
               const isCursor = realIndex === cursorIndex;
               return (
                 <Text key={repo.fullName}>
-                  <Text color={isCursor ? "cyan" : undefined}>{isCursor ? "❯ " : "  "}</Text>
-                  <Text color={isSelected ? "green" : "gray"}>{isSelected ? "◉" : "○"} </Text>
-                  <Text color={repo.hasInstructions ? "green" : "red"}>{repo.hasInstructions ? "✓" : "✗"} </Text>
+                  <Text color={isCursor ? "cyan" : undefined}>{isCursor ? (accessible ? "> " : "❯ ") : "  "}</Text>
+                  <Text color={isSelected ? "green" : "gray"}>{isSelected ? (accessible ? "[x]" : "◉") : (accessible ? "[ ]" : "○")} </Text>
+                  <Text color={repo.hasInstructions ? "green" : "red"}>{repo.hasInstructions ? (accessible ? "HAS" : "✓") : (accessible ? "NEEDS" : "✗")} </Text>
                   <Text color={repo.hasInstructions ? "gray" : undefined}>{repo.fullName}</Text>
                   {repo.isPrivate && <Text color="yellow"> (private)</Text>}
                 </Text>
@@ -394,8 +395,8 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
               <Text color="cyan">Completed:</Text>
               {results.slice(-5).map((r) => (
                 <Text key={r.repo} color={r.success ? "green" : "red"}>
-                  {r.success ? "✓" : "✗"} {r.repo}
-                  {r.success && r.prUrl && <Text color="gray"> → {r.prUrl}</Text>}
+                  {r.success ? (accessible ? "OK" : "✓") : (accessible ? "FAIL" : "✗")} {r.repo}
+                  {r.success && r.prUrl && <Text color="gray"> {accessible ? "- " : "→ "}{r.prUrl}</Text>}
                   {!r.success && r.error && <Text color="gray"> ({r.error})</Text>}
                 </Text>
               ))}
@@ -407,13 +408,13 @@ export function BatchTui({ token, outputPath }: Props): React.JSX.Element {
       {status === "complete" && (
         <Box flexDirection="column" marginTop={1}>
           <Text color="green" bold>
-            ✓ Batch complete: {results.filter(r => r.success).length} succeeded, {results.filter(r => !r.success).length} failed
+            {accessible ? "DONE" : "✓"} Batch complete: {results.filter(r => r.success).length} succeeded, {results.filter(r => !r.success).length} failed
           </Text>
           <Box flexDirection="column" marginTop={1}>
             {results.map((r) => (
               <Text key={r.repo} color={r.success ? "green" : "red"}>
-                {r.success ? "✓" : "✗"} {r.repo}
-                {r.success && r.prUrl && <Text color="gray"> → {r.prUrl}</Text>}
+                {r.success ? (accessible ? "OK" : "✓") : (accessible ? "FAIL" : "✗")} {r.repo}
+                {r.success && r.prUrl && <Text color="gray"> {accessible ? "- " : "→ "}{r.prUrl}</Text>}
                 {!r.success && r.error && <Text color="gray"> ({r.error})</Text>}
               </Text>
             ))}
