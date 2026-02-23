@@ -31,3 +31,4 @@ npm-debug.log*
 # Primer outputs
 .primer/
 readiness-report.html
+*.vsix
