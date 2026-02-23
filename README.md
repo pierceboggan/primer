@@ -14,6 +14,8 @@ Primer is a CLI and VS Code extension that helps teams prepare repositories for 
 npx github:pierceboggan/primer readiness
 ```
 
+`npx github:<owner>/primer ...` installs from the Git repository and runs the package `prepare` script, which builds the CLI before first use.
+
 Or install locally:
 
 ```bash

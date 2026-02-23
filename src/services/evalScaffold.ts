@@ -2,6 +2,7 @@ import { DEFAULT_MODEL } from "../config";
 
 import type { Area } from "./analyzer";
 import { assertCopilotCliReady } from "./copilot";
+import { createCopilotClient } from "./copilotSdk";
 
 const EVAL_SCAFFOLD_TIMEOUT_MS = 600000;
 const EVAL_SCAFFOLD_RECOVERY_TIMEOUT_MS = 90000;
@@ -40,8 +41,7 @@ export async function generateEvalScaffold(options: EvalScaffoldOptions): Promis
   const cliConfig = await assertCopilotCliReady();
 
   progress("Starting Copilot SDK...");
-  const sdk = await import("@github/copilot-sdk");
-  const client = new sdk.CopilotClient(cliConfig);
+  const client = await createCopilotClient(cliConfig);
 
   try {
     progress("Creating session...");

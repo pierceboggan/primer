@@ -13,7 +13,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsx src/index.ts",
-    "prepare": "test \"$CI\" = true || husky",
+    "prepare": "npm run build && (test \"$CI\" = true || husky)",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

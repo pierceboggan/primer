@@ -4,6 +4,7 @@ import path from "path";
 import { buildTimestampedName, safeWriteFile } from "../utils/fs";
 
 import { assertCopilotCliReady } from "./copilot";
+import { createCopilotClient } from "./copilotSdk";
 import type { EvalConfig } from "./evalScaffold";
 
 const DEFAULT_SYSTEM_MESSAGE =
@@ -97,8 +98,7 @@ export async function runEval(
 
   progress("Starting Copilot SDK...");
   const cliConfig = await assertCopilotCliReady();
-  const sdk = await import("@github/copilot-sdk");
-  const client = new sdk.CopilotClient(cliConfig);
+  const client = await createCopilotClient(cliConfig);
 
   try {
     const results: EvalResult[] = [];

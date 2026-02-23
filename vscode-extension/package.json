@@ -289,10 +289,8 @@
   "extensionDependencies": [
     "vscode.git"
   ],
-  "dependencies": {
-    "@github/copilot-sdk": "^0.1.24"
-  },
   "devDependencies": {
+    "@github/copilot-sdk": "^0.1.24",
     "@octokit/rest": "^22.0.1",
     "@types/node": "^25.2.3",
     "@types/vscode": "^1.109.0",

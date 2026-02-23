@@ -7,9 +7,21 @@ import fg from "fast-glob";
 
 const execFileAsync = promisify(execFile);
 
+const COPILOT_DEBUG_ENABLED = /^(1|true|yes|on)$/iu.test(process.env.PRIMER_DEBUG_COPILOT ?? "");
+
+export function logCopilotDebug(message: string): void {
+  if (!COPILOT_DEBUG_ENABLED) return;
+  process.stderr.write(`[primer:copilot] ${message}\n`);
+}
+
 export type CopilotCliConfig = {
   cliPath: string;
   cliArgs?: string[];
+};
+
+type CopilotCliCandidate = {
+  config: CopilotCliConfig;
+  source: string;
 };
 
 let cachedCliConfig: CopilotCliConfig | null = null;
@@ -24,13 +36,18 @@ function cacheConfig(config: CopilotCliConfig): CopilotCliConfig {
 
 export async function assertCopilotCliReady(): Promise<CopilotCliConfig> {
   const config = await findCopilotCliConfig();
+  const desc = config.cliArgs ? `${config.cliPath} ${config.cliArgs.join(" ")}` : config.cliPath;
+  logCopilotDebug(`validating CLI compatibility with ${desc}`);
 
   try {
-    const [cmd, args] = buildExecArgs(config, ["--version"]);
+    const [cmd, args] = buildExecArgs(config, ["--headless", "--version"]);
     await execFileAsync(cmd, args, { timeout: 5000 });
   } catch {
-    const desc = config.cliArgs ? `${config.cliPath} ${config.cliArgs.join(" ")}` : config.cliPath;
-    throw new Error(`Copilot CLI at ${desc} is not working.`);
+    cachedCliConfig = null;
+    throw new Error(
+      `Copilot CLI at ${desc} is not compatible with SDK server mode. ` +
+        "Expected support for '--headless'. Install/update the VS Code Copilot Chat CLI or adjust PATH."
+    );
   }
 
   return config;
@@ -43,7 +60,7 @@ export async function listCopilotModels(): Promise<string[]> {
   return extractModelChoices(stdout);
 }
 
-function buildExecArgs(config: CopilotCliConfig, extraArgs: string[]): [string, string[]] {
+export function buildExecArgs(config: CopilotCliConfig, extraArgs: string[]): [string, string[]] {
   if (config.cliArgs && config.cliArgs.length > 0) {
     return [config.cliPath, [...config.cliArgs, ...extraArgs]];
   }
@@ -58,12 +75,28 @@ function buildExecArgs(config: CopilotCliConfig, extraArgs: string[]): [string, 
 
 async function findCopilotCliConfig(): Promise<CopilotCliConfig> {
   if (cachedCliConfig && Date.now() - cachedCliConfigTimestamp < CLI_CACHE_TTL_MS) {
+    logCopilotDebug("using cached CLI config");
     return cachedCliConfig;
+  }
+
+  const overrideCliPath = process.env.PRIMER_COPILOT_CLI_PATH;
+  if (overrideCliPath) {
+    const overrideConfig = { cliPath: overrideCliPath };
+    logCopilotDebug(`trying override PRIMER_COPILOT_CLI_PATH=${overrideCliPath}`);
+    if (await isHeadlessCompatible(overrideConfig)) {
+      logCopilotDebug("override CLI is compatible");
+      return cacheConfig(overrideConfig);
+    }
+    throw new Error(
+      `PRIMER_COPILOT_CLI_PATH points to an incompatible CLI (${overrideCliPath}). ` +
+        "It must support '--headless --version'."
+    );
   }
 
   const isWindows = process.platform === "win32";
   const home = process.env.HOME ?? process.env.USERPROFILE ?? "";
   const appData = process.env.APPDATA ?? "";
+  const candidates: CopilotCliCandidate[] = [];
 
   // On Windows, prefer npm-installed binary and use node + cliArgs approach.
   // This bypasses .cmd/.bat wrapper issues that prevent direct spawning.
@@ -79,7 +112,13 @@ async function findCopilotCliConfig(): Promise<CopilotCliConfig> {
     );
     try {
       await fs.access(npmLoaderPath);
-      return cacheConfig({ cliPath: process.execPath, cliArgs: [npmLoaderPath] });
+      candidates.push({
+        config: { cliPath: process.execPath, cliArgs: [npmLoaderPath] },
+        source: "Windows npm loader"
+      });
+      logCopilotDebug(
+        `discovered candidate from Windows npm loader: ${process.execPath} ${npmLoaderPath}`
+      );
     } catch {
       // npm binary not found, will try PATH and VS Code locations
     }
@@ -90,7 +129,8 @@ async function findCopilotCliConfig(): Promise<CopilotCliConfig> {
     const { stdout } = await execFileAsync(whichCmd, ["copilot"], { timeout: 5000 });
     const found = stdout.trim().split(/\r?\n/)[0];
     if (found) {
-      return cacheConfig({ cliPath: found });
+      candidates.push({ config: { cliPath: found }, source: "PATH" });
+      logCopilotDebug(`discovered candidate from PATH: ${found}`);
     }
   } catch {
     // Not on PATH, will try VS Code locations
@@ -118,7 +158,8 @@ async function findCopilotCliConfig(): Promise<CopilotCliConfig> {
   for (const location of staticLocations) {
     try {
       await fs.access(location);
-      return cacheConfig({ cliPath: location });
+      candidates.push({ config: { cliPath: location }, source: "VS Code globalStorage" });
+      logCopilotDebug(`discovered candidate from VS Code globalStorage: ${location}`);
     } catch {
       // Try next
     }
@@ -133,9 +174,35 @@ async function findCopilotCliConfig(): Promise<CopilotCliConfig> {
 
   for (const pattern of globPatterns) {
     const matches = await fg(pattern, { onlyFiles: true });
-    if (matches.length > 0) {
-      return cacheConfig({ cliPath: path.normalize(matches[0]) });
+    for (const match of matches) {
+      const normalized = path.normalize(match);
+      candidates.push({
+        config: { cliPath: normalized },
+        source: "VS Code extensions"
+      });
+      logCopilotDebug(`discovered candidate from VS Code extensions: ${normalized}`);
     }
+  }
+
+  const compatible = await findFirstCompatibleCandidate(candidates);
+  if (compatible) {
+    const desc = compatible.config.cliArgs
+      ? `${compatible.config.cliPath} ${compatible.config.cliArgs.join(" ")}`
+      : compatible.config.cliPath;
+    logCopilotDebug(`selected compatible candidate from ${compatible.source}: ${desc}`);
+    return cacheConfig(compatible.config);
+  }
+
+  if (candidates.length > 0) {
+    const first = candidates[0];
+    const desc = first.config.cliArgs
+      ? `${first.config.cliPath} ${first.config.cliArgs.join(" ")}`
+      : first.config.cliPath;
+    throw new Error(
+      `Found Copilot CLI candidate from ${first.source} (${desc}) but it does not support '--headless'. ` +
+        "Primer requires a Copilot CLI build compatible with SDK server mode. " +
+        "Install/update GitHub Copilot Chat in VS Code, or point PRIMER_COPILOT_CLI_PATH to a compatible CLI binary."
+    );
   }
 
   const platformHint = isWindows
@@ -147,6 +214,44 @@ async function findCopilotCliConfig(): Promise<CopilotCliConfig> {
   throw new Error(
     `Copilot CLI not found. Install GitHub Copilot Chat extension in VS Code or run: npm install -g @github/copilot.${platformHint}`
   );
+}
+
+async function findFirstCompatibleCandidate(
+  candidates: CopilotCliCandidate[]
+): Promise<CopilotCliCandidate | null> {
+  const seen = new Set<string>();
+
+  for (const candidate of candidates) {
+    const key = [candidate.config.cliPath, ...(candidate.config.cliArgs ?? [])].join("\u0000");
+    if (seen.has(key)) {
+      logCopilotDebug(`skipping duplicate candidate: ${candidate.config.cliPath}`);
+      continue;
+    }
+    seen.add(key);
+
+    const compatible = await isHeadlessCompatible(candidate.config);
+    const desc = candidate.config.cliArgs
+      ? `${candidate.config.cliPath} ${candidate.config.cliArgs.join(" ")}`
+      : candidate.config.cliPath;
+    logCopilotDebug(
+      `probe ${candidate.source}: ${desc} => ${compatible ? "compatible" : "incompatible"}`
+    );
+    if (compatible) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
+async function isHeadlessCompatible(config: CopilotCliConfig): Promise<boolean> {
+  try {
+    const [cmd, args] = buildExecArgs(config, ["--headless", "--version"]);
+    await execFileAsync(cmd, args, { timeout: 5000 });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function extractModelChoices(helpText: string): string[] {

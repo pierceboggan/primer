@@ -11,7 +11,8 @@ const buildOptions = {
   platform: "node",
   target: "node22",
   outfile: "out/extension.js",
-  external: ["vscode", "@github/copilot-sdk"],
+  // Keep Copilot SDK bundled: packaged extensions may not have node_modules at runtime.
+  external: ["vscode"],
   sourcemap: !production,
   minify: production,
   alias: {

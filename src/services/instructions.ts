@@ -6,6 +6,7 @@ import { ensureDir, safeWriteFile } from "../utils/fs";
 import type { Area } from "./analyzer";
 import { sanitizeAreaName } from "./analyzer";
 import { assertCopilotCliReady } from "./copilot";
+import { createCopilotClient } from "./copilotSdk";
 
 type GenerateInstructionsOptions = {
   repoPath: string;
@@ -23,8 +24,7 @@ export async function generateCopilotInstructions(
   const cliConfig = await assertCopilotCliReady();
 
   progress("Starting Copilot SDK...");
-  const sdk = await import("@github/copilot-sdk");
-  const client = new sdk.CopilotClient(cliConfig);
+  const client = await createCopilotClient(cliConfig);
 
   try {
     progress("Creating session...");
@@ -109,8 +109,7 @@ export async function generateAreaInstructions(
   const cliConfig = await assertCopilotCliReady();
 
   progress(`Starting Copilot SDK for area "${area.name}"...`);
-  const sdk = await import("@github/copilot-sdk");
-  const client = new sdk.CopilotClient(cliConfig);
+  const client = await createCopilotClient(cliConfig);
 
   try {
     const applyToPatterns = Array.isArray(area.applyTo) ? area.applyTo : [area.applyTo];
