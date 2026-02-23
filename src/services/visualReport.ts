@@ -1,6 +1,5 @@
-import type { ReadinessReport, AreaReadinessReport, ReadinessPillarSummary } from "./readiness";
 import { PILLAR_GROUPS, PILLAR_GROUP_NAMES } from "./readiness";
-import type { PillarGroup } from "./readiness";
+import type { AreaReadinessReport, PillarGroup, ReadinessReport } from "./readiness";
 
 type VisualReportOptions = {
   reports: Array<{ repo: string; report: ReadinessReport; error?: string }>;
