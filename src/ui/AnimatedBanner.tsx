@@ -121,10 +121,19 @@ export function AnimatedBanner({
 
 /**
  * Static banner for use after animation or when animation is disabled.
+ * When accessible=true, renders plain text instead of block art.
  */
-export function StaticBanner({ darkMode = true }: { darkMode?: boolean }): React.JSX.Element {
+export function StaticBanner({ darkMode = true, accessible = false }: { darkMode?: boolean; accessible?: boolean }): React.JSX.Element {
   const color = darkMode ? "magentaBright" : "magenta";
-  
+
+  if (accessible) {
+    return (
+      <Box flexDirection="column">
+        <Text color={color} bold>PRIMER</Text>
+      </Box>
+    );
+  }
+
   return (
     <Box flexDirection="column">
       {FULL_BANNER.map((line, i) => (
