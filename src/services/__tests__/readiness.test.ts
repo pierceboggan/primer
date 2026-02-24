@@ -319,6 +319,74 @@ describe("runReadinessReport", () => {
 
       expect(criterion?.status).toBe("pass");
     });
+
+    describe("instructions-consistency", () => {
+      it("skips when only one instruction file exists", async () => {
+        await writePackageJson({ name: "test-repo" });
+        await writeFile(".github/copilot-instructions.md", "# Instructions");
+
+        const report = await runReadinessReport({ repoPath });
+        const criterion = report.criteria.find((c) => c.id === "instructions-consistency");
+
+        expect(criterion?.status).toBe("skip");
+      });
+
+      it("skips when no instruction files exist", async () => {
+        await writePackageJson({ name: "test-repo" });
+
+        const report = await runReadinessReport({ repoPath });
+        const criterion = report.criteria.find((c) => c.id === "instructions-consistency");
+
+        expect(criterion?.status).toBe("skip");
+      });
+
+      it("passes when two instruction files have identical content", async () => {
+        await writePackageJson({ name: "test-repo" });
+        const content = "# Shared instructions\n\nUse TypeScript strict mode.\n";
+        await writeFile(".github/copilot-instructions.md", content);
+        await writeFile("CLAUDE.md", content);
+
+        const report = await runReadinessReport({ repoPath });
+        const criterion = report.criteria.find((c) => c.id === "instructions-consistency");
+
+        expect(criterion?.status).toBe("pass");
+        expect(criterion?.reason).toContain("consistent");
+      });
+
+      it("passes when instruction files are symlinked", async () => {
+        await writePackageJson({ name: "test-repo" });
+        await writeFile(".github/copilot-instructions.md", "# Instructions\n\nShared content.");
+        const target = path.join(repoPath, ".github", "copilot-instructions.md");
+        const link = path.join(repoPath, "CLAUDE.md");
+        await fs.symlink(target, link);
+
+        const report = await runReadinessReport({ repoPath });
+        const criterion = report.criteria.find((c) => c.id === "instructions-consistency");
+
+        expect(criterion?.status).toBe("pass");
+      });
+
+      it("fails when instruction files have diverging content", async () => {
+        await writePackageJson({ name: "test-repo" });
+        await writeFile(
+          ".github/copilot-instructions.md",
+          "# Copilot\n\nUse React for all frontend components.\nFollow functional patterns."
+        );
+        await writeFile(
+          "CLAUDE.md",
+          "# Claude\n\nUse Vue.js for UI development.\nPrefer class-based components."
+        );
+
+        const report = await runReadinessReport({ repoPath });
+        const criterion = report.criteria.find((c) => c.id === "instructions-consistency");
+
+        expect(criterion?.status).toBe("fail");
+        expect(criterion?.reason).toContain("diverging");
+        expect(criterion?.reason).toContain("% similar");
+        expect(criterion?.evidence).toContain(".github/copilot-instructions.md");
+        expect(criterion?.evidence).toContain("CLAUDE.md");
+      });
+    });
   });
 
   describe("build-system pillar", () => {

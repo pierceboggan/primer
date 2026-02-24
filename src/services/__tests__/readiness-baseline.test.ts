@@ -181,6 +181,7 @@ describe("buildCriteria baseline", () => {
       "dependabot",
       "env-example",
       "format-config",
+      "instructions-consistency",
       "license",
       "lint-config",
       "lockfile",

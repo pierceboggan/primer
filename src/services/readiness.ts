@@ -730,6 +730,34 @@ export function buildCriteria(): ReadinessCriterion[] {
       }
     },
     {
+      id: "instructions-consistency",
+      title: "AI instruction files are consistent",
+      pillar: "ai-tooling",
+      level: 2,
+      scope: "repo",
+      impact: "medium",
+      effort: "low",
+      check: async (context) => {
+        const rootFound = await hasCustomInstructions(context.repoPath);
+        if (rootFound.length <= 1) {
+          return { status: "skip", reason: "Fewer than 2 instruction files found." };
+        }
+        const result = await checkInstructionConsistency(context.repoPath, rootFound);
+        if (result.unified) {
+          return {
+            status: "pass",
+            reason: `${rootFound.length} instruction files are consistent.`,
+            evidence: rootFound
+          };
+        }
+        return {
+          status: "fail",
+          reason: `${rootFound.length} instruction files are diverging (${result.similarity !== undefined ? `${Math.round(result.similarity * 100)}% similar` : "different content"}). Consider consolidating or symlinking them.`,
+          evidence: rootFound
+        };
+      }
+    },
+    {
       id: "mcp-config",
       title: "MCP configuration present",
       pillar: "ai-tooling",
@@ -1139,6 +1167,95 @@ async function hasFileBasedInstructions(repoPath: string): Promise<string[]> {
   } catch {
     return [];
   }
+}
+
+export type InstructionConsistencyResult = {
+  unified: boolean;
+  files: string[];
+  similarity?: number;
+};
+
+/**
+ * Jaccard similarity on normalized line sets.
+ * Returns 1.0 for identical (after normalization), 0.0 for completely disjoint.
+ */
+export function contentSimilarity(a: string, b: string): number {
+  const normalize = (s: string) =>
+    new Set(
+      s
+        .toLowerCase()
+        .split("\n")
+        .map((l) => l.trim().replace(/\s+/gu, " "))
+        .filter((l) => l.length > 0)
+    );
+  const setA = normalize(a);
+  const setB = normalize(b);
+  if (setA.size === 0 && setB.size === 0) return 1;
+  let intersection = 0;
+  for (const line of setA) {
+    if (setB.has(line)) intersection++;
+  }
+  const union = new Set([...setA, ...setB]).size;
+  return union === 0 ? 1 : intersection / union;
+}
+
+/**
+ * Check whether multiple instruction files in a repo are consistent.
+ * Files sharing the same realpath (symlinks) are treated as unified.
+ * For distinct files, content is compared via Jaccard similarity.
+ */
+export async function checkInstructionConsistency(
+  repoPath: string,
+  foundFiles: string[]
+): Promise<InstructionConsistencyResult> {
+  if (foundFiles.length <= 1) {
+    return { unified: true, files: foundFiles };
+  }
+
+  // Group files by their real path (symlinks collapse)
+  const realPathMap = new Map<string, string[]>();
+  for (const file of foundFiles) {
+    const fullPath = path.join(repoPath, file);
+    try {
+      const real = await fs.realpath(fullPath);
+      const group = realPathMap.get(real) ?? [];
+      group.push(file);
+      realPathMap.set(real, group);
+    } catch {
+      // If realpath fails, treat as unique
+      realPathMap.set(fullPath, [file]);
+    }
+  }
+
+  const groups = [...realPathMap.values()];
+  // All files resolve to the same real path → unified via symlinks
+  if (groups.length <= 1) {
+    return { unified: true, files: foundFiles };
+  }
+
+  // Read content from one representative file per group and compare pairwise
+  const contents: string[] = [];
+  for (const group of groups) {
+    try {
+      contents.push(await fs.readFile(path.join(repoPath, group[0]), "utf8"));
+    } catch {
+      contents.push("");
+    }
+  }
+
+  // Compute minimum pairwise similarity
+  let minSimilarity = 1;
+  for (let i = 0; i < contents.length; i++) {
+    for (let j = i + 1; j < contents.length; j++) {
+      minSimilarity = Math.min(minSimilarity, contentSimilarity(contents[i], contents[j]));
+    }
+  }
+
+  return {
+    unified: minSimilarity >= 0.9,
+    files: foundFiles,
+    similarity: Math.round(minSimilarity * 100) / 100
+  };
 }
 
 async function hasMcpConfig(repoPath: string): Promise<string[]> {
