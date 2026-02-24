@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en" data-color-mode="dark" data-dark-theme="dark" data-light-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Primer — Prime repositories for AI-assisted development</title>
+  <meta name="description" content="Generate tailored AI instructions, assess readiness, evaluate effectiveness, and configure development environments — for individual repos or entire organizations.">
+  <link rel="stylesheet" href="https://unpkg.com/@primer/css/dist/primer.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- ===== Header ===== -->
+  <header class="site-header">
+    <div class="container-xl px-3 px-md-6 d-flex flex-items-center flex-justify-between" style="height: var(--header-height);">
+      <div class="d-flex flex-items-center" style="gap: 16px;">
+        <a href="index.html" class="site-logo">
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M0 2.75C0 1.784.784 1 1.75 1h12.5c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0 1 14.25 15H1.75A1.75 1.75 0 0 1 0 13.25Zm1.75-.25a.25.25 0 0 0-.25.25v10.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V2.75a.25.25 0 0 0-.25-.25Zm7.25 8a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 0 1.5h-3.5a.75.75 0 0 1-.75-.75Zm-7.25-6a.75.75 0 0 1 1.06 0l3 3a.75.75 0 0 1 0 1.06l-3 3a.75.75 0 0 1-1.06-1.06L4.44 8 1.72 5.28a.75.75 0 0 1 0-1.06Z"/></svg>
+          <span>Primer</span>
+        </a>
+        <button class="nav-toggle" aria-label="Toggle navigation">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2.75A.75.75 0 0 1 1.75 2h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 2.75Zm0 5A.75.75 0 0 1 1.75 7h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 7.75ZM1.75 12h12.5a.75.75 0 0 1 0 1.5H1.75a.75.75 0 0 1 0-1.5Z"/></svg>
+        </button>
+      </div>
+      <nav class="nav-links">
+        <a href="guide.html" class="nav-link">Guide</a>
+        <a href="cli.html" class="nav-link">CLI</a>
+        <a href="extension.html" class="nav-link">VS Code</a>
+      </nav>
+      <div class="d-flex flex-items-center header-actions" style="gap: 8px;">
+        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+          <svg class="theme-icon-dark" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M9.598 1.591a.749.749 0 0 1 .785-.175 7.001 7.001 0 1 1-8.967 8.967.75.75 0 0 1 .961-.96 5.5 5.5 0 0 0 7.046-7.046.75.75 0 0 1 .175-.786Zm1.616 1.945a7 7 0 0 1-7.678 7.678 5.499 5.499 0 1 0 7.678-7.678Z"/></svg>
+          <svg class="theme-icon-light" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 1.5a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11ZM8 0a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0V.75A.75.75 0 0 1 8 0ZM3.076 2.783a.75.75 0 0 1 1.06 0l1.061 1.06a.75.75 0 0 1-1.06 1.061l-1.06-1.06a.75.75 0 0 1 0-1.06Zm8.787 0a.75.75 0 0 1 1.06 1.06l-1.06 1.061a.75.75 0 0 1-1.06-1.06l1.06-1.06ZM8 13a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 8 13ZM3.076 11.217a.75.75 0 0 1 1.06 1.06l-1.06 1.061a.75.75 0 0 1-1.061-1.06l1.06-1.061Zm8.787 1.06a.75.75 0 0 1 1.06-1.06l1.061 1.06a.75.75 0 0 1-1.06 1.061l-1.061-1.06ZM0 8a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5H.75A.75.75 0 0 1 0 8Zm13 0a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5h-1.5A.75.75 0 0 1 13 8Z"/></svg>
+        </button>
+        <a href="https://github.com/pierceboggan/primer" class="btn btn-sm d-flex flex-items-center" style="gap: 6px;">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container-xl px-3 px-md-6">
+    <!-- ===== Hero ===== -->
+    <section class="hero">
+      <h1 class="hero-title">Primer</h1>
+      <p class="hero-subtitle">Prime repositories for AI-assisted development</p>
+      <p class="hero-desc">
+        Generate tailored AI instructions, assess readiness across 9 pillars,
+        evaluate instruction effectiveness, and configure dev environments —
+        for individual repos or entire organizations.
+      </p>
+
+      <div class="cta-group" style="margin-top: 32px;">
+        <div class="install-cmd" data-cmd="npx github:pierceboggan/primer init" role="button" tabindex="0" title="Click to copy">
+          <span class="prompt">$</span>
+          <span class="cmd-label">npx github:pierceboggan/primer init</span>
+          <span class="copy-hint">⎘</span>
+        </div>
+      </div>
+      <div class="cta-group" style="margin-top: 12px;">
+        <a href="https://marketplace.visualstudio.com/items?itemName=digitarald.primer-vscode" class="btn btn-primary">
+          VS Code Extension
+        </a>
+        <a href="guide.html" class="btn btn-outline">
+          Get Started →
+        </a>
+      </div>
+    </section>
+
+    <!-- ===== Features ===== -->
+    <section>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon blue">🔍</div>
+          <div class="feature-title">Assess</div>
+          <p class="feature-desc">
+            Score any repository across 9 maturity pillars — from style and testing to AI tooling.
+            Get a readiness level from 1–5 with actionable recommendations.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon purple">⚡</div>
+          <div class="feature-title">Generate</div>
+          <p class="feature-desc">
+            Use the Copilot SDK to analyze your repo and produce tailored
+            <code>copilot-instructions.md</code> or <code>AGENTS.md</code> files. Monorepo-aware.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon orange">🧪</div>
+          <div class="feature-title">Evaluate</div>
+          <p class="feature-desc">
+            Measure instruction impact by comparing AI responses with and without them,
+            scored by a judge model. Use as a CI gate to prevent regressions.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon green">⚙️</div>
+          <div class="feature-title">Configure</div>
+          <p class="feature-desc">
+            Generate <code>.vscode/mcp.json</code> and <code>.vscode/settings.json</code>
+            so the dev environment is wired for AI from the start.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon pink">🚀</div>
+          <div class="feature-title">Scale</div>
+          <p class="feature-desc">
+            Batch-process repos across GitHub orgs or Azure DevOps projects.
+            Clone, generate, and open PRs automatically.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Maturity Model ===== -->
+    <section style="margin: 64px 0;">
+      <h2 class="section-heading">AI Readiness Maturity Model</h2>
+      <p style="color: var(--fgColor-muted, #7d8590); margin-bottom: 24px;">
+        Primer's readiness assessment scores repos against a 5-level maturity model
+        spanning Repo Health (8 pillars) and AI Setup.
+      </p>
+      <table class="maturity-table">
+        <thead>
+          <tr>
+            <th>Level</th>
+            <th>Name</th>
+            <th>What it means</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="level-badge level-1">1</span></td>
+            <td>Functional</td>
+            <td>Builds, tests, and basic tooling in place</td>
+          </tr>
+          <tr>
+            <td><span class="level-badge level-2">2</span></td>
+            <td>Documented</td>
+            <td>README, CONTRIBUTING, custom AI instructions exist</td>
+          </tr>
+          <tr>
+            <td><span class="level-badge level-3">3</span></td>
+            <td>Standardized</td>
+            <td>CI/CD, security policies, CODEOWNERS, observability</td>
+          </tr>
+          <tr>
+            <td><span class="level-badge level-4">4</span></td>
+            <td>Optimized</td>
+            <td>MCP servers, custom agents, AI skills configured</td>
+          </tr>
+          <tr>
+            <td><span class="level-badge level-5">5</span></td>
+            <td>Autonomous</td>
+            <td>Full AI-native development with minimal oversight</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ===== Quick Start ===== -->
+    <section style="margin: 64px 0;">
+      <h2 class="section-heading">Quick Start</h2>
+      <p style="color: var(--fgColor-muted, #7d8590); margin-bottom: 16px;">
+        Get up and running in under a minute. Primer's <code>init</code> command
+        analyzes your repo, generates instructions, and wires up your dev environment.
+      </p>
+      <div class="code-block">
+        <button class="copy-btn">Copy</button>
+        <pre><code><span class="comment"># Run directly — no install required</span>
+<span class="prompt">$ </span>npx github:pierceboggan/primer init
+
+<span class="comment"># Or install globally</span>
+<span class="prompt">$ </span>npm install -g github:pierceboggan/primer
+<span class="prompt">$ </span>primer init</code></pre>
+      </div>
+      <p style="margin-top: 16px;">
+        <a href="guide.html" style="color: var(--fgColor-accent, #58a6ff); text-decoration: none;">
+          Read the full guide →
+        </a>
+      </p>
+    </section>
+
+    <!-- ===== Who It's For ===== -->
+    <section style="margin: 64px 0;">
+      <h2 class="section-heading">Who It's For</h2>
+      <div class="feature-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+        <div class="feature-card">
+          <div class="feature-title">Platform Engineering Teams</div>
+          <p class="feature-desc">
+            Assess readiness, set baselines, and track AI adoption at scale
+            across hundreds of repositories with batch operations and policy-driven compliance.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-title">Individual Developers</div>
+          <p class="feature-desc">
+            Get your AI agent to understand your repo's stack, conventions,
+            and architecture from day one — no manual instruction authoring.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-title">Engineering Leadership</div>
+          <p class="feature-desc">
+            Evaluate AI readiness across portfolios with quantifiable maturity levels,
+            visual reports, and policy-driven thresholds.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer class="site-footer">
+    <div class="container-xl px-3 px-md-6 d-flex flex-justify-between flex-wrap" style="gap: 16px;">
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="guide.html">Guide</a>
+        <a href="cli.html">CLI Reference</a>
+        <a href="extension.html">VS Code Extension</a>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/pierceboggan/primer">GitHub</a>
+        <a href="https://github.com/pierceboggan/primer/blob/main/LICENSE">MIT License</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

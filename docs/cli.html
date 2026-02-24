@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en" data-color-mode="dark" data-dark-theme="dark" data-light-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CLI Reference — Primer Docs</title>
+  <meta name="description" content="Complete CLI reference for Primer: all commands, options, global flags, environment variables, and policy configuration.">
+  <link rel="stylesheet" href="https://unpkg.com/@primer/css/dist/primer.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- ===== Header ===== -->
+  <header class="site-header">
+    <div class="container-xl px-3 px-md-6 d-flex flex-items-center flex-justify-between" style="height: var(--header-height);">
+      <div class="d-flex flex-items-center" style="gap: 16px;">
+        <a href="index.html" class="site-logo">
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M0 2.75C0 1.784.784 1 1.75 1h12.5c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0 1 14.25 15H1.75A1.75 1.75 0 0 1 0 13.25Zm1.75-.25a.25.25 0 0 0-.25.25v10.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V2.75a.25.25 0 0 0-.25-.25Zm7.25 8a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 0 1.5h-3.5a.75.75 0 0 1-.75-.75Zm-7.25-6a.75.75 0 0 1 1.06 0l3 3a.75.75 0 0 1 0 1.06l-3 3a.75.75 0 0 1-1.06-1.06L4.44 8 1.72 5.28a.75.75 0 0 1 0-1.06Z"/></svg>
+          <span>Primer</span>
+        </a>
+        <button class="nav-toggle" aria-label="Toggle navigation">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2.75A.75.75 0 0 1 1.75 2h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 2.75Zm0 5A.75.75 0 0 1 1.75 7h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 7.75ZM1.75 12h12.5a.75.75 0 0 1 0 1.5H1.75a.75.75 0 0 1 0-1.5Z"/></svg>
+        </button>
+      </div>
+      <nav class="nav-links">
+        <a href="guide.html" class="nav-link">Guide</a>
+        <a href="cli.html" class="nav-link" aria-current="page">CLI</a>
+        <a href="extension.html" class="nav-link">VS Code</a>
+      </nav>
+      <div class="d-flex flex-items-center header-actions" style="gap: 8px;">
+        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+          <svg class="theme-icon-dark" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M9.598 1.591a.749.749 0 0 1 .785-.175 7.001 7.001 0 1 1-8.967 8.967.75.75 0 0 1 .961-.96 5.5 5.5 0 0 0 7.046-7.046.75.75 0 0 1 .175-.786Zm1.616 1.945a7 7 0 0 1-7.678 7.678 5.499 5.499 0 1 0 7.678-7.678Z"/></svg>
+          <svg class="theme-icon-light" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 1.5a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11ZM8 0a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0V.75A.75.75 0 0 1 8 0ZM3.076 2.783a.75.75 0 0 1 1.06 0l1.061 1.06a.75.75 0 0 1-1.06 1.061l-1.06-1.06a.75.75 0 0 1 0-1.06Zm8.787 0a.75.75 0 0 1 1.06 1.06l-1.06 1.061a.75.75 0 0 1-1.06-1.06l1.06-1.06ZM8 13a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 8 13ZM3.076 11.217a.75.75 0 0 1 1.06 1.06l-1.06 1.061a.75.75 0 0 1-1.061-1.06l1.06-1.061Zm8.787 1.06a.75.75 0 0 1 1.06-1.06l1.061 1.06a.75.75 0 0 1-1.06 1.061l-1.061-1.06ZM0 8a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5H.75A.75.75 0 0 1 0 8Zm13 0a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5h-1.5A.75.75 0 0 1 13 8Z"/></svg>
+        </button>
+        <a href="https://github.com/pierceboggan/primer" class="btn btn-sm d-flex flex-items-center" style="gap: 6px;">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container-xl px-3 px-md-6">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1 class="page-title">CLI Reference</h1>
+      <p class="page-desc">
+        Complete reference for all Primer CLI commands, options, and configuration.
+      </p>
+    </div>
+
+    <div class="content-layout">
+      <!-- Table of Contents -->
+      <aside class="content-sidebar">
+        <nav class="toc">
+          <div class="toc-title">Commands</div>
+          <a href="#global-options" class="toc-link">Global Options</a>
+          <a href="#init" class="toc-link">init</a>
+          <a href="#analyze" class="toc-link">analyze</a>
+          <a href="#generate" class="toc-link">generate</a>
+          <a href="#instructions" class="toc-link">instructions</a>
+          <a href="#readiness" class="toc-link">readiness</a>
+          <a href="#eval" class="toc-link">eval</a>
+          <a href="#batch" class="toc-link">batch</a>
+          <a href="#batch-readiness" class="toc-link">batch-readiness</a>
+          <a href="#pr" class="toc-link">pr</a>
+          <a href="#tui" class="toc-link">tui</a>
+          <div class="toc-title" style="margin-top: 16px;">Config</div>
+          <a href="#env-vars" class="toc-link">Environment Variables</a>
+          <a href="#policy-config" class="toc-link">Policy Configuration</a>
+        </nav>
+      </aside>
+
+      <!-- Content -->
+      <div class="content-main">
+        <!-- Global Options -->
+        <div id="global-options" class="command-section">
+          <h2 class="command-name" style="color: var(--fgColor-default, #e6edf3);">Global Options</h2>
+          <p class="command-desc">These flags are available on every command.</p>
+          <table class="options-table">
+            <thead>
+              <tr><th>Option</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>--json</code></td>
+                <td>Output machine-readable JSON to stdout. Human-readable progress goes to stderr.</td>
+              </tr>
+              <tr>
+                <td><code>--quiet</code></td>
+                <td>Suppress stderr progress output.</td>
+              </tr>
+              <tr>
+                <td><code>--help</code></td>
+                <td>Display help for a command.</td>
+              </tr>
+              <tr>
+                <td><code>--version</code></td>
+                <td>Display the Primer version.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- init -->
+        <div id="init" class="command-section">
+          <h2 class="command-name">primer init [path]</h2>
+          <p class="command-desc">Interactive repo setup — detect stack, assess readiness, generate instructions and configs.</p>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="prompt">$ </span>primer init
+<span class="prompt">$ </span>primer init ./my-project --yes --force</code></pre>
+          </div>
+          <table class="options-table">
+            <thead>
+              <tr><th>Option</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>--github</code></td><td>Use a GitHub repository (interactive selection).</td></tr>
+              <tr><td><code>--provider &lt;provider&gt;</code></td><td>Repo provider: <code>github</code> or <code>azure</code>.</td></tr>
+              <tr><td><code>--yes</code></td><td>Accept defaults — generate instructions, MCP, and VS Code configs without prompting.</td></tr>
+              <tr><td><code>--force</code></td><td>Overwrite existing files.</td></tr>
+              <tr><td><code>--model &lt;name&gt;</code></td><td>Model for instruction generation (default: <code>claude-sonnet-4.5</code>).</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- analyze -->
+        <div id="analyze" class="command-section">
+          <h2 class="command-name">primer analyze [path]</h2>
+          <p class="command-desc">Inspect repository structure — detect languages, frameworks, monorepo layout, and area mappings.</p>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="prompt">$ </span>primer analyze
+<span class="prompt">$ </span>primer analyze --output report.json</code></pre>
+          </div>
+          <table class="options-table">
+            <thead>
+              <tr><th>Option</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>--output &lt;path&gt;</code></td><td>Write report to file (<code>.json</code> or <code>.md</code>).</td></tr>
+              <tr><td><code>--force</code></td><td>Overwrite existing output file.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- generate -->
+        <div id="generate" class="command-section">
+          <h2 class="command-name">primer generate &lt;type&gt; [path]</h2>
+          <p class="command-desc">Generate configuration files: instructions, agents, MCP servers, or VS Code settings.</p>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="prompt">$ </span>primer generate instructions
+<span class="prompt">$ </span>primer generate mcp
+<span class="prompt">$ </span>primer generate vscode --force</code></pre>
+          </div>
+          <p><strong>Type argument:</strong> <code>instructions</code> | <code>agents</code> | <code>mcp</code> | <code>vscode</code></p>
+          <table class="options-table">
+            <thead>
+              <tr><th>Option</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>--force</code></td><td>Overwrite existing files.</td></tr>
+              <tr><td><code>--per-app</code></td><td>Generate per-app configs in monorepos.</td></tr>
+              <tr><td><code>--model &lt;name&gt;</code></td><td>Model for instruction generation (default: <code>claude-sonnet-4.5</code>).</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- instructions -->
+        <div id="instructions" class="command-section">
+          <h2 class="command-name">primer instructions [--repo &lt;path&gt;]</h2>
+          <p class="command-desc">Generate root and per-area instruction files using the Copilot SDK.</p>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="prompt">$ </span>primer instructions
+<span class="prompt">$ </span>primer instructions --areas
+<span class="prompt">$ </span>primer instructions --area frontend --force</code></pre>
+          </div>
+          <table class="options-table">
+            <thead>
+              <tr><th>Option</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>--repo &lt;path&gt;</code></td><td>Repository path (default: current directory).</td></tr>
+              <tr><td><code>--output &lt;path&gt;</code></td><td>Output path for the instructions file.</td></tr>
+              <tr><td><code>--model &lt;name&gt;</code></td><td>Model for generation (default: <code>claude-sonnet-4.5</code>).</td></tr>
+              <tr><td><code>--force</code></td><td>Overwrite existing instruction files.</td></tr>
+              <tr><td><code>--areas</code></td><td>Generate per-area instruction files for all detected areas.</td></tr>
+              <tr><td><code>--areas-only</code></td><td>Generate only per-area instructions (skip root).</td></tr>
+              <tr><td><code>--area &lt;name&gt;</code></td><td>Generate instructions for a specific area only.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- readiness -->
+        <div id="readiness" class="command-section">
+          <h2 class="command-name">primer readiness [path]</h2>
+          <p class="command-desc">Score a repo across 9 maturity pillars with levels 1–5.</p>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="prompt">$ </span>primer readiness
+<span class="prompt">$ </span>primer readiness --visual --output report.html
+<span class="prompt">$ </span>primer readiness --fail-level 3 --json</code></pre>
+          </div>
+          <table class="options-table">
+            <thead>
+              <tr><th>Option</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>--output &lt;path&gt;</code></td><td>Write report to file (<code>.json</code>, <code>.md</code>, or <code>.html</code>).</td></tr>
+              <tr><td><code>--force</code></td><td>Overwrite existing output file.</td></tr>
+              <tr><td><code>--visual</code></td><td>Generate a GitHub-themed visual HTML report.</td></tr>
+              <tr><td><code>--per-area</code></td><td>Include per-area readiness breakdown.</td></tr>
+              <tr><td><code>--policy &lt;sources&gt;</code></td><td>Policy sources (comma-separated: file paths or npm packages).</td></tr>
+              <tr><td><code>--fail-level &lt;n&gt;</code></td><td>Exit code 1 if readiness level &lt; threshold (1–5). Useful for CI gates.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- eval -->
+        <div id="eval" class="command-section">
+          <h2 class="command-name">primer eval [path]</h2>
+          <p class="command-desc">Evaluate how instructions improve AI responses using a judge model.</p>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="prompt">$ </span>primer eval --init           <span class="comment"># scaffold primer.eval.json</span>
+<span class="prompt">$ </span>primer eval                  <span class="comment"># run evaluations</span>
+<span class="prompt">$ </span>primer eval --fail-level 80  <span class="comment"># CI gate at 80% pass rate</span></code></pre>
+          </div>
+          <table class="options-table">
+            <thead>
+              <tr><th>Option</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>--repo &lt;path&gt;</code></td><td>Repository path (default: current directory).</td></tr>
+              <tr><td><code>--model &lt;name&gt;</code></td><td>Model for generating responses (default: <code>claude-sonnet-4.5</code>).</td></tr>
+              <tr><td><code>--judge-model &lt;name&gt;</code></td><td>Model for judging responses (default: <code>claude-sonnet-4.5</code>).</td></tr>
+              <tr><td><code>--list-models</code></td><td>List available Copilot CLI models and exit.</td></tr>
+              <tr><td><code>--output &lt;path&gt;</code></td><td>Write results JSON to file.</td></tr>
+              <tr><td><code>--init</code></td><td>Create a starter <code>primer.eval.json</code> file.</td></tr>
+              <tr><td><code>--count &lt;n&gt;</code></td><td>Number of eval cases to generate with <code>--init</code> (default: 5).</td></tr>
+              <tr><td><code>--fail-level &lt;n&gt;</code></td><td>Exit code 1 if pass rate (%) &lt; threshold.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- batch -->
+        <div id="batch" class="command-section">
+          <h2 class="command-name">primer batch [repos...]</h2>
+          <p class="command-desc">Batch process multiple repositories — generate configs and open PRs across GitHub or Azure DevOps.</p>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="comment"># Interactive TUI (GitHub)</span>
+<span class="prompt">$ </span>primer batch
+
+<span class="comment"># Headless mode</span>
+<span class="prompt">$ </span>primer batch owner/repo1 owner/repo2 --json
+
+<span class="comment"># Azure DevOps</span>
+<span class="prompt">$ </span>primer batch org/project/repo --provider azure</code></pre>
+          </div>
+          <p><strong>Arguments:</strong> <code>[repos...]</code> — Repo identifiers. GitHub: <code>owner/name</code>. Azure: <code>org/project/repo</code>.</p>
+          <table class="options-table">
+            <thead>
+              <tr><th>Option</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>--output &lt;path&gt;</code></td><td>Write results JSON to file.</td></tr>
+              <tr><td><code>--provider &lt;provider&gt;</code></td><td>Repo provider: <code>github</code> (default) or <code>azure</code>.</td></tr>
+              <tr><td><code>--model &lt;name&gt;</code></td><td>Model for instruction generation (default: <code>claude-sonnet-4.5</code>).</td></tr>
+              <tr><td><code>--branch &lt;name&gt;</code></td><td>Branch name for generated PRs.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- batch-readiness -->
+        <div id="batch-readiness" class="command-section">
+          <h2 class="command-name">primer batch-readiness</h2>
+          <p class="command-desc">Generate a batch AI readiness report for multiple repos across organizations.</p>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="prompt">$ </span>primer batch-readiness
+<span class="prompt">$ </span>primer batch-readiness --output report.html --policy ./strict.json</code></pre>
+          </div>
+          <table class="options-table">
+            <thead>
+              <tr><th>Option</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>--output &lt;path&gt;</code></td><td>Write HTML report to file.</td></tr>
+              <tr><td><code>--policy &lt;sources&gt;</code></td><td>Policy sources (comma-separated: file paths or npm packages).</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- pr -->
+        <div id="pr" class="command-section">
+          <h2 class="command-name">primer pr [repo]</h2>
+          <p class="command-desc">Clone a repo, generate configs, and open a pull request on GitHub or Azure DevOps.</p>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="prompt">$ </span>primer pr owner/repo
+<span class="prompt">$ </span>primer pr org/project/repo --provider azure</code></pre>
+          </div>
+          <p><strong>Arguments:</strong> <code>[repo]</code> — Repository identifier. GitHub: <code>owner/name</code>. Azure: <code>org/project/repo</code>.</p>
+          <table class="options-table">
+            <thead>
+              <tr><th>Option</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>--branch &lt;name&gt;</code></td><td>Branch name for PR (default: <code>primer/add-ai-config</code>).</td></tr>
+              <tr><td><code>--provider &lt;provider&gt;</code></td><td>Repo provider: <code>github</code> or <code>azure</code>.</td></tr>
+              <tr><td><code>--model &lt;name&gt;</code></td><td>Model for instruction generation (default: <code>claude-sonnet-4.5</code>).</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- tui -->
+        <div id="tui" class="command-section">
+          <h2 class="command-name">primer tui [--repo &lt;path&gt;]</h2>
+          <p class="command-desc">Launch the interactive terminal UI for generation, evaluation, and batch workflows.</p>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="prompt">$ </span>primer tui
+<span class="prompt">$ </span>primer tui --repo ./my-project --no-animation</code></pre>
+          </div>
+          <table class="options-table">
+            <thead>
+              <tr><th>Option</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>--repo &lt;path&gt;</code></td><td>Repository path (default: current directory).</td></tr>
+              <tr><td><code>--no-animation</code></td><td>Skip the animated banner intro.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Environment Variables -->
+        <div id="env-vars" class="command-section">
+          <h2 style="font-size: 20px; font-weight: 700;">Environment Variables</h2>
+          <table class="options-table">
+            <thead>
+              <tr><th>Variable</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>GITHUB_TOKEN</code> / <code>GH_TOKEN</code></td>
+                <td>GitHub personal access token for API operations. Alternatively, authenticate via <code>gh auth login</code>.</td>
+              </tr>
+              <tr>
+                <td><code>AZURE_DEVOPS_PAT</code> / <code>AZDO_PAT</code></td>
+                <td>Azure DevOps personal access token for Azure batch and PR workflows.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Policy Configuration -->
+        <div id="policy-config" class="command-section">
+          <h2 style="font-size: 20px; font-weight: 700;">Policy Configuration</h2>
+          <p>
+            Readiness policies are JSON files that customize scoring behavior. They can disable
+            criteria, override metadata, and set pass-rate thresholds.
+          </p>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code>{
+  "name": "my-org-policy",
+  "criteria": {
+    "disable": ["lint-config"],
+    "override": {
+      "readme": {
+        "impact": "high",
+        "level": 2
+      }
+    }
+  },
+  "extras": {
+    "disable": ["pre-commit"]
+  },
+  "thresholds": {
+    "passRate": 0.9
+  }
+}</code></pre>
+          </div>
+          <table class="options-table">
+            <thead>
+              <tr><th>Field</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>name</code></td><td>Policy identifier for logging and diagnostics.</td></tr>
+              <tr><td><code>criteria.disable</code></td><td>Array of criterion IDs to skip during evaluation.</td></tr>
+              <tr><td><code>criteria.override</code></td><td>Map of criterion IDs to metadata overrides (impact, level, etc.).</td></tr>
+              <tr><td><code>extras.disable</code></td><td>Array of extra criterion IDs to disable.</td></tr>
+              <tr><td><code>thresholds.passRate</code></td><td>Minimum pass rate (0–1) for the readiness report to be considered passing.</td></tr>
+            </tbody>
+          </table>
+          <p>
+            Chain multiple policies by comma-separating paths:
+          </p>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="prompt">$ </span>primer readiness --policy ./base.json,./team.json</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer class="site-footer">
+    <div class="container-xl px-3 px-md-6 d-flex flex-justify-between flex-wrap" style="gap: 16px;">
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="guide.html">Guide</a>
+        <a href="cli.html">CLI Reference</a>
+        <a href="extension.html">VS Code Extension</a>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/pierceboggan/primer">GitHub</a>
+        <a href="https://github.com/pierceboggan/primer/blob/main/LICENSE">MIT License</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

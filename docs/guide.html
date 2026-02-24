@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en" data-color-mode="dark" data-dark-theme="dark" data-light-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Getting Started — Primer Docs</title>
+  <meta name="description" content="Step-by-step guide to setting up Primer for AI-assisted development: prerequisites, installation, workflow, monorepo support, policies, and CI integration.">
+  <link rel="stylesheet" href="https://unpkg.com/@primer/css/dist/primer.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- ===== Header ===== -->
+  <header class="site-header">
+    <div class="container-xl px-3 px-md-6 d-flex flex-items-center flex-justify-between" style="height: var(--header-height);">
+      <div class="d-flex flex-items-center" style="gap: 16px;">
+        <a href="index.html" class="site-logo">
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M0 2.75C0 1.784.784 1 1.75 1h12.5c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0 1 14.25 15H1.75A1.75 1.75 0 0 1 0 13.25Zm1.75-.25a.25.25 0 0 0-.25.25v10.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V2.75a.25.25 0 0 0-.25-.25Zm7.25 8a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 0 1.5h-3.5a.75.75 0 0 1-.75-.75Zm-7.25-6a.75.75 0 0 1 1.06 0l3 3a.75.75 0 0 1 0 1.06l-3 3a.75.75 0 0 1-1.06-1.06L4.44 8 1.72 5.28a.75.75 0 0 1 0-1.06Z"/></svg>
+          <span>Primer</span>
+        </a>
+        <button class="nav-toggle" aria-label="Toggle navigation">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2.75A.75.75 0 0 1 1.75 2h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 2.75Zm0 5A.75.75 0 0 1 1.75 7h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 7.75ZM1.75 12h12.5a.75.75 0 0 1 0 1.5H1.75a.75.75 0 0 1 0-1.5Z"/></svg>
+        </button>
+      </div>
+      <nav class="nav-links">
+        <a href="guide.html" class="nav-link" aria-current="page">Guide</a>
+        <a href="cli.html" class="nav-link">CLI</a>
+        <a href="extension.html" class="nav-link">VS Code</a>
+      </nav>
+      <div class="d-flex flex-items-center header-actions" style="gap: 8px;">
+        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+          <svg class="theme-icon-dark" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M9.598 1.591a.749.749 0 0 1 .785-.175 7.001 7.001 0 1 1-8.967 8.967.75.75 0 0 1 .961-.96 5.5 5.5 0 0 0 7.046-7.046.75.75 0 0 1 .175-.786Zm1.616 1.945a7 7 0 0 1-7.678 7.678 5.499 5.499 0 1 0 7.678-7.678Z"/></svg>
+          <svg class="theme-icon-light" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 1.5a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11ZM8 0a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0V.75A.75.75 0 0 1 8 0ZM3.076 2.783a.75.75 0 0 1 1.06 0l1.061 1.06a.75.75 0 0 1-1.06 1.061l-1.06-1.06a.75.75 0 0 1 0-1.06Zm8.787 0a.75.75 0 0 1 1.06 1.06l-1.06 1.061a.75.75 0 0 1-1.06-1.06l1.06-1.06ZM8 13a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 8 13ZM3.076 11.217a.75.75 0 0 1 1.06 1.06l-1.06 1.061a.75.75 0 0 1-1.061-1.06l1.06-1.061Zm8.787 1.06a.75.75 0 0 1 1.06-1.06l1.061 1.06a.75.75 0 0 1-1.06 1.061l-1.061-1.06ZM0 8a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5H.75A.75.75 0 0 1 0 8Zm13 0a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5h-1.5A.75.75 0 0 1 13 8Z"/></svg>
+        </button>
+        <a href="https://github.com/pierceboggan/primer" class="btn btn-sm d-flex flex-items-center" style="gap: 6px;">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container-xl px-3 px-md-6">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1 class="page-title">Getting Started</h1>
+      <p class="page-desc">
+        Set up Primer to analyze, generate, and optimize AI-readiness for your repositories.
+      </p>
+    </div>
+
+    <div class="content-layout">
+      <!-- Table of Contents -->
+      <aside class="content-sidebar">
+        <nav class="toc">
+          <div class="toc-title">On this page</div>
+          <a href="#prerequisites" class="toc-link">Prerequisites</a>
+          <a href="#installation" class="toc-link">Installation</a>
+          <a href="#quick-start" class="toc-link">Quick Start</a>
+          <a href="#workflow" class="toc-link">Core Workflow</a>
+          <a href="#analyze" class="toc-link toc-sub">Analyze</a>
+          <a href="#instructions" class="toc-link toc-sub">Generate Instructions</a>
+          <a href="#configs" class="toc-link toc-sub">Generate Configs</a>
+          <a href="#readiness" class="toc-link toc-sub">Check Readiness</a>
+          <a href="#eval" class="toc-link toc-sub">Evaluate</a>
+          <a href="#monorepos" class="toc-link">Monorepo Support</a>
+          <a href="#policies" class="toc-link">Readiness Policies</a>
+          <a href="#batch" class="toc-link">Batch Operations</a>
+          <a href="#ci" class="toc-link">CI/CD Integration</a>
+        </nav>
+      </aside>
+
+      <!-- Content -->
+      <div class="content-main">
+        <!-- Prerequisites -->
+        <section id="prerequisites" class="content-section">
+          <h2>Prerequisites</h2>
+          <table class="options-table">
+            <thead>
+              <tr><th>Requirement</th><th>Details</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Node.js 20+</strong></td>
+                <td>Runtime environment. <a href="https://nodejs.org">nodejs.org</a></td>
+              </tr>
+              <tr>
+                <td><strong>GitHub Copilot CLI</strong></td>
+                <td>Required for instruction generation. Verify with <code>copilot --version</code></td>
+              </tr>
+              <tr>
+                <td><strong>Copilot Auth</strong></td>
+                <td>Run <code>copilot</code> and use <code>/login</code> to authenticate</td>
+              </tr>
+              <tr>
+                <td><strong>GitHub CLI</strong> <em>(optional)</em></td>
+                <td>For batch and PR workflows. <code>brew install gh && gh auth login</code></td>
+              </tr>
+              <tr>
+                <td><strong>Azure DevOps PAT</strong> <em>(optional)</em></td>
+                <td>Set <code>AZURE_DEVOPS_PAT</code> env var for Azure workflows</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Installation -->
+        <section id="installation" class="content-section">
+          <h2>Installation</h2>
+
+          <h3>Run directly (no install)</h3>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="prompt">$ </span>npx github:pierceboggan/primer &lt;command&gt;</code></pre>
+          </div>
+
+          <h3>Install globally</h3>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="prompt">$ </span>npm install -g github:pierceboggan/primer
+<span class="prompt">$ </span>primer --version</code></pre>
+          </div>
+
+          <h3>Clone and build from source</h3>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="prompt">$ </span>git clone https://github.com/pierceboggan/primer.git
+<span class="prompt">$ </span>cd primer
+<span class="prompt">$ </span>npm install && npm run build
+<span class="prompt">$ </span>npm link</code></pre>
+          </div>
+
+          <h3>VS Code Extension</h3>
+          <p>
+            Install from the
+            <a href="https://marketplace.visualstudio.com/items?itemName=digitarald.primer-vscode">VS Code Marketplace</a>,
+            or search for <strong>"Primer"</strong> in the Extensions view (<code>Ctrl+Shift+X</code>).
+          </p>
+        </section>
+
+        <!-- Quick Start -->
+        <section id="quick-start" class="content-section">
+          <h2>Quick Start</h2>
+          <p>
+            The fastest way to get started is with <code>primer init</code>. It runs an interactive
+            setup that analyzes your repo, generates AI instructions, and creates config files:
+          </p>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="prompt">$ </span>cd your-project
+<span class="prompt">$ </span>primer init</code></pre>
+          </div>
+          <p>This will:</p>
+          <ol>
+            <li>Detect your languages, frameworks, and project structure</li>
+            <li>Generate a <code>copilot-instructions.md</code> tailored to your codebase</li>
+            <li>Create <code>.vscode/mcp.json</code> with relevant MCP server configs</li>
+            <li>Set up <code>.vscode/settings.json</code> optimized for your stack</li>
+          </ol>
+          <p>
+            Use <code>--yes</code> to accept all defaults without prompts, or <code>--force</code>
+            to overwrite existing files.
+          </p>
+        </section>
+
+        <!-- Core Workflow -->
+        <section id="workflow" class="content-section">
+          <h2>Core Workflow</h2>
+          <p>
+            Primer's five core capabilities can be used independently or as a progressive workflow.
+            Here's the recommended order for setting up a repository:
+          </p>
+
+          <h3 id="analyze">1. Analyze your repository</h3>
+          <p>
+            Start by understanding your repo's structure. The <code>analyze</code> command
+            detects languages, frameworks, package managers, and monorepo workspaces:
+          </p>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="prompt">$ </span>primer analyze
+<span class="prompt">$ </span>primer analyze --output report.md</code></pre>
+          </div>
+          <p>
+            The analysis results feed into instruction generation and readiness scoring.
+            In VS Code, results populate the <strong>Analysis</strong> sidebar view.
+          </p>
+
+          <h3 id="instructions">2. Generate AI instructions</h3>
+          <p>
+            Generate <code>copilot-instructions.md</code> or <code>AGENTS.md</code> files using
+            the Copilot SDK. Instructions are analyzed from your actual code, not templated:
+          </p>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="comment"># Generate root instructions</span>
+<span class="prompt">$ </span>primer instructions
+
+<span class="comment"># Generate per-area instructions for monorepos</span>
+<span class="prompt">$ </span>primer instructions --areas
+
+<span class="comment"># Generate just one specific area</span>
+<span class="prompt">$ </span>primer instructions --area frontend</code></pre>
+          </div>
+
+          <h3 id="configs">3. Generate configurations</h3>
+          <p>
+            Create MCP server configs and VS Code settings tailored to your tech stack:
+          </p>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="prompt">$ </span>primer generate mcp      <span class="comment"># .vscode/mcp.json</span>
+<span class="prompt">$ </span>primer generate vscode   <span class="comment"># .vscode/settings.json</span></code></pre>
+          </div>
+
+          <h3 id="readiness">4. Check AI readiness</h3>
+          <p>
+            Score your repository across 9 maturity pillars and get a readiness level from 1–5:
+          </p>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="prompt">$ </span>primer readiness
+<span class="prompt">$ </span>primer readiness --visual --output readiness.html</code></pre>
+          </div>
+          <p>The 9 pillars span two groups:</p>
+          <ul>
+            <li><strong>Repo Health</strong> — Style/linting, build system, testing, documentation,
+              dev environment, code quality, observability, security/governance</li>
+            <li><strong>AI Setup</strong> — Instructions, MCP servers, agents, skills</li>
+          </ul>
+
+          <h3 id="eval">5. Evaluate effectiveness</h3>
+          <p>
+            Measure whether your instructions actually improve AI responses by running
+            evaluations with a judge model:
+          </p>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="comment"># Create starter eval config</span>
+<span class="prompt">$ </span>primer eval --init
+
+<span class="comment"># Run evaluations</span>
+<span class="prompt">$ </span>primer eval</code></pre>
+          </div>
+          <p>
+            The eval compares AI responses with and without custom instructions,
+            then a judge model scores which response better follows codebase conventions.
+          </p>
+        </section>
+
+        <!-- Monorepo Support -->
+        <section id="monorepos" class="content-section">
+          <h2>Monorepo Support</h2>
+          <p>
+            Primer automatically detects monorepo structures (npm/yarn/pnpm workspaces,
+            Lerna, Nx, Rush, etc.) and maps logical areas like <code>frontend</code>,
+            <code>backend</code>, <code>infrastructure</code>.
+          </p>
+          <p>
+            For monorepos, you can generate per-area instructions scoped with
+            <code>applyTo</code> globs:
+          </p>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="comment"># Generate instructions for all detected areas</span>
+<span class="prompt">$ </span>primer instructions --areas
+
+<span class="comment"># Generate for a specific area</span>
+<span class="prompt">$ </span>primer instructions --area api
+
+<span class="comment"># Generate per-app configs</span>
+<span class="prompt">$ </span>primer generate instructions --per-app</code></pre>
+          </div>
+          <p>
+            Per-area readiness breakdowns are also available:
+          </p>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="prompt">$ </span>primer readiness --per-area</code></pre>
+          </div>
+        </section>
+
+        <!-- Policies -->
+        <section id="policies" class="content-section">
+          <h2>Readiness Policies</h2>
+          <p>
+            Policies are composable JSON files that customize which readiness criteria are
+            evaluated, override scoring metadata, and set pass-rate thresholds. Chain
+            multiple policies or distribute them org-wide.
+          </p>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="comment"># Apply a single policy</span>
+<span class="prompt">$ </span>primer readiness --policy ./policies/strict.json
+
+<span class="comment"># Chain multiple policies</span>
+<span class="prompt">$ </span>primer readiness --policy ./base.json,./team-overrides.json</code></pre>
+          </div>
+          <h3>Policy format</h3>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code>{
+  "name": "my-org-policy",
+  "criteria": {
+    "disable": ["lint-config"],
+    "override": {
+      "readme": { "impact": "high", "level": 2 }
+    }
+  },
+  "extras": {
+    "disable": ["pre-commit"]
+  },
+  "thresholds": {
+    "passRate": 0.9
+  }
+}</code></pre>
+          </div>
+          <p>
+            See the <a href="cli.html#readiness">readiness command reference</a> for all policy options.
+          </p>
+        </section>
+
+        <!-- Batch Operations -->
+        <section id="batch" class="content-section">
+          <h2>Batch Operations</h2>
+          <p>
+            Process multiple repositories across GitHub organizations or Azure DevOps projects.
+            Primer supports both interactive TUI and headless modes.
+          </p>
+
+          <h3>GitHub — Interactive</h3>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="comment"># Launch the TUI to select repos from your org</span>
+<span class="prompt">$ </span>primer batch</code></pre>
+          </div>
+
+          <h3>GitHub — Headless</h3>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="prompt">$ </span>primer batch owner/repo1 owner/repo2 --json
+<span class="prompt">$ </span>echo "owner/repo1\nowner/repo2" | primer batch --json</code></pre>
+          </div>
+
+          <h3>Azure DevOps</h3>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="prompt">$ </span>export AZURE_DEVOPS_PAT="your-pat-here"
+<span class="prompt">$ </span>primer batch org/project/repo --provider azure</code></pre>
+          </div>
+
+          <h3>Batch readiness report</h3>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="prompt">$ </span>primer batch-readiness --output report.html</code></pre>
+          </div>
+        </section>
+
+        <!-- CI/CD Integration -->
+        <section id="ci" class="content-section">
+          <h2>CI/CD Integration</h2>
+          <p>
+            Use Primer's <code>--fail-level</code> flag to enforce readiness and evaluation
+            thresholds in your CI pipeline.
+          </p>
+
+          <h3>Readiness gate</h3>
+          <p>
+            Exit with code 1 if the readiness level falls below a threshold:
+          </p>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="comment"># Fail if readiness level &lt; 3</span>
+<span class="prompt">$ </span>primer readiness --fail-level 3 --json</code></pre>
+          </div>
+
+          <h3>Eval gate</h3>
+          <p>
+            Exit with code 1 if the eval pass rate drops below a threshold:
+          </p>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code><span class="comment"># Fail if pass rate &lt; 80%</span>
+<span class="prompt">$ </span>primer eval --fail-level 80 --json</code></pre>
+          </div>
+
+          <h3>Example GitHub Actions workflow</h3>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre><code>- name: Check AI Readiness
+  run: npx github:pierceboggan/primer readiness --fail-level 3 --json
+
+- name: Run Eval
+  run: npx github:pierceboggan/primer eval --fail-level 80 --json</code></pre>
+          </div>
+
+          <div class="callout">
+            <div class="callout-title">Tip</div>
+            Always use <code>--json</code> in CI to get machine-readable output on stdout.
+            Human-readable progress goes to stderr and won't interfere with JSON parsing.
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer class="site-footer">
+    <div class="container-xl px-3 px-md-6 d-flex flex-justify-between flex-wrap" style="gap: 16px;">
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="guide.html">Guide</a>
+        <a href="cli.html">CLI Reference</a>
+        <a href="extension.html">VS Code Extension</a>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/pierceboggan/primer">GitHub</a>
+        <a href="https://github.com/pierceboggan/primer/blob/main/LICENSE">MIT License</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
