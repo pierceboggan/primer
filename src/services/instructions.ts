@@ -67,7 +67,7 @@ export async function generateCopilotInstructions(
     // Simple prompt - let the agent use tools to explore
     const prompt = `Analyze this codebase and generate a .github/copilot-instructions.md file.
 
-Use tools to explore:
+Fan out multiple Explore subagents to map out the codebase in parallel:
 1. Check for existing instruction files: glob for **/{.github/copilot-instructions.md,AGENT.md,CLAUDE.md,.cursorrules,README.md}
 2. Identify the tech stack: look at package.json, tsconfig.json, pyproject.toml, Cargo.toml, go.mod, *.csproj, *.sln, build.gradle, pom.xml, etc.
 3. Understand the structure: list key directories
@@ -80,7 +80,7 @@ Generate concise instructions (~20-50 lines) covering:
 - Key files/directories
 - Monorepo structure and per-app layout (if this is a monorepo, describe the workspace organization, how apps relate to each other, and any shared libraries)
 
-Output ONLY the markdown content for the instructions file.`;
+Output ONLY the markdown content for the instructions file, not wrapped in markdown code fences.`;
 
     progress("Analyzing codebase...");
     await session.sendAndWait({ prompt }, 180000);
@@ -122,7 +122,7 @@ export async function generateAreaInstructions(
       streaming: true,
       workingDirectory: repoPath,
       systemMessage: {
-        content: `You are an expert codebase analyst. Your task is to generate a concise .instructions.md file for a specific area of a codebase. This file will be used as a file-based custom instruction in VS Code Copilot, automatically applied when working on files matching certain patterns. Use the available tools (glob, view, grep) to explore the codebase. Output ONLY the final markdown content (no frontmatter, no explanations).`
+        content: `You are an expert codebase analyst. Your task is to generate a concise .instructions.md file for a specific area of a codebase. This file will be used as a file-based custom instruction in VS Code Copilot, automatically applied when working on files matching certain patterns. Use the Explore subagents and  read-only tools to explore the codebase. Output ONLY the final markdown content, not wrapped in markdown code fences.`
       },
       infiniteSessions: { enabled: false }
     });
