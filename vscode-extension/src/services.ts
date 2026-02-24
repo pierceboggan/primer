@@ -7,7 +7,12 @@ export {
 } from "primer/services/instructions.js";
 export { runEval } from "primer/services/evaluator.js";
 export { generateEvalScaffold } from "primer/services/evalScaffold.js";
-export { runReadinessReport, groupPillars } from "primer/services/readiness.js";
+export {
+  runReadinessReport,
+  groupPillars,
+  getLevelName,
+  getLevelDescription
+} from "primer/services/readiness.js";
 export { generateVisualReport } from "primer/services/visualReport.js";
 export { createPullRequest } from "primer/services/github.js";
 export {

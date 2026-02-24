@@ -6,5 +6,6 @@ export type { RepoAnalysis } from "primer/services/analyzer.js";
 export type {
   ReadinessReport,
   ReadinessPillarSummary,
-  ReadinessCriterionResult
+  ReadinessCriterionResult,
+  ReadinessLevelSummary
 } from "primer/services/readiness.js";

@@ -1,4 +1,4 @@
-import { PILLAR_GROUPS, PILLAR_GROUP_NAMES } from "./readiness";
+import { PILLAR_GROUPS, PILLAR_GROUP_NAMES, getLevelName, getLevelDescription } from "./readiness";
 import type { AreaReadinessReport, PillarGroup, ReadinessReport } from "./readiness";
 
 type VisualReportOptions = {
@@ -36,7 +36,7 @@ export function generateVisualReport(options: VisualReportOptions): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(title)}</title>
   <style>
-    :root, [data-theme="dark"] {
+    :root, [data-theme="dark"], body.vscode-dark {
       --color-canvas-default: #0d1117;
       --color-canvas-subtle: #161b22;
       --color-canvas-inset: #010409;
@@ -55,7 +55,7 @@ export function generateVisualReport(options: VisualReportOptions): string {
       --color-done-fg: #a371f7;
     }
 
-    [data-theme="light"] {
+    [data-theme="light"], body.vscode-light, body.vscode-high-contrast-light {
       --color-canvas-default: #ffffff;
       --color-canvas-subtle: #f6f8fa;
       --color-canvas-inset: #eff2f5;
@@ -102,7 +102,7 @@ export function generateVisualReport(options: VisualReportOptions): string {
     .header-text h1 { font-size: 20px; font-weight: 600; color: var(--color-fg-default); }
     .header .subtitle { color: var(--color-fg-muted); font-size: 12px; }
 
-    /* Summary Cards */
+    /* Summary Cards (multi-repo) */
     .summary-cards {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -118,6 +118,75 @@ export function generateVisualReport(options: VisualReportOptions): string {
     .card-title { font-size: 12px; color: var(--color-fg-muted); font-weight: 500; margin-bottom: 4px; }
     .card-value { font-size: 32px; font-weight: 600; color: var(--color-accent-fg); }
     .card-subtitle { font-size: 12px; color: var(--color-fg-subtle); margin-top: 4px; }
+
+    /* Single-repo Hero */
+    .hero {
+      background: var(--color-canvas-subtle);
+      border: 1px solid var(--color-border-default);
+      padding: 24px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .hero-level {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; font-weight: 700; flex-shrink: 0;
+    }
+    .hero-level.level-high { background: rgba(63,185,80,0.12); border: 2px solid var(--color-success-fg); color: var(--color-success-fg); }
+    .hero-level.level-mid { background: rgba(210,153,34,0.12); border: 2px solid var(--color-attention-fg); color: var(--color-attention-fg); }
+    .hero-level.level-low { background: rgba(88,166,255,0.12); border: 2px solid var(--color-accent-fg); color: var(--color-accent-fg); }
+    .hero-info { flex: 1; }
+    .hero-name { font-size: 20px; font-weight: 600; color: var(--color-fg-default); margin-bottom: 2px; }
+    .hero-subtitle { color: var(--color-fg-muted); font-size: 14px; }
+    .hero-next { margin-top: 8px; font-size: 13px; color: var(--color-fg-subtle); }
+    .hero-next strong { color: var(--color-fg-muted); }
+
+    /* Fix First */
+    .fix-first {
+      background: var(--color-canvas-subtle);
+      border: 1px solid var(--color-border-default);
+      padding: 24px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+    }
+    .fix-first .section-title { color: var(--color-attention-fg); }
+    .fix-list { display: grid; gap: 8px; }
+    .fix-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 6px;
+      background: var(--color-canvas-default);
+      border: 1px solid var(--color-border-muted);
+    }
+    .fix-item-icon {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; flex-shrink: 0; font-weight: 700;
+      background: rgba(248,81,73,0.12); color: var(--color-danger-fg);
+    }
+    .fix-item-text { flex: 1; min-width: 0; }
+    .fix-item-title { font-weight: 600; font-size: 13px; color: var(--color-fg-default); }
+    .fix-item-reason { font-size: 12px; color: var(--color-fg-muted); margin-top: 2px; }
+    .fix-item-badges { display: flex; gap: 6px; margin-top: 4px; }
+    .fix-badge {
+      font-size: 11px;
+      padding: 1px 8px;
+      border-radius: 2em;
+      border: 1px solid transparent;
+    }
+    .fix-badge.impact-high { color: var(--color-danger-fg); background: rgba(248,81,73,0.08); border-color: rgba(248,81,73,0.2); }
+    .fix-badge.impact-medium { color: var(--color-attention-fg); background: rgba(210,153,34,0.08); border-color: rgba(210,153,34,0.2); }
+    .fix-badge.impact-low { color: var(--color-fg-muted); background: rgba(139,148,158,0.08); border-color: rgba(139,148,158,0.15); }
+    .fix-badge.effort-low { color: var(--color-success-fg); background: rgba(63,185,80,0.08); border-color: rgba(63,185,80,0.2); }
+    .fix-badge.effort-medium { color: var(--color-attention-fg); background: rgba(210,153,34,0.08); border-color: rgba(210,153,34,0.2); }
+    .fix-badge.effort-high { color: var(--color-fg-muted); background: rgba(139,148,158,0.08); border-color: rgba(139,148,158,0.15); }
 
     /* Sections */
     .section {
@@ -147,6 +216,16 @@ export function generateVisualReport(options: VisualReportOptions): string {
       border-radius: 6px;
       background: var(--color-canvas-default);
       border: 1px solid var(--color-border-muted);
+    }
+    .pillar-card.all-passing {
+      opacity: 0.7;
+    }
+    .pillar-card.has-failures {
+      border-color: var(--color-attention-fg);
+    }
+    .pillar-card.all-passing .pillar-name::before {
+      content: '\\2713 ';
+      color: var(--color-success-fg);
     }
     .pillar-name { font-size: 13px; font-weight: 600; color: var(--color-fg-default); margin-bottom: 8px; }
     .pillar-stats { display: flex; align-items: center; gap: 12px; }
@@ -343,6 +422,36 @@ export function generateVisualReport(options: VisualReportOptions): string {
     .footer a { color: var(--color-accent-fg); text-decoration: none; }
     .footer a:hover { text-decoration: underline; }
 
+    /* Compact Maturity Progress */
+    .maturity-progress {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      align-items: stretch;
+      height: 8px;
+    }
+    .maturity-segment {
+      flex: 1;
+      border-radius: 4px;
+      background: var(--color-border-muted);
+      position: relative;
+    }
+    .maturity-segment.achieved { background: var(--color-accent-fg); }
+    .maturity-segment.current { background: var(--color-accent-fg); box-shadow: 0 0 0 2px var(--color-accent-emphasis); }
+
+    .maturity-labels {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+    }
+    .maturity-label {
+      flex: 1;
+      text-align: center;
+      font-size: 11px;
+      color: var(--color-fg-subtle);
+    }
+    .maturity-label.current { color: var(--color-accent-fg); font-weight: 600; }
+
     /* Theme Toggle */
     .theme-toggle {
       margin-left: auto;
@@ -389,27 +498,13 @@ export function generateVisualReport(options: VisualReportOptions): string {
       </button>
     </div>
 
-    <div class="summary-cards">
-      <div class="card">
-        <div class="card-title">Repositories</div>
-        <div class="card-value">${totalRepos}</div>
-        <div class="card-subtitle">${successfulRepos} analyzed successfully</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Avg Maturity</div>
-        <div class="card-value">${avgLevel.toFixed(1)}</div>
-        <div class="card-subtitle">${getLevelName(Math.round(avgLevel))}</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Success Rate</div>
-        <div class="card-value">${totalRepos > 0 ? Math.round((successfulRepos / totalRepos) * 100) : 0}%</div>
-        <div class="card-subtitle">${failedReports.length > 0 ? failedReports.length + " failed" : "All succeeded"}</div>
-      </div>
-    </div>
+    ${successfulReports.length === 1 ? buildSingleRepoHero(successfulReports[0]) : buildMultiRepoSummary(totalRepos, successfulRepos, failedReports.length, avgLevel)}
 
     ${
       successfulReports.length > 0
         ? `
+    ${buildFixFirstHtml(successfulReports)}
+
     ${buildAiToolingHeroHtml(aiToolingData, successfulReports)}
 
     <div class="section">
@@ -417,51 +512,13 @@ export function generateVisualReport(options: VisualReportOptions): string {
       ${buildGroupedPillarsHtml(pillarStats)}
     </div>
 
-    <div class="section">
-      <h2 class="section-title">Maturity Model</h2>
-      <div class="maturity-descriptions">
-        ${[1, 2, 3, 4, 5]
-          .map((level) => {
-            const count = successfulReports.filter((r) => r.report.achievedLevel === level).length;
-            return `
-            <div class="maturity-item${count > 0 ? " has-repos" : ""}">
-              <div class="maturity-header">
-                <span class="level-badge level-${level}">${level}</span>
-                <span class="maturity-name">${getLevelName(level)}</span>
-                <span class="maturity-count">${count} repo${count !== 1 ? "s" : ""}</span>
-              </div>
-              <div class="maturity-desc">${getLevelDescription(level)}</div>
-            </div>
-          `;
-          })
-          .join("")}
-      </div>
-
-      <h3 style="font-size: 14px; font-weight: 600; color: var(--color-fg-default); margin-top: 20px; margin-bottom: 12px;">Distribution</h3>
-      <div class="level-distribution">
-        ${[1, 2, 3, 4, 5]
-          .map((level) => {
-            const count = successfulReports.filter((r) => r.report.achievedLevel === level).length;
-            const percent =
-              successfulReports.length > 0 ? (count / successfulReports.length) * 100 : 0;
-            const barHeight = count > 0 ? Math.max(40, percent * 2) : 0;
-            return `
-            <div class="level-bar">
-              <div class="level-bar-count">${count}</div>
-              <div class="level-bar-fill${count === 0 ? " empty" : ""}" style="height: ${barHeight}px"></div>
-              <div class="level-bar-label">${level}<br>${getLevelName(level)}</div>
-            </div>
-          `;
-          })
-          .join("")}
-      </div>
-    </div>
+    ${buildCompactMaturityHtml(successfulReports)}
     `
         : ""
     }
 
     <div class="section">
-      <h2 class="section-title">Repository Details</h2>
+      <h2 class="section-title">${successfulReports.length === 1 ? "Pillar Details" : "Repository Details"}</h2>
       <div class="repo-list">
         ${reports
           .map(({ repo, report, error }) => {
@@ -479,23 +536,29 @@ export function generateVisualReport(options: VisualReportOptions): string {
 
             return `
             <div class="repo-item">
+              ${
+                successfulReports.length > 1
+                  ? `
               <div class="repo-header">
                 <div class="repo-name">${escapeHtml(repo)}</div>
                 <div class="level-badge level-${report.achievedLevel}">
-                  Maturity ${report.achievedLevel}: ${getLevelName(report.achievedLevel)}
+                  Level ${report.achievedLevel}: ${getLevelName(report.achievedLevel)}
                 </div>
-              </div>
+              </div>`
+                  : ""
+              }
               ${report.isMonorepo ? `<div style="color: var(--color-fg-muted); font-size: 12px; margin-bottom: 8px;">Monorepo &middot; ${report.apps.length} apps</div>` : ""}
               <div class="repo-pillars">
                 ${report.pillars
                   .map((pillar) => {
                     const pillarCriteria = report.criteria.filter((c) => c.pillar === pillar.id);
+                    const allPass = pillar.passed === pillar.total;
                     return `
                   <div class="repo-pillar">
-                    <details>
+                    <details${allPass ? "" : " open"}>
                       <summary>
-                        <span class="repo-pillar-name">${escapeHtml(pillar.name)}</span>
-                        <span class="repo-pillar-value">${pillar.passed}/${pillar.total} (${Math.round(pillar.passRate * 100)}%)</span>
+                        <span class="repo-pillar-name">${allPass ? "&#10003; " : ""}${escapeHtml(pillar.name)}</span>
+                        <span class="repo-pillar-value" style="${allPass ? "color: var(--color-success-fg);" : ""}">${pillar.passed}/${pillar.total}${allPass ? "" : ` (${Math.round(pillar.passRate * 100)}%)`}</span>
                       </summary>
                       <div class="pillar-criteria-list">
                         ${pillarCriteria
@@ -516,7 +579,6 @@ export function generateVisualReport(options: VisualReportOptions): string {
                   })
                   .join("")}
               </div>
-              ${getTopFixesHtml(report)}
               ${buildAreaReportsHtml(report.areaReports)}
             </div>
           `;
@@ -553,6 +615,9 @@ export function generateVisualReport(options: VisualReportOptions): string {
   </div>
   <script>
     function getPreferredTheme() {
+      // In VS Code webviews, body classes are injected automatically
+      if (document.body.classList.contains('vscode-light') || document.body.classList.contains('vscode-high-contrast-light')) return 'light';
+      if (document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')) return 'dark';
       const stored = localStorage.getItem('primer-report-theme');
       if (stored) return stored;
       return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
@@ -577,6 +642,172 @@ export function generateVisualReport(options: VisualReportOptions): string {
 }
 
 // ── Helper Functions ──────────────────────────────────────────────────
+
+function buildSingleRepoHero(entry: { repo: string; report: ReadinessReport }): string {
+  const { repo, report } = entry;
+  const level = report.achievedLevel;
+  const name = getLevelName(level);
+  const levelClass = level >= 4 ? "level-high" : level >= 2 ? "level-mid" : "level-low";
+
+  const nextLevel = report.levels.find((l) => l.level === level + 1);
+  let nextHtml = "";
+  if (nextLevel && !nextLevel.achieved) {
+    const nextName = getLevelName(nextLevel.level);
+    const remaining = nextLevel.total - nextLevel.passed;
+    nextHtml = `<div class="hero-next">Next: <strong>Level ${nextLevel.level} — ${nextName}</strong> (${remaining} more check${remaining !== 1 ? "s" : ""} needed)</div>`;
+  } else if (level === 5) {
+    nextHtml = `<div class="hero-next" style="color: var(--color-success-fg);">&#10003; Maximum level achieved</div>`;
+  }
+
+  const totalPassed = report.pillars.reduce((s, p) => s + p.passed, 0);
+  const totalChecks = report.pillars.reduce((s, p) => s + p.total, 0);
+
+  return `
+    <div class="hero">
+      <div class="hero-level ${levelClass}">${level}</div>
+      <div class="hero-info">
+        <div class="hero-name">${escapeHtml(repo)}</div>
+        <div class="hero-subtitle">Level ${level}: ${name} — ${totalPassed} of ${totalChecks} checks passing</div>
+        ${nextHtml}
+      </div>
+    </div>
+  `;
+}
+
+function buildMultiRepoSummary(
+  totalRepos: number,
+  successfulRepos: number,
+  failedCount: number,
+  avgLevel: number
+): string {
+  return `
+    <div class="summary-cards">
+      <div class="card">
+        <div class="card-title">Repositories</div>
+        <div class="card-value">${totalRepos}</div>
+        <div class="card-subtitle">${successfulRepos} analyzed successfully</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Avg Maturity</div>
+        <div class="card-value">${avgLevel.toFixed(1)}</div>
+        <div class="card-subtitle">${getLevelName(Math.round(avgLevel))}</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Success Rate</div>
+        <div class="card-value">${totalRepos > 0 ? Math.round((successfulRepos / totalRepos) * 100) : 0}%</div>
+        <div class="card-subtitle">${failedCount > 0 ? failedCount + " failed" : "All succeeded"}</div>
+      </div>
+    </div>
+  `;
+}
+
+function buildFixFirstHtml(reports: Array<{ repo: string; report: ReadinessReport }>): string {
+  // Collect all failing criteria across repos, deduplicate by id
+  const failMap = new Map<string, { criterion: ReadinessReport["criteria"][0]; repos: string[] }>();
+  for (const { repo, report } of reports) {
+    for (const c of report.criteria) {
+      if (c.status !== "fail") continue;
+      const existing = failMap.get(c.id);
+      if (existing) {
+        existing.repos.push(repo);
+      } else {
+        failMap.set(c.id, { criterion: c, repos: [repo] });
+      }
+    }
+  }
+
+  const sorted = Array.from(failMap.values())
+    .sort((a, b) => {
+      const impactWeight = { high: 3, medium: 2, low: 1 };
+      const effortWeight = { low: 1, medium: 2, high: 3 };
+      const delta = impactWeight[b.criterion.impact] - impactWeight[a.criterion.impact];
+      if (delta !== 0) return delta;
+      return effortWeight[a.criterion.effort] - effortWeight[b.criterion.effort];
+    })
+    .slice(0, 5);
+
+  if (sorted.length === 0) {
+    return `
+      <div class="section" style="border-color: var(--color-success-emphasis);">
+        <h2 class="section-title" style="color: var(--color-success-fg);">&#10003; All Checks Passing</h2>
+        <p style="color: var(--color-fg-muted); font-size: 13px;">This repository passes all readiness criteria.</p>
+      </div>
+    `;
+  }
+
+  const multiRepo = reports.length > 1;
+  return `
+    <div class="fix-first">
+      <h2 class="section-title">&#9888; Fix First</h2>
+      <div class="fix-list">
+        ${sorted
+          .map(
+            ({ criterion: c, repos }) => `
+          <div class="fix-item">
+            <div class="fix-item-icon">&#10007;</div>
+            <div class="fix-item-text">
+              <div class="fix-item-title">${escapeHtml(c.title)}</div>
+              ${c.reason ? `<div class="fix-item-reason">${escapeHtml(c.reason)}</div>` : ""}
+              <div class="fix-item-badges">
+                <span class="fix-badge impact-${c.impact}">${c.impact} impact</span>
+                <span class="fix-badge effort-${c.effort}">${c.effort} effort</span>
+                ${multiRepo ? `<span class="fix-badge impact-low">${repos.length} repo${repos.length > 1 ? "s" : ""}</span>` : ""}
+              </div>
+            </div>
+          </div>
+        `
+          )
+          .join("")}
+      </div>
+    </div>
+  `;
+}
+
+function buildCompactMaturityHtml(
+  reports: Array<{ repo: string; report: ReadinessReport }>
+): string {
+  const level =
+    reports.length === 1
+      ? reports[0].report.achievedLevel
+      : Math.floor(reports.reduce((s, r) => s + r.report.achievedLevel, 0) / reports.length);
+
+  return `
+    <div class="section">
+      <h2 class="section-title">Maturity Model</h2>
+      <div class="maturity-progress">
+        ${[1, 2, 3, 4, 5]
+          .map(
+            (l) =>
+              `<div class="maturity-segment${l < level ? " achieved" : l === level ? " current" : ""}"></div>`
+          )
+          .join("")}
+      </div>
+      <div class="maturity-labels">
+        ${[1, 2, 3, 4, 5]
+          .map(
+            (l) =>
+              `<div class="maturity-label${l === level ? " current" : ""}">${l}. ${getLevelName(l)}</div>`
+          )
+          .join("")}
+      </div>
+      ${[level, level + 1]
+        .filter((l) => l >= 1 && l <= 5)
+        .map(
+          (l) => `
+        <div class="maturity-item${l === level ? " has-repos" : ""}">
+          <div class="maturity-header">
+            <span class="level-badge level-${l}">${l}</span>
+            <span class="maturity-name">${getLevelName(l)}</span>
+            ${l === level ? '<span class="maturity-count" style="color: var(--color-accent-fg);">Current</span>' : '<span class="maturity-count">Next</span>'}
+          </div>
+          <div class="maturity-desc">${getLevelDescription(l)}</div>
+        </div>
+      `
+        )
+        .join("")}
+    </div>
+  `;
+}
 
 function calculatePillarStats(reports: Array<{ repo: string; report: ReadinessReport }>): Array<{
   id: string;
@@ -610,64 +841,6 @@ function calculatePillarStats(reports: Array<{ repo: string; report: ReadinessRe
     total: stats.total,
     passRate: stats.total > 0 ? stats.passed / stats.total : 0
   }));
-}
-
-function getTopFixesHtml(report: ReadinessReport): string {
-  const failedCriteria = report.criteria
-    .filter((c) => c.status === "fail")
-    .sort((a, b) => {
-      const impactWeight = { high: 3, medium: 2, low: 1 };
-      const effortWeight = { low: 1, medium: 2, high: 3 };
-      const impactDelta = impactWeight[b.impact] - impactWeight[a.impact];
-      if (impactDelta !== 0) return impactDelta;
-      return effortWeight[a.effort] - effortWeight[b.effort];
-    })
-    .slice(0, 3);
-
-  if (failedCriteria.length === 0) {
-    return '<div style="margin-top: 12px; color: var(--color-success-fg); font-weight: 600; font-size: 13px;">All criteria passing</div>';
-  }
-
-  return `
-    <div style="margin-top: 12px;">
-      <div style="font-size: 12px; font-weight: 600; color: var(--color-fg-muted); margin-bottom: 6px;">Top Fixes Needed</div>
-      <ul style="list-style: none; padding-left: 0; font-size: 12px;">
-        ${failedCriteria
-          .map(
-            (c) => `
-          <li style="margin-bottom: 4px; color: var(--color-fg-muted);">
-            <span style="color: ${c.impact === "high" ? "var(--color-danger-fg)" : c.impact === "medium" ? "var(--color-attention-fg)" : "var(--color-fg-subtle)"};">&#9679;</span>
-            <span style="color: var(--color-fg-default);">${escapeHtml(c.title)}</span>
-            <span style="color: var(--color-fg-subtle);">${c.impact} impact, ${c.effort} effort</span>
-          </li>
-        `
-          )
-          .join("")}
-      </ul>
-    </div>
-  `;
-}
-
-function getLevelName(level: number): string {
-  const names: Record<number, string> = {
-    1: "Functional",
-    2: "Documented",
-    3: "Standardized",
-    4: "Optimized",
-    5: "Autonomous"
-  };
-  return names[level] || "Unknown";
-}
-
-function getLevelDescription(level: number): string {
-  const descriptions: Record<number, string> = {
-    1: "Repo builds, tests run, and basic tooling (linter, lockfile) is in place. AI agents can clone and get started.",
-    2: "README, CONTRIBUTING guide, and custom AI instructions exist. Agents understand project context and conventions.",
-    3: "CI/CD, security policies, CODEOWNERS, and observability are configured. Agents operate within well-defined guardrails.",
-    4: "MCP servers, custom agents, and AI skills are set up. Agents have deep integration with project-specific tools and workflows.",
-    5: "Full AI-native development: agents can independently plan, implement, test, and ship changes with minimal human oversight."
-  };
-  return descriptions[level] || "";
 }
 
 function getProgressClass(passRate: number): string {
@@ -849,19 +1022,20 @@ function buildGroupedPillarsHtml(
         <h3 style="font-size: 13px; font-weight: 600; color: var(--color-fg-muted); margin-bottom: 8px; margin-top: 12px;">${escapeHtml(PILLAR_GROUP_NAMES[group])}</h3>
         <div class="pillar-grid">
           ${pillars
-            .map(
-              (pillar) => `
-            <div class="pillar-card">
+            .map((pillar) => {
+              const allPass = pillar.passed === pillar.total;
+              return `
+            <div class="pillar-card${allPass ? " all-passing" : " has-failures"}">
               <div class="pillar-name">${escapeHtml(pillar.name)}</div>
               <div class="pillar-stats">
                 <div class="progress-bar">
                   <div class="progress-fill ${getProgressClass(pillar.passRate)}" style="width: ${Math.max(pillar.passRate * 100, pillar.total > 0 ? 2 : 0)}%"></div>
                 </div>
-                <span>${pillar.passed}/${pillar.total} (${Math.round(pillar.passRate * 100)}%)</span>
+                <span>${allPass ? "All passing" : `${pillar.passed} of ${pillar.total}`}</span>
               </div>
             </div>
-          `
-            )
+          `;
+            })
             .join("")}
         </div>
       `;

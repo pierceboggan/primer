@@ -124,7 +124,7 @@ describe("generateVisualReport", () => {
       reports: [{ repo: "test-repo", report: makeReport({ achievedLevel: 2 }) }]
     });
 
-    expect(html).toContain("Maturity 2");
+    expect(html).toContain("Level 2:");
     expect(html).toContain("Documented");
   });
 
@@ -204,7 +204,7 @@ describe("generateVisualReport", () => {
       reports: [{ repo: "test-repo", report: makeReport() }]
     });
 
-    expect(html).toContain("Top Fixes");
+    expect(html).toContain("Fix First");
     expect(html).toContain("MCP config present");
   });
 
@@ -228,7 +228,7 @@ describe("generateVisualReport", () => {
       reports: [{ repo: "test-repo", report }]
     });
 
-    expect(html).toContain("All criteria passing");
+    expect(html).toContain("All Checks Passing");
   });
 
   it("escapes HTML in repo names", () => {
