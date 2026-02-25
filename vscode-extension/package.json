@@ -7,7 +7,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pierceboggan/primer.git"
+    "url": "https://github.com/microsoft/agent-init.git"
   },
   "engines": {
     "vscode": "^1.109.0"

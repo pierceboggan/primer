@@ -89,6 +89,6 @@ Both views show welcome screens with action buttons when no data is loaded yet.
 
 ## Links
 
-- [Primer CLI on GitHub](https://github.com/digitarald/primer)
-- [Contributing Guide](https://github.com/digitarald/primer/blob/main/CONTRIBUTING.md)
-- [License (MIT)](https://github.com/digitarald/primer/blob/main/LICENSE)
+- [Primer CLI on GitHub](https://github.com/microsoft/agent-init)
+- [Contributing Guide](https://github.com/microsoft/agent-init/blob/main/CONTRIBUTING.md)
+- [License (MIT)](https://github.com/microsoft/agent-init/blob/main/LICENSE)

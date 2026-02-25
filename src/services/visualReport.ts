@@ -610,7 +610,7 @@ export function generateVisualReport(options: VisualReportOptions): string {
     }
 
     <div class="footer">
-      <p>Generated with <a href="https://github.com/pierceboggan/primer">Primer</a> &middot; AI Readiness Tool</p>
+      <p>Generated with <a href="https://github.com/microsoft/agent-init">Primer</a> &middot; AI Readiness Tool</p>
     </div>
   </div>
   <script>

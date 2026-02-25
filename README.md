@@ -2,7 +2,7 @@
 
 > Prime your repositories for AI-assisted development.
 
-[![CI](https://github.com/pierceboggan/primer/actions/workflows/ci.yml/badge.svg)](https://github.com/pierceboggan/primer/actions/workflows/ci.yml)
+[![CI](https://github.com/microsoft/agent-init/actions/workflows/ci.yml/badge.svg)](https://github.com/microsoft/agent-init/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 Primer is a CLI and VS Code extension that helps teams prepare repositories for AI-assisted development. It generates custom instructions, assesses AI readiness across a maturity model, and supports batch processing across organizations.
@@ -11,7 +11,7 @@ Primer is a CLI and VS Code extension that helps teams prepare repositories for 
 
 ```bash
 # Run directly (no install needed)
-npx github:pierceboggan/primer readiness
+npx github:microsoft/agent-init readiness
 ```
 
 `npx github:<owner>/primer ...` installs from the Git repository and runs the package `prepare` script, which builds the CLI before first use.
@@ -19,7 +19,7 @@ npx github:pierceboggan/primer readiness
 Or install locally:
 
 ```bash
-git clone https://github.com/pierceboggan/primer.git
+git clone https://github.com/microsoft/agent-init.git
 cd primer && npm install && npm run build && npm link
 
 # 1. Check how AI-ready your repo is
@@ -231,3 +231,7 @@ vscode-extension/         # VS Code extension (commands, tree views, webview)
 ## License
 
 [MIT](LICENSE)
+
+## Trademarks
+
+This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft trademarks or logos is subject to and must follow [Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general). Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship. Any use of third-party trademarks or logos are subject to those third-party's policies.
