@@ -71,7 +71,7 @@ async function findModularInstructionFiles(repoPath: string): Promise<string[]> 
   const dir = path.join(repoPath, ".github", "instructions");
   const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => []);
   return entries
-    .filter((e) => e.isFile() && e.name.endsWith(".instructions.md"))
+    .filter((e) => !e.isSymbolicLink() && e.isFile() && e.name.endsWith(".instructions.md"))
     .map((e) => `.github/instructions/${e.name}`)
     .sort();
 }
@@ -283,7 +283,8 @@ IMPORTANT:
 - Focus ONLY on this specific area, not the whole repo
 - Do NOT repeat repo-wide information (that goes in the root copilot-instructions.md)
 - Keep it complementary to root instructions
-${existingSection ? `- Do NOT duplicate content already covered by existing instruction files\n${existingSection}` : ""}- Output ONLY the markdown content, no YAML frontmatter, no code fences`;
+${existingSection ? `- Do NOT duplicate content already covered by existing instruction files\n${existingSection}` : ""}
+- Output ONLY the markdown content, no YAML frontmatter, no code fences`;
 
     progress(`Analyzing area "${area.name}"...`);
     await session.sendAndWait({ prompt }, 180000);

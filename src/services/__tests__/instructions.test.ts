@@ -322,6 +322,33 @@ describe("detectExistingInstructions", () => {
 
     expect(result.instructionMdFiles).toEqual([".github/instructions/frontend.instructions.md"]);
   });
+
+  it("excludes symlinked AGENTS.md and CLAUDE.md files", async () => {
+    const realAgentsPath = path.join(tmpDir, "REAL_AGENTS.md");
+    const realClaudePath = path.join(tmpDir, "REAL_CLAUDE.md");
+
+    await fs.writeFile(realAgentsPath, "# Real AGENTS content", "utf8");
+    await fs.writeFile(realClaudePath, "# Real CLAUDE content", "utf8");
+
+    const symlinkAgentsPath = path.join(tmpDir, "AGENTS.md");
+    const symlinkClaudePath = path.join(tmpDir, "CLAUDE.md");
+
+    try {
+      await fs.symlink(realAgentsPath, symlinkAgentsPath);
+      await fs.symlink(realClaudePath, symlinkClaudePath);
+    } catch (error: unknown) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code === "EPERM" || code === "EACCES" || code === "ENOENT") {
+        return;
+      }
+      throw error;
+    }
+
+    const result = await detectExistingInstructions(tmpDir);
+
+    expect(result.agentsMdFiles).toEqual([]);
+    expect(result.claudeMdFiles).toEqual([]);
+  });
 });
 
 describe("buildExistingInstructionsSection", () => {
