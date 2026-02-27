@@ -320,6 +320,178 @@ describe("runReadinessReport", () => {
       expect(criterion?.status).toBe("pass");
     });
 
+    describe("vscode location settings", () => {
+      it("detects file-based instructions from chat.instructionsFilesLocations in settings.json", async () => {
+        await writePackageJson({ name: "test-repo" });
+        await writeFile(".github/copilot-instructions.md", "# Instructions");
+        await writeFile(
+          ".vscode/settings.json",
+          JSON.stringify({
+            "chat.instructionsFilesLocations": [{ path: "docs/instructions" }]
+          })
+        );
+        await writeFile("docs/instructions/api.instructions.md", "# API rules");
+        await writeFile("frontend/index.ts", "export {};");
+
+        const report = await runReadinessReport({ repoPath });
+        const criterion = report.criteria.find((c) => c.id === "custom-instructions");
+
+        expect(criterion?.status).toBe("pass");
+        expect(criterion?.evidence).toEqual(
+          expect.arrayContaining([expect.stringContaining("docs/instructions/api.instructions.md")])
+        );
+      });
+
+      it("detects file-based instructions from .code-workspace settings", async () => {
+        await writePackageJson({ name: "test-repo" });
+        await writeFile(".github/copilot-instructions.md", "# Instructions");
+        await writeFile(
+          "project.code-workspace",
+          JSON.stringify({
+            folders: [{ path: "." }],
+            settings: {
+              "chat.instructionsFilesLocations": [{ path: "custom-rules" }]
+            }
+          })
+        );
+        await writeFile("custom-rules/style.instructions.md", "# Style");
+        await writeFile("frontend/index.ts", "export {};");
+
+        const report = await runReadinessReport({ repoPath });
+        const criterion = report.criteria.find((c) => c.id === "custom-instructions");
+
+        expect(criterion?.status).toBe("pass");
+        expect(criterion?.evidence).toEqual(
+          expect.arrayContaining([expect.stringContaining("custom-rules/style.instructions.md")])
+        );
+      });
+
+      it("passes custom-agents when chat.agentFilesLocations points to agents dir", async () => {
+        await writePackageJson({ name: "test-repo" });
+        await writeFile(
+          ".vscode/settings.json",
+          JSON.stringify({
+            "chat.agentFilesLocations": [{ path: "my-agents" }]
+          })
+        );
+        await writeFile("my-agents/planner.agent.md", "# Planner");
+
+        const report = await runReadinessReport({ repoPath });
+        const criterion = report.criteria.find((c) => c.id === "custom-agents");
+
+        expect(criterion?.status).toBe("pass");
+        expect(criterion?.evidence).toEqual(expect.arrayContaining(["my-agents"]));
+      });
+
+      it("passes copilot-skills when chat.agentSkillsLocations points to skills dir", async () => {
+        await writePackageJson({ name: "test-repo" });
+        await writeFile(
+          ".vscode/settings.json",
+          JSON.stringify({
+            "chat.agentSkillsLocations": [{ path: "tools/skills" }]
+          })
+        );
+        await writeFile("tools/skills/testing/SKILL.md", "# Testing skill");
+
+        const report = await runReadinessReport({ repoPath });
+        const criterion = report.criteria.find((c) => c.id === "copilot-skills");
+
+        expect(criterion?.status).toBe("pass");
+        expect(criterion?.evidence).toEqual(expect.arrayContaining(["tools/skills"]));
+      });
+
+      it("merges locations from settings.json and .code-workspace files", async () => {
+        await writePackageJson({ name: "test-repo" });
+        await writeFile(
+          ".vscode/settings.json",
+          JSON.stringify({
+            "chat.agentFilesLocations": [{ path: "agents-a" }]
+          })
+        );
+        await writeFile(
+          "mono.code-workspace",
+          JSON.stringify({
+            folders: [{ path: "." }],
+            settings: {
+              "chat.agentFilesLocations": [{ path: "agents-b" }]
+            }
+          })
+        );
+        await writeFile("agents-a/review.agent.md", "# Review");
+        await writeFile("agents-b/plan.agent.md", "# Plan");
+
+        const report = await runReadinessReport({ repoPath });
+        const criterion = report.criteria.find((c) => c.id === "custom-agents");
+
+        expect(criterion?.status).toBe("pass");
+        expect(criterion?.evidence).toEqual(expect.arrayContaining(["agents-a", "agents-b"]));
+      });
+
+      it("handles string entries in location arrays", async () => {
+        await writePackageJson({ name: "test-repo" });
+        await writeFile(
+          ".vscode/settings.json",
+          JSON.stringify({
+            "chat.agentSkillsLocations": ["my-skills"]
+          })
+        );
+        await writeFile("my-skills/debug/SKILL.md", "# Debug");
+
+        const report = await runReadinessReport({ repoPath });
+        const criterion = report.criteria.find((c) => c.id === "copilot-skills");
+
+        expect(criterion?.status).toBe("pass");
+        expect(criterion?.evidence).toEqual(expect.arrayContaining(["my-skills"]));
+      });
+
+      it("rejects path traversal and absolute paths in location settings", async () => {
+        await writePackageJson({ name: "test-repo" });
+        await writeFile(
+          ".vscode/settings.json",
+          JSON.stringify({
+            "chat.agentFilesLocations": [
+              { path: "../outside" },
+              { path: "/etc/agents" },
+              { path: "valid-agents" }
+            ]
+          })
+        );
+        await writeFile("valid-agents/test.agent.md", "# Test");
+
+        const report = await runReadinessReport({ repoPath });
+        const criterion = report.criteria.find((c) => c.id === "custom-agents");
+
+        expect(criterion?.status).toBe("pass");
+        expect(criterion?.evidence).toEqual(["valid-agents"]);
+        expect(criterion?.evidence).not.toEqual(
+          expect.arrayContaining([expect.stringContaining("..")])
+        );
+      });
+
+      it("ignores invalid entries in location arrays", async () => {
+        await writePackageJson({ name: "test-repo" });
+        await writeFile(
+          ".vscode/settings.json",
+          JSON.stringify({
+            "chat.agentSkillsLocations": [
+              { notPath: "invalid" },
+              null,
+              123,
+              "",
+              { path: "real-skills" }
+            ]
+          })
+        );
+        await writeFile("real-skills/testing/SKILL.md", "# Testing");
+
+        const report = await runReadinessReport({ repoPath });
+        const criterion = report.criteria.find((c) => c.id === "copilot-skills");
+
+        expect(criterion?.status).toBe("pass");
+        expect(criterion?.evidence).toEqual(["real-skills"]);
+      });
+    });
+
     describe("instructions-consistency", () => {
       it("skips when only one instruction file exists", async () => {
         await writePackageJson({ name: "test-repo" });
