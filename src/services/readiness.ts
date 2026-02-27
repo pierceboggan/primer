@@ -740,6 +740,15 @@ export function buildCriteria(): ReadinessCriterion[] {
           };
         }
 
+        // File-based instructions found (e.g. from VS Code location settings) without areas
+        if (fileBasedInstructions.length > 0) {
+          return {
+            status: "pass",
+            reason: `Root + ${fileBasedInstructions.length} file-based instruction(s) found.`,
+            evidence: [...rootFound, ...fileBasedInstructions]
+          };
+        }
+
         // For monorepos without areas, check per-app instructions (legacy behavior)
         if (context.analysis.isMonorepo && context.apps.length > 1) {
           const appsMissing: string[] = [];
