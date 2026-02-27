@@ -1193,7 +1193,9 @@ function validateAndNormalize(raw: string): string | undefined {
   if (!trimmed || path.isAbsolute(trimmed)) return undefined;
   const segments = trimmed.split(/[/\\]+/u);
   if (segments.some((s) => s === "..")) return undefined;
-  return path.normalize(trimmed).replace(/\\/gu, "/");
+  let normalized = path.normalize(trimmed).replace(/\\/gu, "/");
+  normalized = normalized.replace(/\/+$/u, "");
+  return normalized || undefined;
 }
 
 function extractLocationPaths(entries: unknown): string[] {
