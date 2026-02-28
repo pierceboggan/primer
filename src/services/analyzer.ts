@@ -988,7 +988,8 @@ async function detectAreas(repoPath: string, analysis: RepoAnalysis): Promise<Ar
       path: basePath,
       source: "config" as const,
       scripts,
-      hasTsConfig
+      hasTsConfig,
+      parentArea: ca.parentArea
     });
   }
 
@@ -1092,13 +1093,16 @@ export async function loadAgentrcConfig(repoPath: string): Promise<AgentrcConfig
     // Parse detailDir with safety validation
     let detailDir: string | undefined;
     if (typeof json.detailDir === "string") {
-      const dir = (json.detailDir as string).trim();
+      // Normalize separators so validation works on both Windows and POSIX
+      const dir = (json.detailDir as string).trim().replace(/\\+/g, "/");
       const blocklist = new Set([".git", "node_modules", ".github", "dist", "build"]);
+      // Must be a single path segment — no slashes, no traversal, not in blocklist
       if (
         dir &&
         !path.isAbsolute(dir) &&
-        !dir.split("/").includes("..") &&
-        !blocklist.has(dir.split("/")[0])
+        !dir.includes("/") &&
+        !dir.includes("..") &&
+        !blocklist.has(dir)
       ) {
         detailDir = dir;
       }

@@ -142,8 +142,11 @@ export async function instructionsCommand(): Promise<void> {
             claudeMd
           });
           const actions = await writeNestedInstructions(workspacePath, nestedResult, false);
-          const wroteCount = actions.filter((a) => a.action === "wrote").length;
-          const skippedCount = actions.filter((a) => a.action === "skipped").length;
+          let wroteCount = actions.filter((a) => a.action === "wrote").length;
+          let skippedCount = actions.filter((a) => a.action !== "wrote").length;
+          for (const warning of nestedResult.warnings) {
+            reporter.update(`Warning: ${warning}`);
+          }
 
           // Handle areas for nested
           if (selectedAreas) {
@@ -162,11 +165,15 @@ export async function instructionsCommand(): Promise<void> {
               });
               const areaActions = await writeNestedInstructions(workspacePath, areaResult, false);
               const areaWrote = areaActions.filter((a) => a.action === "wrote").length;
-              const areaSkipped = areaActions.filter((a) => a.action === "skipped").length;
-              // Accumulate totals (simplified — just report)
+              const areaSkipped = areaActions.filter((a) => a.action !== "wrote").length;
+              wroteCount += areaWrote;
+              skippedCount += areaSkipped;
               if (areaWrote > 0) reporter.succeed(`Wrote ${areaWrote} files for ${area.name}`);
               if (areaSkipped > 0)
                 reporter.update(`Skipped ${areaSkipped} existing files for ${area.name}`);
+              for (const warning of areaResult.warnings) {
+                reporter.update(`Warning: ${warning}`);
+              }
             }
           }
 

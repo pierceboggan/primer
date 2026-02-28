@@ -18,6 +18,7 @@ export type NestedInstructionsResult = {
   hub: { relativePath: string; content: string };
   details: Array<{ relativePath: string; content: string; topic: string }>;
   claudeMd?: { relativePath: string; content: string };
+  warnings: string[];
 };
 
 export type NestedHub = {
@@ -455,6 +456,19 @@ export async function writeInstructionFile(
   return { status: "written", filePath };
 }
 
+function statusToAction(status: WriteAreaResult["status"]): FileAction["action"] {
+  switch (status) {
+    case "written":
+      return "wrote";
+    case "symlink":
+      return "symlink";
+    case "empty":
+      return "empty";
+    default:
+      return "skipped";
+  }
+}
+
 /**
  * Write all files for a nested instruction set (hub + details + optional CLAUDE.md).
  */
@@ -474,7 +488,7 @@ export async function writeNestedInstructions(
   );
   actions.push({
     path: hubResult.filePath,
-    action: hubResult.status === "written" ? "wrote" : "skipped"
+    action: statusToAction(hubResult.status)
   });
 
   // Write detail files
@@ -487,7 +501,7 @@ export async function writeNestedInstructions(
     );
     actions.push({
       path: detailResult.filePath,
-      action: detailResult.status === "written" ? "wrote" : "skipped"
+      action: statusToAction(detailResult.status)
     });
   }
 
@@ -501,7 +515,7 @@ export async function writeNestedInstructions(
     );
     actions.push({
       path: claudeResult.filePath,
-      action: claudeResult.status === "written" ? "wrote" : "skipped"
+      action: statusToAction(claudeResult.status)
     });
   }
 
@@ -539,13 +553,17 @@ export function parseTopicsFromHub(content: string): {
     if (!Array.isArray(parsed)) return { cleanContent: content, topics: [] };
     const topics = parsed
       .filter(
-        (t): t is NestedTopic =>
+        (t): t is Record<string, unknown> =>
           typeof t === "object" &&
           t !== null &&
           typeof (t as Record<string, unknown>).slug === "string" &&
           typeof (t as Record<string, unknown>).title === "string"
       )
-      .map((t) => ({ ...t, slug: sanitizeAreaName(t.slug) }))
+      .map((t) => ({
+        slug: sanitizeAreaName(t.slug as string),
+        title: t.title as string,
+        description: typeof t.description === "string" ? t.description : ""
+      }))
       .slice(0, 7); // Cap at 7 topics
     const cleanContent = content.slice(0, match.index).trimEnd();
     return { cleanContent, topics };
@@ -568,7 +586,7 @@ async function generateNestedHub(
   const progress = options.onProgress ?? (() => {});
   const model = options.model ?? DEFAULT_MODEL;
 
-  const existingCtx = await detectExistingInstructions(options.repoPath);
+  const existingCtx = await detectExistingInstructions(options.repoPath, options.detailDir);
   const existingSection = buildExistingInstructionsSection(existingCtx);
 
   const session = await client.createSession({
@@ -639,10 +657,6 @@ ${existingSection ? `- Do NOT duplicate content from existing instruction files\
   await session.destroy();
 
   const { cleanContent, topics } = parseTopicsFromHub(content.trim());
-
-  if (topics.length === 0) {
-    process.stderr.write("Warning: Could not parse topics from hub. Skipping detail generation.\n");
-  }
 
   return { hubContent: cleanContent, topics };
 }
@@ -755,7 +769,8 @@ export async function generateNestedInstructions(
 
     const result: NestedInstructionsResult = {
       hub: { relativePath: hubRelativePath, content: finalHubContent },
-      details: []
+      details: [],
+      warnings: []
     };
 
     // Step 2: Generate detail files (sequential, one session per topic)
@@ -778,7 +793,7 @@ export async function generateNestedInstructions(
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        process.stderr.write(`Warning: Failed to generate detail for "${topic.title}": ${msg}\n`);
+        result.warnings.push(`Failed to generate detail for "${topic.title}": ${msg}`);
       }
     }
 

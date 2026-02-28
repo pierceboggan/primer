@@ -64,12 +64,12 @@ export function outputResult<T>(result: CommandResult<T>, json: boolean): void {
   }
 }
 
-export function deriveFileStatus(files: { action: "wrote" | "skipped" }[]): {
+export function deriveFileStatus(files: { action: string }[]): {
   ok: boolean;
   status: "success" | "partial" | "noop";
 } {
   const hasWrites = files.some((f) => f.action === "wrote");
-  const hasSkips = files.some((f) => f.action === "skipped");
+  const hasSkips = files.some((f) => f.action !== "wrote");
   if (hasWrites && hasSkips) return { ok: true, status: "partial" };
   if (hasWrites || files.length === 0) return { ok: true, status: "success" };
   return { ok: true, status: "noop" };

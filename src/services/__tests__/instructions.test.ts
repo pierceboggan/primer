@@ -511,7 +511,8 @@ describe("writeNestedInstructions", () => {
           content: "# Architecture\n\nPatterns.",
           topic: "Architecture"
         }
-      ]
+      ],
+      warnings: []
     };
 
     const actions = await writeNestedInstructions(tmpDir, result, false);
@@ -531,7 +532,8 @@ describe("writeNestedInstructions", () => {
     const result: NestedInstructionsResult = {
       hub: { relativePath: "AGENTS.md", content: "# Hub" },
       details: [],
-      claudeMd: { relativePath: "CLAUDE.md", content: "@AGENTS.md\n" }
+      claudeMd: { relativePath: "CLAUDE.md", content: "@AGENTS.md\n" },
+      warnings: []
     };
 
     const actions = await writeNestedInstructions(tmpDir, result, false);
@@ -545,13 +547,26 @@ describe("writeNestedInstructions", () => {
 
     const result: NestedInstructionsResult = {
       hub: { relativePath: "AGENTS.md", content: "new content" },
-      details: []
+      details: [],
+      warnings: []
     };
 
     const actions = await writeNestedInstructions(tmpDir, result, false);
 
     expect(actions[0].action).toBe("skipped");
     expect(await fs.readFile(path.join(tmpDir, "AGENTS.md"), "utf8")).toBe("existing");
+  });
+
+  it("reports empty action for whitespace-only content", async () => {
+    const result: NestedInstructionsResult = {
+      hub: { relativePath: "AGENTS.md", content: "   \n  " },
+      details: [],
+      warnings: []
+    };
+
+    const actions = await writeNestedInstructions(tmpDir, result, false);
+
+    expect(actions[0].action).toBe("empty");
   });
 });
 
@@ -633,6 +648,14 @@ describe("parseTopicsFromHub", () => {
 
     expect(result.topics).toHaveLength(1);
     expect(result.topics[0].slug).toBe("valid");
+  });
+
+  it("defaults missing description to empty string", () => {
+    const content = `# Hub\n\n\`\`\`json\n[{"slug":"topic","title":"Topic"}]\n\`\`\``;
+    const result = parseTopicsFromHub(content);
+
+    expect(result.topics).toHaveLength(1);
+    expect(result.topics[0].description).toBe("");
   });
 
   it("caps topics at 7", () => {

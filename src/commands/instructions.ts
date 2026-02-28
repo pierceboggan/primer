@@ -14,6 +14,12 @@ import { ensureDir, safeWriteFile } from "../utils/fs";
 import type { CommandResult } from "../utils/output";
 import { outputResult, outputError, createProgressReporter, shouldLog } from "../utils/output";
 
+function skipReason(action: string): string {
+  if (action === "symlink") return "symlink";
+  if (action === "empty") return "empty content";
+  return "exists, use --force";
+}
+
 type InstructionsOptions = {
   repo?: string;
   output?: string;
@@ -79,8 +85,11 @@ export async function instructionsCommand(options: InstructionsOptions): Promise
             if (action.action === "wrote") {
               if (shouldLog(options)) progress.succeed(`Wrote ${relPath}`);
             } else if (shouldLog(options)) {
-              progress.update(`Skipped ${relPath} (exists, use --force)`);
+              progress.update(`Skipped ${relPath} (${skipReason(action.action)})`);
             }
+          }
+          for (const warning of nestedResult.warnings) {
+            if (shouldLog(options)) progress.update(`Warning: ${warning}`);
           }
           if (options.json) {
             const result: CommandResult<{ files: typeof actions }> = {
@@ -226,8 +235,11 @@ export async function instructionsCommand(options: InstructionsOptions): Promise
               if (action.action === "wrote") {
                 if (shouldLog(options)) progress.succeed(`Wrote ${relPath}`);
               } else if (shouldLog(options)) {
-                progress.update(`Skipped ${relPath} (exists, use --force)`);
+                progress.update(`Skipped ${relPath} (${skipReason(action.action)})`);
               }
+            }
+            for (const warning of nestedResult.warnings) {
+              if (shouldLog(options)) progress.update(`Warning: ${warning}`);
             }
           } else {
             // Flat: existing behavior
