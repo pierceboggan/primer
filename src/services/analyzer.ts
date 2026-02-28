@@ -26,6 +26,7 @@ export type Area = {
   source: "auto" | "config";
   scripts?: Record<string, string>;
   hasTsConfig?: boolean;
+  parentArea?: string;
 };
 
 export type RepoAnalysis = {
@@ -987,7 +988,8 @@ async function detectAreas(repoPath: string, analysis: RepoAnalysis): Promise<Ar
       path: basePath,
       source: "config" as const,
       scripts,
-      hasTsConfig
+      hasTsConfig,
+      parentArea: ca.parentArea
     });
   }
 
@@ -1002,15 +1004,21 @@ async function detectAreas(repoPath: string, analysis: RepoAnalysis): Promise<Ar
 
 // ─── AgentRC config ───
 
+export type InstructionStrategy = "flat" | "nested";
+
 export type AgentrcConfigArea = {
   name: string;
   applyTo: string | string[];
   description?: string;
+  parentArea?: string;
 };
 
 export type AgentrcConfig = {
   areas?: AgentrcConfigArea[];
   policies?: string[];
+  strategy?: InstructionStrategy;
+  detailDir?: string;
+  claudeMd?: boolean;
 };
 
 export async function loadAgentrcConfig(repoPath: string): Promise<AgentrcConfig | undefined> {
@@ -1060,7 +1068,8 @@ export async function loadAgentrcConfig(repoPath: string): Promise<AgentrcConfig
           areas.push({
             name: e.name as string,
             applyTo,
-            description: typeof e.description === "string" ? e.description : undefined
+            description: typeof e.description === "string" ? e.description : undefined,
+            parentArea: typeof e.parentArea === "string" ? e.parentArea : undefined
           });
         }
       }
@@ -1072,7 +1081,51 @@ export async function loadAgentrcConfig(repoPath: string): Promise<AgentrcConfig
       policies = json.policies.filter((p): p is string => typeof p === "string" && p.trim() !== "");
     }
 
-    return { areas, policies: policies?.length ? policies : undefined };
+    // Parse strategy
+    let strategy: InstructionStrategy | undefined;
+    if (typeof json.strategy === "string") {
+      const s = json.strategy as string;
+      if (s === "flat" || s === "nested") {
+        strategy = s;
+      }
+    }
+
+    // Parse detailDir with safety validation
+    let detailDir: string | undefined;
+    if (typeof json.detailDir === "string") {
+      // Normalize separators so validation works on both Windows and POSIX
+      const dir = (json.detailDir as string).trim().replace(/\\+/g, "/");
+      const blocklist = new Set([".git", "node_modules", ".github", "dist", "build"]);
+      // Must be a single path segment — no slashes, no traversal, not in blocklist
+      if (
+        dir &&
+        !path.isAbsolute(dir) &&
+        !dir.includes("/") &&
+        !dir.includes("..") &&
+        !blocklist.has(dir)
+      ) {
+        detailDir = dir;
+      }
+    }
+
+    // Parse claudeMd
+    const claudeMd = json.claudeMd === true ? true : undefined;
+
+    // Validate parentArea references
+    const areaNames = new Set(areas.map((a) => a.name.toLowerCase()));
+    for (const area of areas) {
+      if (area.parentArea && !areaNames.has(area.parentArea.toLowerCase())) {
+        area.parentArea = undefined;
+      }
+    }
+
+    return {
+      areas,
+      policies: policies?.length ? policies : undefined,
+      strategy,
+      detailDir,
+      claudeMd
+    };
   }
 
   return undefined;

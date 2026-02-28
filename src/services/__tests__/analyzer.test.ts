@@ -512,6 +512,25 @@ describe("analyzeRepo", () => {
     expect(apiArea?.hasTsConfig).toBe(true);
   });
 
+  it("propagates parentArea from config to detected areas", async () => {
+    const repoPath = await makeTmpDir();
+    await fs.mkdir(path.join(repoPath, "api"), { recursive: true });
+    await fs.writeFile(path.join(repoPath, "api", "package.json"), JSON.stringify({ name: "api" }));
+    await fs.writeFile(
+      path.join(repoPath, "agentrc.config.json"),
+      JSON.stringify({
+        areas: [
+          { name: "root", applyTo: "src/**" },
+          { name: "API", applyTo: "api/**", parentArea: "root" }
+        ]
+      })
+    );
+    const result = await analyzeRepo(repoPath);
+    const apiArea = result.areas?.find((a) => a.name === "API");
+    expect(apiArea).toBeDefined();
+    expect(apiArea?.parentArea).toBe("root");
+  });
+
   it("detects C++ language from CMakeLists.txt", async () => {
     const repoPath = await makeTmpDir();
     await fs.writeFile(
@@ -890,6 +909,135 @@ describe("loadAgentrcConfig", () => {
     );
     const config = await loadAgentrcConfig(repoPath);
     expect(config?.policies).toBeUndefined();
+  });
+
+  it("parses strategy field", async () => {
+    const repoPath = await makeTmpDir();
+    await fs.writeFile(
+      path.join(repoPath, "agentrc.config.json"),
+      JSON.stringify({ strategy: "nested", areas: [{ name: "web", applyTo: "web/**" }] })
+    );
+    const config = await loadAgentrcConfig(repoPath);
+    expect(config?.strategy).toBe("nested");
+  });
+
+  it("ignores invalid strategy values", async () => {
+    const repoPath = await makeTmpDir();
+    await fs.writeFile(
+      path.join(repoPath, "agentrc.config.json"),
+      JSON.stringify({ strategy: "invalid", areas: [{ name: "web", applyTo: "web/**" }] })
+    );
+    const config = await loadAgentrcConfig(repoPath);
+    expect(config?.strategy).toBeUndefined();
+  });
+
+  it("parses detailDir field", async () => {
+    const repoPath = await makeTmpDir();
+    await fs.writeFile(
+      path.join(repoPath, "agentrc.config.json"),
+      JSON.stringify({ detailDir: "docs-ai", areas: [{ name: "web", applyTo: "web/**" }] })
+    );
+    const config = await loadAgentrcConfig(repoPath);
+    expect(config?.detailDir).toBe("docs-ai");
+  });
+
+  it("rejects detailDir with path traversal", async () => {
+    const repoPath = await makeTmpDir();
+    await fs.writeFile(
+      path.join(repoPath, "agentrc.config.json"),
+      JSON.stringify({ detailDir: "../etc", areas: [{ name: "web", applyTo: "web/**" }] })
+    );
+    const config = await loadAgentrcConfig(repoPath);
+    expect(config?.detailDir).toBeUndefined();
+  });
+
+  it("rejects absolute detailDir", async () => {
+    const repoPath = await makeTmpDir();
+    await fs.writeFile(
+      path.join(repoPath, "agentrc.config.json"),
+      JSON.stringify({ detailDir: "/tmp/evil", areas: [{ name: "web", applyTo: "web/**" }] })
+    );
+    const config = await loadAgentrcConfig(repoPath);
+    expect(config?.detailDir).toBeUndefined();
+  });
+
+  it("rejects detailDir in blocklist", async () => {
+    const repoPath = await makeTmpDir();
+    await fs.writeFile(
+      path.join(repoPath, "agentrc.config.json"),
+      JSON.stringify({ detailDir: "node_modules", areas: [{ name: "web", applyTo: "web/**" }] })
+    );
+    const config = await loadAgentrcConfig(repoPath);
+    expect(config?.detailDir).toBeUndefined();
+  });
+
+  it("rejects detailDir with backslash traversal", async () => {
+    const repoPath = await makeTmpDir();
+    await fs.writeFile(
+      path.join(repoPath, "agentrc.config.json"),
+      JSON.stringify({ detailDir: "..\\..\\etc", areas: [{ name: "web", applyTo: "web/**" }] })
+    );
+    const config = await loadAgentrcConfig(repoPath);
+    expect(config?.detailDir).toBeUndefined();
+  });
+
+  it("rejects multi-segment detailDir", async () => {
+    const repoPath = await makeTmpDir();
+    await fs.writeFile(
+      path.join(repoPath, "agentrc.config.json"),
+      JSON.stringify({ detailDir: "docs/agents", areas: [{ name: "web", applyTo: "web/**" }] })
+    );
+    const config = await loadAgentrcConfig(repoPath);
+    expect(config?.detailDir).toBeUndefined();
+  });
+
+  it("parses claudeMd boolean", async () => {
+    const repoPath = await makeTmpDir();
+    await fs.writeFile(
+      path.join(repoPath, "agentrc.config.json"),
+      JSON.stringify({ claudeMd: true, areas: [{ name: "web", applyTo: "web/**" }] })
+    );
+    const config = await loadAgentrcConfig(repoPath);
+    expect(config?.claudeMd).toBe(true);
+  });
+
+  it("ignores non-boolean claudeMd", async () => {
+    const repoPath = await makeTmpDir();
+    await fs.writeFile(
+      path.join(repoPath, "agentrc.config.json"),
+      JSON.stringify({ claudeMd: "yes", areas: [{ name: "web", applyTo: "web/**" }] })
+    );
+    const config = await loadAgentrcConfig(repoPath);
+    expect(config?.claudeMd).toBeUndefined();
+  });
+
+  it("validates parentArea references existing area", async () => {
+    const repoPath = await makeTmpDir();
+    await fs.writeFile(
+      path.join(repoPath, "agentrc.config.json"),
+      JSON.stringify({
+        areas: [
+          { name: "root", applyTo: "src/**" },
+          { name: "child", applyTo: "src/child/**", parentArea: "root" }
+        ]
+      })
+    );
+    const config = await loadAgentrcConfig(repoPath);
+    const child = config?.areas?.find((a) => a.name === "child");
+    expect(child?.parentArea).toBe("root");
+  });
+
+  it("clears invalid parentArea references", async () => {
+    const repoPath = await makeTmpDir();
+    await fs.writeFile(
+      path.join(repoPath, "agentrc.config.json"),
+      JSON.stringify({
+        areas: [{ name: "child", applyTo: "src/child/**", parentArea: "nonexistent" }]
+      })
+    );
+    const config = await loadAgentrcConfig(repoPath);
+    const child = config?.areas?.find((a) => a.name === "child");
+    expect(child?.parentArea).toBeUndefined();
   });
 });
 

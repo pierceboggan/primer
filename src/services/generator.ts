@@ -6,7 +6,7 @@ import type { RepoAnalysis } from "./analyzer";
 
 export type FileAction = {
   path: string;
-  action: "wrote" | "skipped";
+  action: "wrote" | "skipped" | "symlink" | "empty";
 };
 
 export type GenerateResult = {
