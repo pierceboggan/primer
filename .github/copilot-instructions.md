@@ -44,7 +44,7 @@ VS Code extension: `node esbuild.mjs` from `vscode-extension/`; typecheck with `
 ### Output Discipline
 
 - `stdout` is for JSON only (with `--json`); **all human-readable output goes to `stderr`**.
-- All commands MUST support `--json` and `--quiet` flags. Use `withGlobalOpts()` from `src/cli.ts` to merge global flags into command options.
+- All commands MUST support `--json`, `--quiet`, and `--accessible` flags. Use `withGlobalOpts()` from `src/cli.ts` to merge global flags into command options.
 - Commands return `CommandResult<T>` with `{ ok, status, data?, errors? }` (from `src/utils/output.ts`). Status values: `"success"`, `"partial"`, `"noop"`, `"error"`.
 - Use `outputResult()` / `outputError()` for final output — never `console.log()`.
 
