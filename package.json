@@ -19,7 +19,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsx src/index.ts",
-    "prepare": "test \"$CI\" = true || husky",
+    "prepare": "node --input-type=commonjs -e \"if(process.env.CI!=='true'){require('child_process').execSync('npx husky',{stdio:'inherit'})}\"",
     "prepublishOnly": "npm run build",
     "lint": "eslint .",
     "format": "prettier --write .",

@@ -154,6 +154,7 @@ export function runCli(argv: string[]): void {
   program
     .command("doctor")
     .description("Check environment prerequisites (Node.js, git, Copilot CLI, auth)")
+    .option("--accessible", "Use text labels instead of Unicode symbols")
     .action(withGlobalOpts(doctorCommand));
 
   program.parse(argv);
