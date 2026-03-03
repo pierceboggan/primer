@@ -7,7 +7,7 @@ import { ensureDir, safeWriteFile } from "../utils/fs";
 import type { Area, InstructionStrategy } from "./analyzer";
 import { sanitizeAreaName } from "./analyzer";
 import { assertCopilotCliReady } from "./copilot";
-import { createCopilotClient } from "./copilotSdk";
+import { approveAllPermissions, createCopilotClient } from "./copilotSdk";
 import type { FileAction } from "./generator";
 
 type CopilotClient = Awaited<ReturnType<typeof createCopilotClient>>;
@@ -208,6 +208,7 @@ export async function generateCopilotInstructions(
       systemMessage: {
         content: systemContent
       },
+      onPermissionRequest: approveAllPermissions,
       infiniteSessions: { enabled: false }
     });
 
@@ -308,6 +309,7 @@ export async function generateAreaInstructions(
       systemMessage: {
         content: areaSystemContent
       },
+      onPermissionRequest: approveAllPermissions,
       infiniteSessions: { enabled: false }
     });
 
@@ -598,6 +600,7 @@ async function generateNestedHub(
         ? `You are an expert codebase analyst. Generate a lean AGENTS.md hub file for the "${options.area.name}" area. Use tools to explore the codebase. Output ONLY the final markdown content.`
         : "You are an expert codebase analyst. Generate a lean AGENTS.md hub file for this repository. Use tools to explore the codebase. Output ONLY the final markdown content."
     },
+    onPermissionRequest: approveAllPermissions,
     infiniteSessions: { enabled: false }
   });
 
@@ -681,6 +684,7 @@ async function generateNestedDetail(
     systemMessage: {
       content: `You are an expert codebase analyst. Generate a deep-dive instruction file about "${options.topic.title}". Use tools to explore the codebase. Output ONLY the final markdown content.`
     },
+    onPermissionRequest: approveAllPermissions,
     infiniteSessions: { enabled: false }
   });
 

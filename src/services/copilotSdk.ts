@@ -6,6 +6,14 @@ import { buildExecArgs, logCopilotDebug, type CopilotCliConfig } from "./copilot
 
 export type CopilotSdkModule = typeof CopilotSdk;
 
+/**
+ * A permission handler that approves all permission requests.
+ * Required by Copilot SDK >= 0.1.28 when creating sessions.
+ */
+export const approveAllPermissions: CopilotSdk.PermissionHandler = () => ({
+  kind: "approved" as const
+});
+
 let cachedSdkModule: Promise<CopilotSdkModule> | null = null;
 
 function normalizeSdkLoadError(error: unknown): Error {
