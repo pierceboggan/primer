@@ -44,7 +44,7 @@ agentrc init
 | Requirement                       | Notes                                                            |
 | --------------------------------- | ---------------------------------------------------------------- |
 | **Node.js 20+**                   | Runtime                                                          |
-| **GitHub Copilot CLI**            | Bundled with the VS Code Copilot Chat extension                  |
+| **GitHub Copilot CLI**            | Bundled with the VS Code Copilot Chat extension; discovered automatically via `npx` as a fallback |
 | **Copilot authentication**        | Run `copilot` → `/login`                                         |
 | **GitHub CLI** _(optional)_       | For batch processing and PRs: `brew install gh && gh auth login` |
 | **Azure DevOps PAT** _(optional)_ | Set `AZURE_DEVOPS_PAT` for Azure DevOps workflows                |
@@ -102,7 +102,8 @@ agentrc instructions --format agents-md   # AGENTS.md
 agentrc instructions --per-app            # per-app in monorepos
 agentrc instructions --areas              # root + all detected areas
 agentrc instructions --area frontend      # single area
-agentrc instructions --model claude-sonnet-4.5
+agentrc instructions --model claude-haiku-4.5  # default
+agentrc instructions --model claude-sonnet-4.5 # upgrade to larger model
 ```
 
 ### `agentrc eval` — Evaluate Instructions
@@ -231,6 +232,7 @@ src/
 ├── cli.ts                # Commander CLI wiring
 ├── commands/             # CLI subcommands (thin orchestrators)
 ├── services/             # Core logic
+│   ├── batch.ts           # Per-repo batch readiness processing
 │   ├── readiness.ts       # 9-pillar scoring engine with pillar groups
 │   ├── visualReport.ts    # HTML report generator
 │   ├── instructions.ts    # Copilot SDK integration
@@ -250,7 +252,7 @@ vscode-extension/         # VS Code extension (commands, tree views, webview)
 
 ## Troubleshooting
 
-**"Copilot CLI not found"** — Install the GitHub Copilot Chat extension in VS Code. The CLI is bundled with it.
+**"Copilot CLI not found"** — Install the GitHub Copilot Chat extension in VS Code. The CLI is bundled with it. Alternatively, AgentRC will attempt to discover the CLI via `npx --yes @github/copilot` automatically (allow up to 30 seconds on first run).
 
 **"Copilot CLI not logged in"** — Run `copilot` in your terminal, then `/login` to authenticate.
 
