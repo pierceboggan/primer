@@ -107,7 +107,7 @@ jobs:
         run: npm run test:coverage
       - name: Upload coverage
         if: matrix.node == 22 && matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage
           path: coverage
