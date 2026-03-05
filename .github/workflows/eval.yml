@@ -79,6 +79,7 @@ jobs:
           THRESHOLD="${{ inputs.fail-threshold || '50' }}"
           ARGS="$ARGS --fail-level $THRESHOLD"
 
+          # shellcheck disable=SC2086
           node dist/index.js eval $ARGS 2>&1 | tee .agentrc/evals/eval.log
         env:
           GH_TOKEN: ${{ secrets.COPILOT_TOKEN }}

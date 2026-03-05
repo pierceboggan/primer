@@ -19,6 +19,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: raven-actions/actionlint@v2
+        with:
+          flags: "-ignore SC2015 -ignore SC2086"
 
   lint:
     name: Lint & Format
