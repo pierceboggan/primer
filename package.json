@@ -29,7 +29,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@github/copilot-sdk": "^0.1.29",
+    "@github/copilot-sdk": "^0.1.30",
     "@inquirer/prompts": "^8.2.1",
     "@octokit/rest": "^22.0.1",
     "chalk": "^5.6.2",
@@ -37,7 +37,7 @@
     "fast-glob": "^3.3.3",
     "ink": "^6.7.0",
     "react": "^19.2.4",
-    "simple-git": "^3.31.1"
+    "simple-git": "^3.32.3"
   },
   "lint-staged": {
     "*.{ts,tsx,js,json,md}": "prettier --write"
