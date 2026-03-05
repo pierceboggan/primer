@@ -2,9 +2,7 @@ import fs from "fs/promises";
 import os from "os";
 import path from "path";
 
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-
-import type { Area } from "../analyzer";
+import type { Area } from "@agentrc/core/services/analyzer";
 import {
   writeAreaInstruction,
   writeInstructionFile,
@@ -15,8 +13,9 @@ import {
   detectExistingInstructions,
   buildExistingInstructionsSection,
   parseTopicsFromHub
-} from "../instructions";
-import type { NestedInstructionsResult } from "../instructions";
+} from "@agentrc/core/services/instructions";
+import type { NestedInstructionsResult } from "@agentrc/core/services/instructions";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 describe("writeAreaInstruction", () => {
   let tmpDir: string;

@@ -1,26 +1,25 @@
 import fs from "fs/promises";
 import path from "path";
 
-import type { Key } from "ink";
-import { Box, Text, useApp, useInput, useStdout, useIsScreenReaderEnabled } from "ink";
-import React, { useEffect, useMemo, useState } from "react";
-
-import type { RepoApp, Area } from "../services/analyzer";
-import { analyzeRepo } from "../services/analyzer";
-import { getAzureDevOpsToken } from "../services/azureDevops";
-import { listCopilotModels } from "../services/copilot";
-import { generateEvalScaffold } from "../services/evalScaffold";
-import type { EvalConfig } from "../services/evalScaffold";
-import { runEval, type EvalResult } from "../services/evaluator";
-import { getGitHubToken } from "../services/github";
+import type { RepoApp, Area } from "@agentrc/core/services/analyzer";
+import { analyzeRepo } from "@agentrc/core/services/analyzer";
+import { getAzureDevOpsToken } from "@agentrc/core/services/azureDevops";
+import { listCopilotModels } from "@agentrc/core/services/copilot";
+import { generateEvalScaffold } from "@agentrc/core/services/evalScaffold";
+import type { EvalConfig } from "@agentrc/core/services/evalScaffold";
+import { runEval, type EvalResult } from "@agentrc/core/services/evaluator";
+import { getGitHubToken } from "@agentrc/core/services/github";
 import {
   generateCopilotInstructions,
   generateAreaInstructions,
   buildAreaInstructionContent,
   areaInstructionPath,
   writeAreaInstruction
-} from "../services/instructions";
-import { safeWriteFile, buildTimestampedName } from "../utils/fs";
+} from "@agentrc/core/services/instructions";
+import { safeWriteFile, buildTimestampedName } from "@agentrc/core/utils/fs";
+import { Box, Text, useApp, useInput, useStdout, useIsScreenReaderEnabled } from "ink";
+import type { Key } from "ink";
+import React, { useEffect, useMemo, useState } from "react";
 
 import { AnimatedBanner, StaticBanner } from "./AnimatedBanner";
 import { BatchTui } from "./BatchTui";

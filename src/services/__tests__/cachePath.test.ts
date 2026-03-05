@@ -1,9 +1,8 @@
 import os from "os";
 import path from "path";
 
+import { validateCachePath } from "@agentrc/core/utils/fs";
 import { describe, expect, it } from "vitest";
-
-import { validateCachePath } from "../../utils/fs";
 
 const cacheRoot = path.join(os.tmpdir(), "agentrc-cache");
 

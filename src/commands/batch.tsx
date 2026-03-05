@@ -1,20 +1,29 @@
 import readline from "readline";
 
+import type { AzureDevOpsRepo } from "@agentrc/core/services/azureDevops";
+import { getAzureDevOpsToken, getRepo as getAzureRepo } from "@agentrc/core/services/azureDevops";
+import {
+  runBatchHeadlessGitHub,
+  runBatchHeadlessAzure,
+  sanitizeError
+} from "@agentrc/core/services/batch";
+import type { ProcessResult } from "@agentrc/core/services/batch";
+import type { GitHubRepo } from "@agentrc/core/services/github";
+import { getGitHubToken, getRepo as getGitHubRepo } from "@agentrc/core/services/github";
+import { safeWriteFile } from "@agentrc/core/utils/fs";
+import type { CommandResult } from "@agentrc/core/utils/output";
+import {
+  outputResult,
+  outputError,
+  createProgressReporter,
+  shouldLog
+} from "@agentrc/core/utils/output";
+import { GITHUB_REPO_RE, AZURE_REPO_RE } from "@agentrc/core/utils/repo";
 import { render } from "ink";
 import React from "react";
 
-import type { AzureDevOpsRepo } from "../services/azureDevops";
-import { getAzureDevOpsToken, getRepo as getAzureRepo } from "../services/azureDevops";
-import { runBatchHeadlessGitHub, runBatchHeadlessAzure, sanitizeError } from "../services/batch";
-import type { ProcessResult } from "../services/batch";
-import type { GitHubRepo } from "../services/github";
-import { getGitHubToken, getRepo as getGitHubRepo } from "../services/github";
 import { BatchTui } from "../ui/BatchTui";
 import { BatchTuiAzure } from "../ui/BatchTuiAzure";
-import { safeWriteFile } from "../utils/fs";
-import type { CommandResult } from "../utils/output";
-import { outputResult, outputError, createProgressReporter, shouldLog } from "../utils/output";
-import { GITHUB_REPO_RE, AZURE_REPO_RE } from "../utils/repo";
 
 type BatchOptions = {
   output?: string;

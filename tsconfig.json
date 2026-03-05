@@ -11,7 +11,11 @@
     "outDir": "dist",
     "declaration": true,
     "resolveJsonModule": true,
-    "types": ["node", "react"]
+    "types": ["node", "react"],
+    "paths": {
+      "@agentrc/core": ["./packages/core/src/index.ts"],
+      "@agentrc/core/*": ["./packages/core/src/*"]
+    }
   },
-  "include": ["src"]
+  "include": ["src", "packages/core/src"]
 }

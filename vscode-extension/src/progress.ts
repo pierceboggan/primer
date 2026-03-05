@@ -1,5 +1,5 @@
 import type * as vscode from "vscode";
-import type { ProgressReporter } from "agentrc/utils/output.js";
+import type { ProgressReporter } from "@agentrc/core/utils/output";
 
 /**
  * Adapts VS Code's `Progress<{ message, increment }>` to AgentRC's `ProgressReporter` interface.

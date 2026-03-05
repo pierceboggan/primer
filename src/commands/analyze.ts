@@ -1,13 +1,12 @@
 import path from "path";
 
+import type { RepoAnalysis } from "@agentrc/core/services/analyzer";
+import { analyzeRepo } from "@agentrc/core/services/analyzer";
+import { safeWriteFile } from "@agentrc/core/utils/fs";
+import { prettyPrintSummary } from "@agentrc/core/utils/logger";
+import type { CommandResult } from "@agentrc/core/utils/output";
+import { outputResult, outputError, shouldLog } from "@agentrc/core/utils/output";
 import chalk from "chalk";
-
-import type { RepoAnalysis } from "../services/analyzer";
-import { analyzeRepo } from "../services/analyzer";
-import { safeWriteFile } from "../utils/fs";
-import { prettyPrintSummary } from "../utils/logger";
-import type { CommandResult } from "../utils/output";
-import { outputResult, outputError, shouldLog } from "../utils/output";
 
 type AnalyzeOptions = {
   json?: boolean;

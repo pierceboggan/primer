@@ -1,10 +1,10 @@
+import { getGitHubToken } from "@agentrc/core/services/github";
+import { parsePolicySources } from "@agentrc/core/services/policy";
+import { outputError } from "@agentrc/core/utils/output";
 import { render } from "ink";
 import React from "react";
 
-import { getGitHubToken } from "../services/github";
-import { parsePolicySources } from "../services/policy";
 import { BatchReadinessTui } from "../ui/BatchReadinessTui";
-import { outputError } from "../utils/output";
 
 type BatchReadinessOptions = {
   output?: string;

@@ -1,7 +1,6 @@
+import { engineReportToReadiness } from "@agentrc/core/services/policy/adapter";
+import type { EngineReport, Signal } from "@agentrc/core/services/policy/types";
 import { describe, expect, it } from "vitest";
-
-import { engineReportToReadiness } from "../policy/adapter";
-import type { EngineReport, Signal } from "../policy/types";
 
 function makeSignal(overrides: Partial<Signal> = {}): Signal {
   return {

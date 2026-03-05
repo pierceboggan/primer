@@ -1,10 +1,9 @@
+import type { PolicyConfig, ExtraDefinition } from "@agentrc/core/services/policy";
+import { compilePolicyConfig } from "@agentrc/core/services/policy/compiler";
+import type { PolicyContext, Signal } from "@agentrc/core/services/policy/types";
+import type { ReadinessCriterion } from "@agentrc/core/services/readiness";
+import { buildCriteria } from "@agentrc/core/services/readiness";
 import { describe, expect, it } from "vitest";
-
-import type { PolicyConfig, ExtraDefinition } from "../policy";
-import { compilePolicyConfig } from "../policy/compiler";
-import type { PolicyContext, Signal } from "../policy/types";
-import type { ReadinessCriterion } from "../readiness";
-import { buildCriteria } from "../readiness";
 
 // ─── Helpers ───
 

@@ -2,10 +2,10 @@ import fs from "fs/promises";
 import os from "os";
 import path from "path";
 
+import type { RepoAnalysis } from "@agentrc/core/services/analyzer";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { analyzeCommand, formatAnalysisMarkdown } from "../../commands/analyze";
-import type { RepoAnalysis } from "../analyzer";
 
 describe("formatAnalysisMarkdown", () => {
   function makeAnalysis(overrides: Partial<RepoAnalysis> = {}): RepoAnalysis {

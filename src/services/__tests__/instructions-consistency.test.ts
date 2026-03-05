@@ -2,9 +2,8 @@ import fs from "fs/promises";
 import os from "os";
 import path from "path";
 
+import { checkInstructionConsistency, contentSimilarity } from "@agentrc/core/services/readiness";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-
-import { checkInstructionConsistency, contentSimilarity } from "../readiness";
 
 describe("contentSimilarity", () => {
   it("returns 1.0 for identical content", () => {

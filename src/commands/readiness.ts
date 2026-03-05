@@ -1,19 +1,18 @@
 import path from "path";
 
-import chalk from "chalk";
-
-import { parsePolicySources } from "../services/policy";
+import { parsePolicySources } from "@agentrc/core/services/policy";
 import type {
   ReadinessReport,
   ReadinessCriterionResult,
   AreaReadinessReport,
   ReadinessPillarSummary
-} from "../services/readiness";
-import { runReadinessReport, groupPillars } from "../services/readiness";
-import { generateVisualReport } from "../services/visualReport";
-import { safeWriteFile } from "../utils/fs";
-import type { CommandResult } from "../utils/output";
-import { outputResult, outputError, shouldLog } from "../utils/output";
+} from "@agentrc/core/services/readiness";
+import { runReadinessReport, groupPillars } from "@agentrc/core/services/readiness";
+import { generateVisualReport } from "@agentrc/core/services/visualReport";
+import { safeWriteFile } from "@agentrc/core/utils/fs";
+import type { CommandResult } from "@agentrc/core/utils/output";
+import { outputResult, outputError, shouldLog } from "@agentrc/core/utils/output";
+import chalk from "chalk";
 
 type ReadinessOptions = {
   json?: boolean;

@@ -1,6 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
-
-import { executePlugins } from "../policy/engine";
+import { executePlugins } from "@agentrc/core/services/policy/engine";
 import type {
   PolicyPlugin,
   PolicyContext,
@@ -8,7 +6,8 @@ import type {
   Recommendation,
   Detector,
   Recommender
-} from "../policy/types";
+} from "@agentrc/core/services/policy/types";
+import { describe, expect, it, vi } from "vitest";
 
 // ─── Helpers ───
 

@@ -1,26 +1,29 @@
 import path from "path";
 
-import { checkbox, select } from "@inquirer/prompts";
-
-import { analyzeRepo, detectWorkspaces } from "../services/analyzer";
-import type { AgentrcConfig, AgentrcConfigArea } from "../services/analyzer";
-import type { AzureDevOpsOrg, AzureDevOpsProject, AzureDevOpsRepo } from "../services/azureDevops";
+import { analyzeRepo, detectWorkspaces } from "@agentrc/core/services/analyzer";
+import type { AgentrcConfig, AgentrcConfigArea } from "@agentrc/core/services/analyzer";
+import type {
+  AzureDevOpsOrg,
+  AzureDevOpsProject,
+  AzureDevOpsRepo
+} from "@agentrc/core/services/azureDevops";
 import {
   getAzureDevOpsToken,
   listOrganizations,
   listProjects,
   listRepos
-} from "../services/azureDevops";
-import type { FileAction } from "../services/generator";
-import { generateConfigs } from "../services/generator";
-import { buildAuthedUrl, cloneRepo, isGitRepo, setRemoteUrl } from "../services/git";
-import type { GitHubRepo } from "../services/github";
-import { getGitHubToken, listAccessibleRepos } from "../services/github";
-import { generateCopilotInstructions } from "../services/instructions";
-import { ensureDir, safeWriteFile, validateCachePath } from "../utils/fs";
-import { prettyPrintSummary } from "../utils/logger";
-import type { CommandResult } from "../utils/output";
-import { outputResult, outputError, deriveFileStatus, shouldLog } from "../utils/output";
+} from "@agentrc/core/services/azureDevops";
+import type { FileAction } from "@agentrc/core/services/generator";
+import { generateConfigs } from "@agentrc/core/services/generator";
+import { buildAuthedUrl, cloneRepo, isGitRepo, setRemoteUrl } from "@agentrc/core/services/git";
+import type { GitHubRepo } from "@agentrc/core/services/github";
+import { getGitHubToken, listAccessibleRepos } from "@agentrc/core/services/github";
+import { generateCopilotInstructions } from "@agentrc/core/services/instructions";
+import { ensureDir, safeWriteFile, validateCachePath } from "@agentrc/core/utils/fs";
+import { prettyPrintSummary } from "@agentrc/core/utils/logger";
+import type { CommandResult } from "@agentrc/core/utils/output";
+import { outputResult, outputError, deriveFileStatus, shouldLog } from "@agentrc/core/utils/output";
+import { checkbox, select } from "@inquirer/prompts";
 
 type InitOptions = {
   github?: boolean;

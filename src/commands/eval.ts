@@ -1,12 +1,17 @@
 import path from "path";
 
-import { DEFAULT_MODEL, DEFAULT_JUDGE_MODEL } from "../config";
-import { listCopilotModels } from "../services/copilot";
-import { generateEvalScaffold } from "../services/evalScaffold";
-import { runEval } from "../services/evaluator";
-import { safeWriteFile } from "../utils/fs";
-import type { CommandResult } from "../utils/output";
-import { outputResult, outputError, createProgressReporter, shouldLog } from "../utils/output";
+import { DEFAULT_MODEL, DEFAULT_JUDGE_MODEL } from "@agentrc/core/config";
+import { listCopilotModels } from "@agentrc/core/services/copilot";
+import { generateEvalScaffold } from "@agentrc/core/services/evalScaffold";
+import { runEval } from "@agentrc/core/services/evaluator";
+import { safeWriteFile } from "@agentrc/core/utils/fs";
+import type { CommandResult } from "@agentrc/core/utils/output";
+import {
+  outputResult,
+  outputError,
+  createProgressReporter,
+  shouldLog
+} from "@agentrc/core/utils/output";
 
 type EvalOptions = {
   repo?: string;

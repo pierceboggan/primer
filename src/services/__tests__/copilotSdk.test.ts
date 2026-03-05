@@ -1,6 +1,8 @@
+import {
+  attachDefaultPermissionHandler,
+  type CopilotSdkModule
+} from "@agentrc/core/services/copilotSdk";
 import { describe, expect, it, vi } from "vitest";
-
-import { attachDefaultPermissionHandler, type CopilotSdkModule } from "../copilotSdk";
 
 function buildMockClient() {
   const createSessionSpy = vi.fn(async (config: Record<string, unknown>) => ({

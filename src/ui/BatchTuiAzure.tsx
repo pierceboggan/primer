@@ -1,16 +1,19 @@
-import { Box, Text, useApp, useInput, useIsScreenReaderEnabled } from "ink";
-import React, { useEffect, useState } from "react";
-
-import type { AzureDevOpsOrg, AzureDevOpsProject, AzureDevOpsRepo } from "../services/azureDevops";
+import type {
+  AzureDevOpsOrg,
+  AzureDevOpsProject,
+  AzureDevOpsRepo
+} from "@agentrc/core/services/azureDevops";
 import {
   listOrganizations,
   listProjects,
   listRepos,
   checkReposForInstructions
-} from "../services/azureDevops";
-import { processAzureRepo } from "../services/batch";
-import type { ProcessResult } from "../services/batch";
-import { safeWriteFile } from "../utils/fs";
+} from "@agentrc/core/services/azureDevops";
+import { processAzureRepo } from "@agentrc/core/services/batch";
+import type { ProcessResult } from "@agentrc/core/services/batch";
+import { safeWriteFile } from "@agentrc/core/utils/fs";
+import { Box, Text, useApp, useInput, useIsScreenReaderEnabled } from "ink";
+import React, { useEffect, useState } from "react";
 
 import { StaticBanner } from "./AnimatedBanner";
 

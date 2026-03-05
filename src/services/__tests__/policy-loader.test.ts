@@ -2,12 +2,11 @@ import fs from "fs/promises";
 import os from "os";
 import path from "path";
 
+import { executePlugins } from "@agentrc/core/services/policy/engine";
+import { buildBuiltinPlugin, loadPluginChain } from "@agentrc/core/services/policy/loader";
+import type { PolicyContext } from "@agentrc/core/services/policy/types";
+import { buildExtras } from "@agentrc/core/services/readiness";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-
-import { executePlugins } from "../policy/engine";
-import { buildBuiltinPlugin, loadPluginChain } from "../policy/loader";
-import type { PolicyContext } from "../policy/types";
-import { buildExtras } from "../readiness";
 
 function makeCtx(): PolicyContext {
   return {

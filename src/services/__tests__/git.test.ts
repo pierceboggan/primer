@@ -1,6 +1,5 @@
+import { buildAuthedUrl } from "@agentrc/core/services/git";
 import { describe, expect, it } from "vitest";
-
-import { buildAuthedUrl } from "../git";
 
 describe("buildAuthedUrl", () => {
   it("adds github x-access-token to https URL", () => {

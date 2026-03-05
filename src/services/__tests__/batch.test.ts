@@ -1,10 +1,9 @@
+import { processBatchReadinessRepo, sanitizeError } from "@agentrc/core/services/batch";
+import * as gitModule from "@agentrc/core/services/git";
+import type { GitHubRepo } from "@agentrc/core/services/github";
+import * as readinessModule from "@agentrc/core/services/readiness";
+import type { ReadinessReport } from "@agentrc/core/services/readiness";
 import { describe, expect, it, vi, afterEach } from "vitest";
-
-import { processBatchReadinessRepo, sanitizeError } from "../batch";
-import * as gitModule from "../git";
-import type { GitHubRepo } from "../github";
-import * as readinessModule from "../readiness";
-import type { ReadinessReport } from "../readiness";
 
 function makeRepo(overrides: Partial<GitHubRepo> = {}): GitHubRepo {
   return {

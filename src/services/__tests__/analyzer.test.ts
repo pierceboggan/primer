@@ -2,21 +2,20 @@ import fs from "fs/promises";
 import os from "os";
 import path from "path";
 
-import { afterEach, describe, expect, it } from "vitest";
-
 import {
   analyzeRepo,
   loadAgentrcConfig,
   sanitizeAreaName,
   detectWorkspaces,
   type Area
-} from "../analyzer";
+} from "@agentrc/core/services/analyzer";
 import {
   buildAreaFrontmatter,
   buildAreaInstructionContent,
   areaInstructionPath,
   writeAreaInstruction
-} from "../instructions";
+} from "@agentrc/core/services/instructions";
+import { afterEach, describe, expect, it } from "vitest";
 
 describe("analyzeRepo", () => {
   const tmpDirs: string[] = [];

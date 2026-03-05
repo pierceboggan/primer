@@ -2,10 +2,9 @@ import fs from "fs/promises";
 import os from "os";
 import path from "path";
 
+import type { RepoAnalysis } from "@agentrc/core/services/analyzer";
+import { generateConfigs } from "@agentrc/core/services/generator";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-
-import type { RepoAnalysis } from "../analyzer";
-import { generateConfigs } from "../generator";
 
 describe("generateConfigs", () => {
   let tmpDir: string;

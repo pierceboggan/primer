@@ -6,11 +6,11 @@ export type {
   AgentrcConfig,
   AgentrcConfigWorkspace,
   AgentrcConfigArea
-} from "agentrc/services/analyzer.js";
+} from "@agentrc/core/services/analyzer";
 
 export type {
   ReadinessReport,
   ReadinessPillarSummary,
   ReadinessCriterionResult,
   ReadinessLevelSummary
-} from "agentrc/services/readiness.js";
+} from "@agentrc/core/services/readiness";

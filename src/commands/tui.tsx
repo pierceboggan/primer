@@ -1,10 +1,10 @@
 import path from "path";
 
+import { outputError } from "@agentrc/core/utils/output";
 import { render } from "ink";
 import React from "react";
 
 import { AgentRCTui } from "../ui/tui";
-import { outputError } from "../utils/output";
 
 type TuiOptions = {
   repo?: string;

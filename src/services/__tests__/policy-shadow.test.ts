@@ -2,11 +2,10 @@ import fs from "fs/promises";
 import os from "os";
 import path from "path";
 
+import { compareShadow, writeShadowLog } from "@agentrc/core/services/policy/shadow";
+import type { EngineReport } from "@agentrc/core/services/policy/types";
+import type { ReadinessReport, ReadinessCriterionResult } from "@agentrc/core/services/readiness";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-
-import { compareShadow, writeShadowLog } from "../policy/shadow";
-import type { EngineReport } from "../policy/types";
-import type { ReadinessReport, ReadinessCriterionResult } from "../readiness";
 
 function makeLegacyReport(criteria: ReadinessCriterionResult[] = []): ReadinessReport {
   return {

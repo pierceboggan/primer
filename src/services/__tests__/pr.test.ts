@@ -1,11 +1,10 @@
-import { describe, expect, it } from "vitest";
-
 import {
   buildInstructionsPrBody,
   buildFullPrBody,
   isAgentrcFile,
   AGENTRC_FILE_PATTERNS
-} from "../../utils/pr";
+} from "@agentrc/core/utils/pr";
+import { describe, expect, it } from "vitest";
 
 describe("buildInstructionsPrBody", () => {
   it("includes instructions file", () => {

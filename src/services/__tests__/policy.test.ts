@@ -2,11 +2,10 @@ import fs from "fs/promises";
 import os from "os";
 import path from "path";
 
+import type { ExtraDefinition, PolicyConfig } from "@agentrc/core/services/policy";
+import { loadPolicy, resolveChain, parsePolicySources } from "@agentrc/core/services/policy";
+import type { ReadinessCriterion } from "@agentrc/core/services/readiness";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-
-import type { ExtraDefinition, PolicyConfig } from "../policy";
-import { loadPolicy, resolveChain, parsePolicySources } from "../policy";
-import type { ReadinessCriterion } from "../readiness";
 
 // ─── Helpers ───
 

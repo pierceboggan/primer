@@ -1,7 +1,7 @@
 import path from "path";
 
-import { analyzeRepo, loadAgentrcConfig } from "../services/analyzer";
-import type { InstructionStrategy } from "../services/instructions";
+import { analyzeRepo, loadAgentrcConfig } from "@agentrc/core/services/analyzer";
+import type { InstructionStrategy } from "@agentrc/core/services/instructions";
 import {
   generateCopilotInstructions,
   generateAreaInstructions,
@@ -9,10 +9,15 @@ import {
   generateNestedAreaInstructions,
   writeAreaInstruction,
   writeNestedInstructions
-} from "../services/instructions";
-import { ensureDir, safeWriteFile } from "../utils/fs";
-import type { CommandResult } from "../utils/output";
-import { outputResult, outputError, createProgressReporter, shouldLog } from "../utils/output";
+} from "@agentrc/core/services/instructions";
+import { ensureDir, safeWriteFile } from "@agentrc/core/utils/fs";
+import type { CommandResult } from "@agentrc/core/utils/output";
+import {
+  outputResult,
+  outputError,
+  createProgressReporter,
+  shouldLog
+} from "@agentrc/core/utils/output";
 
 function skipReason(action: string): string {
   if (action === "symlink") return "symlink";

@@ -2,9 +2,8 @@ import fs from "fs/promises";
 import os from "os";
 import path from "path";
 
+import { runReadinessReport } from "@agentrc/core/services/readiness";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-
-import { runReadinessReport } from "../readiness";
 
 describe("runReadinessReport", () => {
   let repoPath: string;

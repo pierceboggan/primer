@@ -3,9 +3,8 @@ import fs from "fs/promises";
 import os from "os";
 import path from "path";
 
+import { ensureDir, safeWriteFile } from "@agentrc/core/utils/fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
-import { ensureDir, safeWriteFile } from "../../utils/fs";
 
 describe("ensureDir", () => {
   let tmpDir: string;

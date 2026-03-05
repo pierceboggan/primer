@@ -2,15 +2,14 @@ import fs from "fs/promises";
 import os from "os";
 import path from "path";
 
+import type { ReadinessProcessResult } from "@agentrc/core/services/batch";
+import { processBatchReadinessRepo } from "@agentrc/core/services/batch";
+import type { GitHubOrg, GitHubRepo } from "@agentrc/core/services/github";
+import { listUserOrgs, listOrgRepos, listAccessibleRepos } from "@agentrc/core/services/github";
+import { generateVisualReport } from "@agentrc/core/services/visualReport";
+import { safeWriteFile, ensureDir, validateCachePath } from "@agentrc/core/utils/fs";
 import { Box, Text, useApp, useInput, useIsScreenReaderEnabled } from "ink";
 import React, { useEffect, useState } from "react";
-
-import type { ReadinessProcessResult } from "../services/batch";
-import { processBatchReadinessRepo } from "../services/batch";
-import type { GitHubOrg, GitHubRepo } from "../services/github";
-import { listUserOrgs, listOrgRepos, listAccessibleRepos } from "../services/github";
-import { generateVisualReport } from "../services/visualReport";
-import { safeWriteFile, ensureDir, validateCachePath } from "../utils/fs";
 
 import { StaticBanner } from "./AnimatedBanner";
 

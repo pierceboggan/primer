@@ -9,9 +9,9 @@
     "skipLibCheck": true,
     "noEmit": true,
     "resolveJsonModule": true,
-    "rootDir": "..",
     "paths": {
-      "agentrc/*": ["../src/*"]
+      "@agentrc/core": ["../packages/core/src/index.ts"],
+      "@agentrc/core/*": ["../packages/core/src/*"]
     }
   },
   "include": ["src"],

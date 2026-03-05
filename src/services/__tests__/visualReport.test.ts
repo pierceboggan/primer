@@ -1,7 +1,6 @@
+import type { ReadinessReport } from "@agentrc/core/services/readiness";
+import { generateVisualReport } from "@agentrc/core/services/visualReport";
 import { describe, expect, it } from "vitest";
-
-import type { ReadinessReport } from "../readiness";
-import { generateVisualReport } from "../visualReport";
 
 function makeReport(overrides: Partial<ReadinessReport> = {}): ReadinessReport {
   return {

@@ -1,7 +1,7 @@
+import type { ReadinessReport } from "@agentrc/core/services/readiness";
 import { describe, expect, it } from "vitest";
 
 import { formatReadinessMarkdown } from "../../commands/readiness";
-import type { ReadinessReport } from "../readiness";
 
 describe("formatReadinessMarkdown", () => {
   function makeReport(overrides: Partial<ReadinessReport> = {}): ReadinessReport {

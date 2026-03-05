@@ -1,12 +1,16 @@
-import { describe, expect, it } from "vitest";
-
-import type { Signal, Recommendation, SignalPatch, RecommendationPatch } from "../policy/types";
+import type {
+  Signal,
+  Recommendation,
+  SignalPatch,
+  RecommendationPatch
+} from "@agentrc/core/services/policy/types";
 import {
   calculateScore,
   applySignalPatch,
   applyRecommendationPatch,
   resolveSupersedes
-} from "../policy/types";
+} from "@agentrc/core/services/policy/types";
+import { describe, expect, it } from "vitest";
 
 // ─── Helpers ───
 

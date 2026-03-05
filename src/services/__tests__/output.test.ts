@@ -1,11 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
 import {
   outputResult,
   outputError,
   createProgressReporter,
   type CommandResult
-} from "../../utils/output";
+} from "@agentrc/core/utils/output";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("outputResult", () => {
   let stdoutSpy: ReturnType<typeof vi.spyOn>;

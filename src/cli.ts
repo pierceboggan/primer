@@ -1,5 +1,6 @@
 import { createRequire } from "node:module";
 
+import { DEFAULT_MODEL, DEFAULT_JUDGE_MODEL } from "@agentrc/core/config";
 import { Argument, Command } from "commander";
 
 import { analyzeCommand } from "./commands/analyze";
@@ -12,7 +13,6 @@ import { instructionsCommand } from "./commands/instructions";
 import { prCommand } from "./commands/pr";
 import { readinessCommand } from "./commands/readiness";
 import { tuiCommand } from "./commands/tui";
-import { DEFAULT_MODEL, DEFAULT_JUDGE_MODEL } from "./config";
 
 const _require = createRequire(import.meta.url);
 export const CLI_VERSION = (_require("../package.json") as { version: string }).version;

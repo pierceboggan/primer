@@ -12,9 +12,13 @@ import fs from "fs/promises";
 import os from "os";
 import path from "path";
 
+import {
+  runReadinessReport,
+  buildCriteria,
+  buildExtras,
+  groupPillars
+} from "@agentrc/core/services/readiness";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-
-import { runReadinessReport, buildCriteria, buildExtras, groupPillars } from "../readiness";
 
 describe("ReadinessReport shape baseline", () => {
   let repoPath: string;

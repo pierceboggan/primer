@@ -4,6 +4,9 @@
   "description": "Set up repositories for AI-assisted development",
   "main": "dist/index.js",
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "bin": {
     "agentrc": "dist/index.js"
   },

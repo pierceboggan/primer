@@ -1,16 +1,15 @@
-import { Box, Text, useApp, useInput, useIsScreenReaderEnabled } from "ink";
-import React, { useEffect, useState } from "react";
-
-import { processGitHubRepo } from "../services/batch";
-import type { ProcessResult } from "../services/batch";
-import type { GitHubOrg, GitHubRepo } from "../services/github";
+import { processGitHubRepo } from "@agentrc/core/services/batch";
+import type { ProcessResult } from "@agentrc/core/services/batch";
+import type { GitHubOrg, GitHubRepo } from "@agentrc/core/services/github";
 import {
   listUserOrgs,
   listOrgRepos,
   listAccessibleRepos,
   checkReposForInstructions
-} from "../services/github";
-import { safeWriteFile } from "../utils/fs";
+} from "@agentrc/core/services/github";
+import { safeWriteFile } from "@agentrc/core/utils/fs";
+import { Box, Text, useApp, useInput, useIsScreenReaderEnabled } from "ink";
+import React, { useEffect, useState } from "react";
 
 import { StaticBanner } from "./AnimatedBanner";
 

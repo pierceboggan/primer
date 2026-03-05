@@ -1,10 +1,10 @@
 import path from "path";
 
-import { analyzeRepo } from "../services/analyzer";
-import type { FileAction } from "../services/generator";
-import { generateConfigs } from "../services/generator";
-import type { CommandResult } from "../utils/output";
-import { outputResult, outputError, deriveFileStatus, shouldLog } from "../utils/output";
+import { analyzeRepo } from "@agentrc/core/services/analyzer";
+import type { FileAction } from "@agentrc/core/services/generator";
+import { generateConfigs } from "@agentrc/core/services/generator";
+import type { CommandResult } from "@agentrc/core/utils/output";
+import { outputResult, outputError, deriveFileStatus, shouldLog } from "@agentrc/core/utils/output";
 
 import { instructionsCommand } from "./instructions";
 

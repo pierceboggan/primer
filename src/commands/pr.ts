@@ -1,13 +1,13 @@
 import path from "path";
 
-import { analyzeRepo } from "../services/analyzer";
+import { analyzeRepo } from "@agentrc/core/services/analyzer";
 import {
   createPullRequest as createAzurePullRequest,
   getAzureDevOpsToken,
   getRepo as getAzureRepo
-} from "../services/azureDevops";
-import { sanitizeError } from "../services/batch";
-import { generateConfigs } from "../services/generator";
+} from "@agentrc/core/services/azureDevops";
+import { sanitizeError } from "@agentrc/core/services/batch";
+import { generateConfigs } from "@agentrc/core/services/generator";
 import {
   buildAuthedUrl,
   checkoutBranch,
@@ -16,14 +16,19 @@ import {
   isGitRepo,
   pushBranch,
   setRemoteUrl
-} from "../services/git";
-import { createPullRequest, getRepo, getGitHubToken } from "../services/github";
-import { generateCopilotInstructions } from "../services/instructions";
-import { ensureDir, safeWriteFile, validateCachePath } from "../utils/fs";
-import type { CommandResult } from "../utils/output";
-import { outputResult, outputError, createProgressReporter, shouldLog } from "../utils/output";
-import { buildFullPrBody } from "../utils/pr";
-import { GITHUB_REPO_RE, AZURE_REPO_RE } from "../utils/repo";
+} from "@agentrc/core/services/git";
+import { createPullRequest, getRepo, getGitHubToken } from "@agentrc/core/services/github";
+import { generateCopilotInstructions } from "@agentrc/core/services/instructions";
+import { ensureDir, safeWriteFile, validateCachePath } from "@agentrc/core/utils/fs";
+import type { CommandResult } from "@agentrc/core/utils/output";
+import {
+  outputResult,
+  outputError,
+  createProgressReporter,
+  shouldLog
+} from "@agentrc/core/utils/output";
+import { buildFullPrBody } from "@agentrc/core/utils/pr";
+import { GITHUB_REPO_RE, AZURE_REPO_RE } from "@agentrc/core/utils/repo";
 
 const DEFAULT_PR_BRANCH = "agentrc/add-ai-config";
 
