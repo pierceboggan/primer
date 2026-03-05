@@ -1,10 +1,10 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
 
+import { processBatchReadinessRepo, sanitizeError } from "../batch";
 import * as gitModule from "../git";
+import type { GitHubRepo } from "../github";
 import * as readinessModule from "../readiness";
 import type { ReadinessReport } from "../readiness";
-import { processBatchReadinessRepo, sanitizeError } from "../batch";
-import type { GitHubRepo } from "../github";
 
 function makeRepo(overrides: Partial<GitHubRepo> = {}): GitHubRepo {
   return {
