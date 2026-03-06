@@ -55,4 +55,8 @@ To configure branch protection rules in GitHub:
 
 ## Releasing
 
-Releases are automated with release-please when changes are merged to main.
+Releases are managed via Azure DevOps (ADO) pipelines:
+
+- **VS Code Extension (stable):** `.azure-pipelines/publish-extension.yml` — triggered manually with a `publishExtension` gate. Runs build + test on every push to `main`.
+- **VS Code Extension (pre-release):** `.azure-pipelines/publish-extension-prerelease.yml` — runs on a weekday schedule (9:00 UTC) with `standardizedVersioning` for automatic version bumping.
+- **npm package (`@microsoft/agentrc`):** `.azure-pipelines/publish-npm.yml` — supports a manual `nextVersion` parameter (`major`, `minor`, `patch`, `prerelease`, or `X.X.X`); nightly schedule auto-publishes a prerelease to the `next` tag; multi-platform (Linux, macOS, Windows).

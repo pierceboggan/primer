@@ -70,7 +70,7 @@ AgentRC vNext is a complete rewrite as a TypeScript CLI tool (ESM, strict, ES202
 - ESLint flat config with TypeScript, import ordering, and Prettier integration.
 - CI workflow with lint, typecheck, tests (Node 20/22, Ubuntu/macOS/Windows), build verification, and extension typecheck.
 - CI dogfooding: runs `agentrc analyze --json` and `agentrc readiness --json` on the repo itself.
-- Release automation via release-please with VSIX packaging for the VS Code extension.
+- Release automation via Azure DevOps pipelines for VS Code extension publishing (stable + pre-release via `microsoft/vscode-engineering` templates) and npm publishing of `@microsoft/agentrc`.
 - Code coverage via `@vitest/coverage-v8`.
 
 ### Project Setup
