@@ -234,7 +234,8 @@ const READ_ONLY_PERMISSION_HANDLER: PermissionHandler = (request) => {
 };
 
 function getSessionError(errorMsg: string): Error {
-  if (errorMsg.toLowerCase().includes("auth") || errorMsg.toLowerCase().includes("login")) {
+  const lower = errorMsg.toLowerCase();
+  if (lower.includes("auth") || lower.includes("login")) {
     return new Error("Copilot CLI not logged in. Run `copilot` then `/login` to authenticate.");
   }
 
@@ -250,11 +251,12 @@ function resolveAreaWorkingDirectory(repoPath: string, area?: Area): string {
   const rawWorkingDirectory = area?.workingDirectory ?? area?.path;
   if (!rawWorkingDirectory) return repoRoot;
 
-  const resolved = area?.workingDirectory
-    ? path.resolve(repoRoot, rawWorkingDirectory)
-    : path.isAbsolute(rawWorkingDirectory)
-      ? path.resolve(rawWorkingDirectory)
-      : path.resolve(repoRoot, rawWorkingDirectory);
+  let resolved: string;
+  if (area?.workingDirectory || !path.isAbsolute(rawWorkingDirectory)) {
+    resolved = path.resolve(repoRoot, rawWorkingDirectory);
+  } else {
+    resolved = path.resolve(rawWorkingDirectory);
+  }
 
   if (resolved !== repoRoot && !resolved.startsWith(repoRoot + path.sep)) {
     throw new Error(`Invalid workingDirectory "${rawWorkingDirectory}": escapes repo boundary`);
@@ -284,6 +286,57 @@ async function trySetAutopilot(
 function resolveContent(emitContent: string | undefined, chatContent: string): string {
   const raw = emitContent ?? chatContent;
   return stripMarkdownFences(raw);
+}
+
+type CopilotSession = Awaited<ReturnType<CopilotClient["createSession"]>>;
+
+/**
+ * Attach event listeners for assistant delta, tool execution, and session errors.
+ * Returns a getter for the accumulated session error (if any).
+ */
+function attachSessionEvents(
+  session: CopilotSession,
+  onDelta: (delta: string) => void,
+  onTool: (toolName: string) => void
+): { getError: () => Error | undefined } {
+  let sessionError: Error | undefined;
+  session.on((event) => {
+    const e = event as { type: string; data?: Record<string, unknown> };
+    if (e.type === "assistant.message_delta") {
+      const delta = e.data?.deltaContent as string | undefined;
+      if (delta) onDelta(delta);
+    } else if (e.type === "tool.execution_start") {
+      const toolName = e.data?.toolName as string | undefined;
+      onTool(toolName ?? "...");
+    } else if (e.type === "session.error") {
+      const errorMsg = (e.data?.message as string) ?? "Unknown error";
+      sessionError = getSessionError(errorMsg);
+    }
+  });
+  return { getError: () => sessionError };
+}
+
+/**
+ * Send a prompt and wait for the session to complete, then destroy it.
+ * Prioritises session.error events over sendAndWait errors when both occur.
+ */
+async function runSessionPrompt(
+  session: CopilotSession,
+  prompt: string,
+  getError: () => Error | undefined
+): Promise<void> {
+  let sendError: unknown;
+  try {
+    await session.sendAndWait({ prompt }, 180000);
+  } catch (err) {
+    sendError = err;
+  } finally {
+    await session.destroy();
+  }
+  const sessionErr = getError();
+  if (sessionErr) throw sessionErr;
+  if (sendError !== undefined)
+    throw sendError instanceof Error ? sendError : new Error(String(sendError));
 }
 
 type GenerateInstructionsOptions = {
@@ -338,25 +391,11 @@ export async function generateCopilotInstructions(
     await trySetAutopilot(session);
 
     let content = "";
-    let sessionError: Error | undefined;
-
-    // Subscribe to events for progress and to capture content
-    session.on((event) => {
-      const e = event as { type: string; data?: Record<string, unknown> };
-      if (e.type === "assistant.message_delta") {
-        const delta = e.data?.deltaContent as string | undefined;
-        if (delta) {
-          content += delta;
-          progress("Generating instructions...");
-        }
-      } else if (e.type === "tool.execution_start") {
-        const toolName = e.data?.toolName as string | undefined;
-        progress(`Using tool: ${toolName ?? "..."}`);
-      } else if (e.type === "session.error") {
-        const errorMsg = (e.data?.message as string) ?? "Unknown error";
-        sessionError = getSessionError(errorMsg);
-      }
-    });
+    const { getError } = attachSessionEvents(
+      session,
+      (delta) => { content += delta; progress("Generating instructions..."); },
+      (toolName) => progress(`Using tool: ${toolName}`)
+    );
 
     // Simple prompt - let the agent use tools to explore
     const prompt = `Analyze this codebase and generate a .github/copilot-instructions.md file.
@@ -377,17 +416,7 @@ ${existingSection}
 When you have the complete markdown content, call the \`emit_file_content\` tool with it. Do NOT output the file content directly in chat.`;
 
     progress("Analyzing codebase...");
-    let sendError: unknown;
-    try {
-      await session.sendAndWait({ prompt }, 180000);
-    } catch (err) {
-      sendError = err;
-    } finally {
-      await session.destroy();
-    }
-    if (sessionError) throw sessionError;
-    if (sendError !== undefined)
-      throw sendError instanceof Error ? sendError : new Error(String(sendError));
+    await runSessionPrompt(session, prompt, getError);
 
     return resolveContent(getContent(), content) || "";
   } finally {
@@ -451,24 +480,11 @@ export async function generateAreaInstructions(
     await trySetAutopilot(session);
 
     let content = "";
-    let sessionError: Error | undefined;
-
-    session.on((event) => {
-      const e = event as { type: string; data?: Record<string, unknown> };
-      if (e.type === "assistant.message_delta") {
-        const delta = e.data?.deltaContent as string | undefined;
-        if (delta) {
-          content += delta;
-          progress(`Generating instructions for "${area.name}"...`);
-        }
-      } else if (e.type === "tool.execution_start") {
-        const toolName = e.data?.toolName as string | undefined;
-        progress(`${area.name}: using tool ${toolName ?? "..."}`);
-      } else if (e.type === "session.error") {
-        const errorMsg = (e.data?.message as string) ?? "Unknown error";
-        sessionError = getSessionError(errorMsg);
-      }
-    });
+    const { getError } = attachSessionEvents(
+      session,
+      (delta) => { content += delta; progress(`Generating instructions for "${area.name}"...`); },
+      (toolName) => progress(`${area.name}: using tool ${toolName}`)
+    );
 
     const prompt = `Analyze the "${area.name}" area of this codebase and generate a file-based instruction file.
 
@@ -495,17 +511,7 @@ ${existingSection ? `- Do NOT duplicate content already covered by existing inst
 - When you have the complete markdown content, call the \`emit_file_content\` tool with it. Do NOT output the file content directly in chat.`;
 
     progress(`Analyzing area "${area.name}"...`);
-    let sendError: unknown;
-    try {
-      await session.sendAndWait({ prompt }, 180000);
-    } catch (err) {
-      sendError = err;
-    } finally {
-      await session.destroy();
-    }
-    if (sessionError) throw sessionError;
-    if (sendError !== undefined)
-      throw sendError instanceof Error ? sendError : new Error(String(sendError));
+    await runSessionPrompt(session, prompt, getError);
 
     return resolveContent(getContent(), content) || "";
   } finally {
@@ -754,25 +760,14 @@ async function generateNestedHub(
   await trySetAutopilot(session);
 
   let content = "";
-  let sessionError: Error | undefined;
-  session.on((event) => {
-    const e = event as { type: string; data?: Record<string, unknown> };
-    if (e.type === "assistant.message_delta") {
-      const delta = e.data?.deltaContent as string | undefined;
-      if (delta) {
-        content += delta;
-        progress(
-          options.area ? `Generating hub for "${options.area.name}"...` : "Generating hub..."
-        );
-      }
-    } else if (e.type === "tool.execution_start") {
-      const toolName = e.data?.toolName as string | undefined;
-      progress(`Using tool: ${toolName ?? "..."}`);
-    } else if (e.type === "session.error") {
-      const errorMsg = (e.data?.message as string) ?? "Unknown error";
-      sessionError = getSessionError(errorMsg);
-    }
-  });
+  const { getError } = attachSessionEvents(
+    session,
+    (delta) => {
+      content += delta;
+      progress(options.area ? `Generating hub for "${options.area.name}"...` : "Generating hub...");
+    },
+    (toolName) => progress(`Using tool: ${toolName}`)
+  );
 
   const areaContext = options.area
     ? `\nThis hub is for the "${options.area.name}" area (files matching: ${Array.isArray(options.area.applyTo) ? options.area.applyTo.join(", ") : options.area.applyTo}).${options.area.description ? ` ${options.area.description}` : ""}`
@@ -809,18 +804,7 @@ IMPORTANT:
 ${existingSection ? `- Do NOT duplicate content from existing instruction files\n${existingSection}` : ""}
 - When you have the complete markdown content (including the trailing JSON topic block), call the \`emit_file_content\` tool with it. Do NOT output the content directly in chat.`;
 
-  let sendError: unknown;
-  try {
-    await session.sendAndWait({ prompt }, 180000);
-  } catch (err) {
-    sendError = err;
-  } finally {
-    await session.destroy();
-  }
-
-  if (sessionError) throw sessionError;
-  if (sendError !== undefined)
-    throw sendError instanceof Error ? sendError : new Error(String(sendError));
+  await runSessionPrompt(session, prompt, getError);
 
   const resolved = resolveContent(getContent(), content);
   const { cleanContent, topics } = parseTopicsFromHub(resolved);
@@ -862,23 +846,11 @@ async function generateNestedDetail(
   await trySetAutopilot(session);
 
   let content = "";
-  let sessionError: Error | undefined;
-  session.on((event) => {
-    const e = event as { type: string; data?: Record<string, unknown> };
-    if (e.type === "assistant.message_delta") {
-      const delta = e.data?.deltaContent as string | undefined;
-      if (delta) {
-        content += delta;
-        progress(`Generating detail: ${options.topic.title}...`);
-      }
-    } else if (e.type === "tool.execution_start") {
-      const toolName = e.data?.toolName as string | undefined;
-      progress(`${options.topic.slug}: using tool ${toolName ?? "..."}`);
-    } else if (e.type === "session.error") {
-      const errorMsg = (e.data?.message as string) ?? "Unknown error";
-      sessionError = getSessionError(errorMsg);
-    }
-  });
+  const { getError } = attachSessionEvents(
+    session,
+    (delta) => { content += delta; progress(`Generating detail: ${options.topic.title}...`); },
+    (toolName) => progress(`${options.topic.slug}: using tool ${toolName}`)
+  );
 
   const areaContext = options.area
     ? `Focus on the "${options.area.name}" area (files matching: ${Array.isArray(options.area.applyTo) ? options.area.applyTo.join(", ") : options.area.applyTo}).`
@@ -901,18 +873,7 @@ The file should:
 
 When you have the complete markdown content, call the \`emit_file_content\` tool with it. Do NOT output the content directly in chat.`;
 
-  let sendError: unknown;
-  try {
-    await session.sendAndWait({ prompt }, 180000);
-  } catch (err) {
-    sendError = err;
-  } finally {
-    await session.destroy();
-  }
-
-  if (sessionError) throw sessionError;
-  if (sendError !== undefined)
-    throw sendError instanceof Error ? sendError : new Error(String(sendError));
+  await runSessionPrompt(session, prompt, getError);
 
   const resolved = resolveContent(getContent(), content);
   if (!resolved.trim()) {
