@@ -100,11 +100,21 @@ jobs:
             const fs = require('fs');
 
             let summary = '';
+            let hasResults = false;
             let isPR = context.eventName === 'pull_request';
+
+            // Skip reporting when the eval step crashed (no results produced)
+            if (!fs.existsSync('.agentrc/evals/results.json')) {
+              const evalOutcome = '${{ steps.eval.outcome }}';
+              core.warning(`Eval step finished with outcome "${evalOutcome}" — no results file produced.`);
+              // Don't post an unhelpful comment to the PR
+              return;
+            }
 
             try {
               const raw = fs.readFileSync('.agentrc/evals/results.json', 'utf8');
               const data = JSON.parse(raw);
+              hasResults = true;
               const results = data.results || [];
               const total = results.length;
               const passed = results.filter(r => r.verdict === 'pass').length;
@@ -149,14 +159,14 @@ jobs:
                 summary += `\n</details>\n\n`;
               }
             } catch (err) {
-              summary += `## ⚠️ AgentRC Eval\n\nCould not read eval results: ${err.message}\n`;
+              summary += `## ⚠️ AgentRC Eval\n\nFailed to parse eval results: ${err.message}\n`;
             }
 
             // Write to Actions job summary (visible in run UI and PR checks tab)
             await core.summary.addRaw(summary).write();
 
-            // Also post/update as PR comment
-            if (isPR) {
+            // Only post/update PR comment when we have actual results
+            if (isPR && hasResults) {
               const marker = '<!-- agentrc-eval-results -->';
               const body = marker + '\n' + summary;
 
